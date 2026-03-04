@@ -23,11 +23,9 @@ export default function PremiumPage() {
     getUser();
   }, []);
 
-  const handleSubscribe = async (plan) => {
-    if (!user) {
-      window.location.href = '/login?redirect=/premium';
-      return;
-    }
+    const handleSubscribe = async (plan) => {
+      window.location.href = 'https://buy.stripe.com/test_aFa4gzdx0bWUdAl4rVdwc00';
+    };
 
     setLoading(plan);
     try {
