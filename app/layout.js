@@ -1,8 +1,5 @@
-import { Inter } from 'next/font/google';
 import Navbar from '@/components/Navbar';
 import './globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'Kifurushi - Peer-to-Peer Parcel Delivery for the Kenyan Diaspora',
@@ -10,10 +7,12 @@ export const metadata = {
   keywords: 'Kenya, diaspora, parcel delivery, peer to peer, shipping, Europe, Africa',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-gray-50 min-h-screen`}>
+      <body className="bg-gray-50 min-h-screen" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
         <Navbar />
         <main>{children}</main>
         <footer className="bg-gray-900 text-gray-400 py-12 mt-20">

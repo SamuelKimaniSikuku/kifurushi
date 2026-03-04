@@ -1,4 +1,7 @@
 'use client';
+
+export const dynamic = 'force-dynamic';
+
 export default function PremiumPage() {
   return (
     <div style={{maxWidth:'1100px',margin:'0 auto',padding:'48px 16px'}}>

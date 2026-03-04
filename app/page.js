@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Package, Shield, Clock, Users, Plane, ArrowRight, Star, CreditCard } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <div>

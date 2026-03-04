@@ -2,5 +2,8 @@ node_modules/
 .next/
 .env
 .env.local
+.env*.save
 *.log
 .DS_Store
+next-env.d.ts
+package-lock.json
