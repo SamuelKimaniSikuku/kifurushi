@@ -1,59 +1,34 @@
 'use client';
-
-import { useState } from 'react';
-import { Crown, Check, TrendingUp, Shield, Zap, Star } from 'lucide-react';
-
-const PLANS = {
-  premium: { price: 4.99, features: ['Unlimited trip postings', 'Priority in search results', '3% escrow fee (vs 5%)', 'Premium trust badge', 'Route alerts'] },
-  pro: { price: 12.99, features: ['Everything in Premium', '0% escrow fee', 'Pro Diamond badge', 'Bulk parcel tools', 'Priority support', 'Analytics dashboard'] },
-};
-
+import { Check } from 'lucide-react';
 export default function PremiumPage() {
-  const [currentTier] = useState('free');
-
-  const handleSubscribe = () => {
-    window.location.href = 'https://buy.stripe.com/test_aFa4gzdx0bWUdAl4rVdwc00';
-  };
-
-  const freeFeatures = ['Up to 3 trip postings/month', 'Basic search and matching', 'Community ratings', '5% escrow fee'];
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">Earn More. Ship More. Pay Less.</h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">Upgrade to Premium and unlock unlimited trips, lower fees, and priority features.</p>
+    <div style={{maxWidth:'1100px',margin:'0 auto',padding:'48px 16px'}}>
+      <div style={{textAlign:'center',marginBottom:'48px'}}>
+        <h1 style={{fontSize:'2.5rem',fontWeight:'bold',marginBottom:'16px'}}>Earn More. Ship More. Pay Less.</h1>
+        <p style={{fontSize:'1.2rem',color:'#666',maxWidth:'600px',margin:'0 auto'}}>Upgrade to Premium and unlock unlimited trips, lower fees, and priority features.</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-20">
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 p-8">
-          <h3 className="text-xl font-bold mb-1">Free</h3>
-          <p className="text-gray-600 text-sm mb-4">Get started with basics</p>
-          <div className="mb-6"><span className="text-4xl font-bold">&#8364;0</span><span className="text-gray-500">/month</span></div>
-          <ul className="space-y-3 mb-8">{freeFeatures.map(function(f, i) { return (<li key={i} className="flex items-start gap-2 text-sm"><Check className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" /><span>{f}</span></li>); })}</ul>
-          <button disabled className="w-full py-3 rounded-lg border-2 border-gray-200 text-gray-400 font-semibold">Current Plan</button>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:'24px',marginBottom:'64px'}}>
+        <div style={{background:'#fff',borderRadius:'12px',padding:'32px',border:'1px solid #e5e5e5',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+          <h3 style={{fontSize:'1.25rem',fontWeight:'bold'}}>Free</h3>
+          <p style={{color:'#666',fontSize:'0.9rem',marginBottom:'16px'}}>Get started with basics</p>
+          <div style={{marginBottom:'24px'}}><span style={{fontSize:'2.5rem',fontWeight:'bold'}}>&#8364;0</span><span style={{color:'#999'}}>/month</span></div>
+          <ul style={{listStyle:'none',padding:0,marginBottom:'24px'}}>{['3 trips/month','Basic search','Community ratings','5% escrow fee'].map(function(f,i){return <li key={i} style={{padding:'6px 0',fontSize:'0.9rem',color:'#555'}}>&#10003; {f}</li>})}</ul>
+          <button disabled style={{width:'100%',padding:'12px',borderRadius:'8px',border:'2px solid #ddd',color:'#aaa',fontWeight:'600',background:'#fff',cursor:'not-allowed'}}>Current Plan</button>
         </div>
-        <div className="bg-white rounded-xl shadow-md border-2 border-orange-500 p-8 relative">
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full">MOST POPULAR</div>
-          <h3 className="text-xl font-bold mb-1">Premium</h3>
-          <p className="text-gray-600 text-sm mb-4">For active community members</p>
-          <div className="mb-6"><span className="text-4xl font-bold text-orange-500">&#8364;{PLANS.premium.price}</span><span className="text-gray-500">/month</span></div>
-          <ul className="space-y-3 mb-8">{PLANS.premium.features.map(function(f, i) { return (<li key={i} className="flex items-start gap-2 text-sm"><Check className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" /><span>{f}</span></li>); })}</ul>
-          <button onClick={handleSubscribe} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-bold">Get Premium</button>
+        <div style={{background:'#fff',borderRadius:'12px',padding:'32px',border:'2px solid #f97316',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',position:'relative'}}>
+          <div style={{position:'absolute',top:'-12px',left:'50%',transform:'translateX(-50%)',background:'#f97316',color:'#fff',fontSize:'0.7rem',fontWeight:'bold',padding:'4px 16px',borderRadius:'20px'}}>MOST POPULAR</div>
+          <h3 style={{fontSize:'1.25rem',fontWeight:'bold'}}>Premium</h3>
+          <p style={{color:'#666',fontSize:'0.9rem',marginBottom:'16px'}}>For active community members</p>
+          <div style={{marginBottom:'24px'}}><span style={{fontSize:'2.5rem',fontWeight:'bold',color:'#f97316'}}>&#8364;4.99</span><span style={{color:'#999'}}>/month</span></div>
+          <ul style={{listStyle:'none',padding:0,marginBottom:'24px'}}>{['Unlimited trips','Priority listing','3% escrow fee','Premium badge','Route alerts'].map(function(f,i){return <li key={i} style={{padding:'6px 0',fontSize:'0.9rem',color:'#555'}}>&#10003; {f}</li>})}</ul>
+          <a href="https://buy.stripe.com/test_aFa4gzdx0bWUdAl4rVdwc00" style={{display:'block',width:'100%',padding:'12px',borderRadius:'8px',background:'#f97316',color:'#fff',fontWeight:'bold',textAlign:'center',textDecoration:'none',boxSizing:'border-box'}}>Get Premium</a>
         </div>
-        <div className="bg-gray-900 rounded-xl shadow-md p-8 text-white">
-          <h3 className="text-xl font-bold mb-1">Pro Carrier</h3>
-          <p className="text-gray-400 text-sm mb-4">For power travelers</p>
-          <div className="mb-6"><span className="text-4xl font-bold text-yellow-400">&#8364;{PLANS.pro.price}</span><span className="text-gray-400">/month</span></div>
-          <ul className="space-y-3 mb-8">{PLANS.pro.features.map(function(f, i) { return (<li key={i} className="flex items-start gap-2 text-sm"><Check className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" /><span>{f}</span></li>); })}</ul>
-          <button onClick={handleSubscribe} className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 py-3 rounded-lg font-bold">Get Pro</button>
-        </div>
-      </div>
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-center mb-12">Why Go Premium?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="flex gap-4"><div className="bg-orange-50 p-3 rounded-lg h-fit"><TrendingUp className="h-6 w-6 text-orange-500" /></div><div><h3 className="font-bold text-lg mb-1">Earn 3x More</h3><p className="text-gray-600">Priority listings mean more parcel requests and higher earnings per trip.</p></div></div>
-          <div className="flex gap-4"><div className="bg-orange-50 p-3 rounded-lg h-fit"><Shield className="h-6 w-6 text-orange-500" /></div><div><h3 className="font-bold text-lg mb-1">Trusted Badge</h3><p className="text-gray-600">Stand out with a verified Premium badge. Senders prefer trusted travelers.</p></div></div>
-          <div className="flex gap-4"><div className="bg-orange-50 p-3 rounded-lg h-fit"><Zap className="h-6 w-6 text-orange-500" /></div><div><h3 className="font-bold text-lg mb-1">Lower Fees</h3><p className="text-gray-600">Premium pays 3% escrow fee vs 5%. Pro pays 0%. Keep more of what you earn.</p></div></div>
-          <div className="flex gap-4"><div className="bg-orange-50 p-3 rounded-lg h-fit"><Star className="h-6 w-6 text-orange-500" /></div><div><h3 className="font-bold text-lg mb-1">Route Alerts</h3><p className="text-gray-600">Get notified instantly when someone needs a parcel sent on your route.</p></div></div>
+        <div style={{background:'#111827',borderRadius:'12px',padding:'32px',color:'#fff',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
+          <h3 style={{fontSize:'1.25rem',fontWeight:'bold'}}>Pro Carrier</h3>
+          <p style={{color:'#9ca3af',fontSize:'0.9rem',marginBottom:'16px'}}>For power travelers</p>
+          <div style={{marginBottom:'24px'}}><span style={{fontSize:'2.5rem',fontWeight:'bold',color:'#facc15'}}>&#8364;12.99</span><span style={{color:'#9ca3af'}}>/month</span></div>
+          <ul style={{listStyle:'none',padding:0,marginBottom:'24px'}}>{['Everything in Premium','0% escrow fee','Pro Diamond badge','Bulk tools','Priority support'].map(function(f,i){return <li key={i} style={{padding:'6px 0',fontSize:'0.9rem',color:'#d1d5db'}}>&#10003; {f}</li>})}</ul>
+          <a href="https://buy.stripe.com/test_aFa4gzdx0bWUdAl4rVdwc00" style={{display:'block',width:'100%',padding:'12px',borderRadius:'8px',background:'#facc15',color:'#111827',fontWeight:'bold',textAlign:'center',textDecoration:'none',boxSizing:'border-box'}}>Get Pro</a>
         </div>
       </div>
     </div>
