@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --kenya-green: #006B3F;
+  --kenya-red: #BB1600;
+  --kenya-black: #1a1a1a;
+  --accent-gold: #F5A623;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--kenya-black);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-kenya-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors;
+  }
+  .btn-secondary {
+    @apply bg-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors;
+  }
+  .btn-outline {
+    @apply border-2 border-kenya-green text-kenya-green px-6 py-3 rounded-lg font-semibold hover:bg-kenya-green hover:text-white transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden;
+  }
+  .badge-premium {
+    @apply bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+  .badge-pro {
+    @apply bg-gold text-white text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+}
