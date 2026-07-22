@@ -31,17 +31,17 @@ export default function RootLayout({ children }) {
                 </ul>
               </div>
               <div>
-                <h4 className="text-white font-semibold mb-3">Trust & Safety</h4>
+                <h4 className="text-white font-semibold mb-3">Community</h4>
                 <ul className="space-y-2 text-sm">
-                  <li><a href="#" className="hover:text-white">How It Works</a></li>
-                  <li><a href="#" className="hover:text-white">ID Verification</a></li>
-                  <li><a href="#" className="hover:text-white">Escrow Protection</a></li>
+                  <li><a href="/#how" className="hover:text-white">How It Works</a></li>
+                  <li><a href="/trips" className="hover:text-white">Member Ratings</a></li>
+                  <li>Connecting Kenyans since 2024</li>
                 </ul>
               </div>
               <div>
                 <h4 className="text-white font-semibold mb-3">Contact</h4>
                 <ul className="space-y-2 text-sm">
-                  <li>hello@kifurushi.co</li>
+                  <li>hello@kifurushiapp.com</li>
                   <li><a href="#" className="hover:text-white">WhatsApp Community</a></li>
                 </ul>
               </div>

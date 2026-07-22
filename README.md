@@ -16,8 +16,8 @@ Connecting the Kenyan diaspora in Europe through trusted peer-to-peer parcel del
 - **Parcel Requests** - Senders post parcels they need delivered
 - **Search & Filter** - Find trips/parcels by route, date, weight
 - **User Profiles** - Ratings, verification, trust badges
-- **Escrow Payments** - Secure payment held until delivery confirmed
-- **Premium Subscriptions** - 3 tiers (Free, Premium €4.99/mo, Pro €12.99/mo)
+- **Guest Posting** - Senders can post a parcel without creating an account
+- **Premium Subscriptions** - Free + Premium (KES 150/week, ≈ €1)
 - **Stripe Integration** - Checkout, webhooks, customer portal
 
 ## Getting Started
@@ -40,10 +40,9 @@ npm install
 ### 3. Set up Stripe
 
 1. Create an account at [stripe.com](https://stripe.com)
-2. Create two subscription products:
-   - **Premium** - €4.99/month recurring
-   - **Pro Carrier** - €12.99/month recurring
-3. Copy the Price IDs for each product
+2. Create one subscription product:
+   - **Premium** - KES 150, recurring **weekly**
+3. Copy its Price ID
 4. Set up a webhook endpoint pointing to `YOUR_URL/api/stripe/webhook`
 5. Subscribe to these webhook events:
    - `checkout.session.completed`
@@ -68,7 +67,6 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_PREMIUM_PRICE_ID=price_...
-STRIPE_PRO_PRICE_ID=price_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -121,25 +119,18 @@ kifurushi/
 
 ## Subscription Tiers
 
-| Feature | Free | Premium (€4.99/mo) | Pro (€12.99/mo) |
-|---|---|---|---|
-| Trip postings | 3/month | Unlimited | Unlimited |
-| Escrow fee | 5% | 3% | 0% |
-| Trust badge | - | Premium | Pro Diamond |
-| Priority listing | - | Yes | Yes |
-| Route alerts | - | Yes | Yes |
-| Analytics dashboard | - | Yes | Yes |
-| Bulk tools | - | - | Yes |
-| Priority support | - | - | Yes |
+| Feature | Free | Premium (KES 150/week) |
+|---|---|---|
+| Browse trips & parcels | Yes | Yes |
+| Post parcels (even without an account) | Yes | Yes |
+| Post trips | Yes | Yes |
+| Contact details of matches | - | Yes |
+| Priority listing | - | Yes |
+| Premium badge | - | Yes |
 
 ## Deployment
 
-### Vercel (Recommended)
-
-1. Push to GitHub
-2. Import project in [vercel.com](https://vercel.com)
-3. Add all environment variables
-4. Deploy
+See **DEPLOY.md** for the full step-by-step guide, including connecting the kifurushiapp.com domain.
 
 Update your Stripe webhook URL to `https://your-domain.vercel.app/api/stripe/webhook`
 

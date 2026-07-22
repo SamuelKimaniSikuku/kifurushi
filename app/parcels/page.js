@@ -103,9 +103,9 @@ export default function ParcelsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold">
-                        {parcel.profiles?.full_name?.charAt(0) || '?'}
+                        {(parcel.profiles?.full_name || parcel.guest_name || '?').charAt(0)}
                       </div>
-                      <span className="text-sm">{parcel.profiles?.full_name || 'Anonymous'}</span>
+                      <span className="text-sm">{parcel.profiles?.full_name || parcel.guest_name || 'Guest'}</span>
                     </div>
                     {parcel.budget && (
                       <p className="font-bold text-kenya-green">&euro;{parcel.budget}</p>

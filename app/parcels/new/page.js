@@ -1,9 +1,10 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Package, ArrowRight } from 'lucide-react';
+import { createClient } from '@/lib/supabase';
+import { Package, ArrowRight, User } from 'lucide-react';
 
 export default function NewParcelPage() {
   const [form, setForm] = useState({
@@ -11,10 +12,17 @@ export default function NewParcelPage() {
     origin_city: '', origin_country: '',
     destination_city: '', destination_country: '',
     weight_kg: '', budget: '', deadline: '',
+    guest_name: '', guest_contact: '',
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(null); // null = checking
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setIsLoggedIn(!!user));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,6 +58,28 @@ export default function NewParcelPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="card p-8 space-y-6">
+        {isLoggedIn === false && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-4">
+            <p className="text-sm text-gray-700 flex items-center gap-2">
+              <User className="h-4 w-4 text-kenya-green flex-shrink-0" />
+              No account needed — just tell travelers who you are. Your number stays
+              private and is only shown to Premium travelers.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Your name *</label>
+                <input type="text" value={form.guest_name} onChange={update('guest_name')} required
+                  placeholder="e.g. Wanjiku" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone / WhatsApp *</label>
+                <input type="tel" value={form.guest_contact} onChange={update('guest_contact')} required
+                  placeholder="e.g. +254 712 345 678" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+              </div>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">What are you sending? *</label>
           <input type="text" value={form.title} onChange={update('title')} required

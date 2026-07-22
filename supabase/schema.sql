@@ -1,9 +1,9 @@
 -- ═══════════════════════════════════════════════════════════
--- KIFURUSHI DATABASE SCHEMA
--- Run this in Supabase SQL Editor to set up your database
+-- KIFURUSHI DATABASE SCHEMA  (v2 — matches the app code)
+-- Run this in Supabase SQL Editor on a FRESH project.
+-- If you ran the old schema before, run supabase/reset.sql first.
 -- ═══════════════════════════════════════════════════════════
 
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ─── PROFILES ───
@@ -15,124 +15,108 @@ CREATE TABLE profiles (
   whatsapp TEXT,
   avatar_url TEXT,
   bio TEXT,
-  country TEXT,  -- e.g. 'DE', 'UK', 'FR'
+  country TEXT,
   city TEXT,
 
   -- Subscription
-  subscription_tier TEXT DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium', 'pro')),
+  subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'premium', 'pro')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
-  subscription_expires_at TIMESTAMPTZ,
 
   -- Trust
-  is_verified BOOLEAN DEFAULT FALSE,
-  id_verified BOOLEAN DEFAULT FALSE,
-  total_deliveries INTEGER DEFAULT 0,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   avg_rating NUMERIC(2,1) DEFAULT 0.0,
-  total_ratings INTEGER DEFAULT 0,
-  vouches INTEGER DEFAULT 0,
+  total_ratings INTEGER NOT NULL DEFAULT 0,
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ─── TRIPS ───
+-- ─── TRIPS (travellers offering luggage space) ───
 CREATE TABLE trips (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
 
-  from_city TEXT NOT NULL,
-  from_country TEXT NOT NULL,
-  to_city TEXT NOT NULL,
-  to_country TEXT NOT NULL,
-  direction TEXT NOT NULL CHECK (direction IN ('ke-eu', 'eu-ke')),
+  origin_city TEXT NOT NULL,
+  origin_country TEXT NOT NULL DEFAULT '',
+  destination_city TEXT NOT NULL,
+  destination_country TEXT NOT NULL DEFAULT '',
 
-  travel_date DATE NOT NULL,
-  available_kg NUMERIC(4,1) NOT NULL,
-  price_per_kg NUMERIC(6,2) NOT NULL,
-  currency TEXT DEFAULT 'EUR',
+  departure_date DATE NOT NULL,
+  available_weight_kg NUMERIC(5,1) NOT NULL,
+  price_per_kg NUMERIC(8,2) NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
 
-  accepts TEXT[] DEFAULT '{}',  -- array of accepted item types
-  payment_methods TEXT[] DEFAULT '{}',  -- 'mpesa', 'escrow', 'cash', 'bank'
-  pickup_location TEXT,
-  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'booked', 'completed', 'cancelled')),
 
-  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'booked', 'completed', 'cancelled')),
-  is_featured BOOLEAN DEFAULT FALSE,
-
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ─── PARCEL REQUESTS ───
+-- ─── PARCEL REQUESTS (senders) ───
+-- sender_id is NULLABLE: guests may post a parcel without an account.
 CREATE TABLE parcels (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  guest_name TEXT,          -- shown instead of a profile for guest posts
 
-  from_city TEXT NOT NULL,
-  from_country TEXT NOT NULL,
-  to_city TEXT NOT NULL,
-  to_country TEXT NOT NULL,
-  direction TEXT NOT NULL CHECK (direction IN ('ke-eu', 'eu-ke')),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  origin_city TEXT NOT NULL,
+  origin_country TEXT NOT NULL DEFAULT '',
+  destination_city TEXT NOT NULL,
+  destination_country TEXT NOT NULL DEFAULT '',
 
-  item_type TEXT NOT NULL,
-  item_description TEXT NOT NULL,
-  weight_estimate TEXT NOT NULL,
-  needed_by DATE,
+  weight_kg NUMERIC(5,1) NOT NULL,
   budget NUMERIC(8,2),
-  budget_currency TEXT DEFAULT 'EUR',
+  deadline DATE,
 
-  payment_methods TEXT[] DEFAULT '{}',
-  contact_preference TEXT DEFAULT 'whatsapp',
-  is_urgent BOOLEAN DEFAULT FALSE,
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'matched', 'in_transit', 'delivered', 'cancelled')),
 
-  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'matched', 'in_transit', 'delivered', 'cancelled')),
-  matched_trip_id UUID REFERENCES trips(id),
-  matched_traveler_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  -- a post must have either a registered sender or a guest name
+  CONSTRAINT sender_or_guest CHECK (sender_id IS NOT NULL OR guest_name IS NOT NULL)
+);
+
+-- ─── PARCEL CONTACTS (guest contact details, kept private) ───
+-- Stored separately with NO read policies, so guest phone numbers can
+-- never be fetched from the browser. They are only released through
+-- /api/contact, which checks the requester's Premium status.
+CREATE TABLE parcel_contacts (
+  parcel_id UUID PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,
+  contact TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ─── BOOKINGS ───
 CREATE TABLE bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  trip_id UUID NOT NULL REFERENCES trips(id),
-  parcel_id UUID NOT NULL REFERENCES parcels(id),
-  sender_id UUID NOT NULL REFERENCES profiles(id),
+  trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+  parcel_id UUID NOT NULL REFERENCES parcels(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES profiles(id),
   traveler_id UUID NOT NULL REFERENCES profiles(id),
 
-  agreed_price NUMERIC(8,2) NOT NULL,
-  currency TEXT DEFAULT 'EUR',
-  payment_method TEXT NOT NULL,  -- 'mpesa', 'escrow', 'cash', 'bank'
+  agreed_price NUMERIC(8,2),
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  status TEXT NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'picked_up', 'in_transit', 'delivered', 'disputed', 'cancelled')),
 
-  -- Escrow
-  escrow_status TEXT CHECK (escrow_status IN ('pending', 'held', 'released', 'refunded')),
-  stripe_payment_intent_id TEXT,
-
-  -- Delivery tracking
-  status TEXT DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'picked_up', 'in_transit', 'delivered', 'disputed', 'cancelled')),
-  pickup_photo_url TEXT,
-  delivery_photo_url TEXT,
-  pickup_confirmed_at TIMESTAMPTZ,
-  delivery_confirmed_at TIMESTAMPTZ,
-
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ─── RATINGS ───
 CREATE TABLE ratings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  booking_id UUID NOT NULL REFERENCES bookings(id),
+  booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
   rater_id UUID NOT NULL REFERENCES profiles(id),
   rated_id UUID NOT NULL REFERENCES profiles(id),
-
   score INTEGER NOT NULL CHECK (score >= 1 AND score <= 5),
   comment TEXT,
   role TEXT NOT NULL CHECK (role IN ('sender', 'traveler')),
-
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (booking_id, rater_id)
 );
 
 -- ─── SUBSCRIPTION EVENTS (Stripe webhook log) ───
@@ -141,58 +125,73 @@ CREATE TABLE subscription_events (
   user_id UUID REFERENCES profiles(id),
   stripe_event_id TEXT NOT NULL UNIQUE,
   event_type TEXT NOT NULL,
-  data JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  plan TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ─── INDEXES ───
-CREATE INDEX idx_trips_direction ON trips(direction);
-CREATE INDEX idx_trips_travel_date ON trips(travel_date);
+CREATE INDEX idx_trips_departure_date ON trips(departure_date);
 CREATE INDEX idx_trips_status ON trips(status);
 CREATE INDEX idx_trips_user_id ON trips(user_id);
-CREATE INDEX idx_parcels_direction ON parcels(direction);
 CREATE INDEX idx_parcels_status ON parcels(status);
-CREATE INDEX idx_parcels_user_id ON parcels(user_id);
+CREATE INDEX idx_parcels_sender_id ON parcels(sender_id);
 CREATE INDEX idx_bookings_trip_id ON bookings(trip_id);
 CREATE INDEX idx_bookings_sender_id ON bookings(sender_id);
 CREATE INDEX idx_bookings_traveler_id ON bookings(traveler_id);
-CREATE INDEX idx_profiles_subscription ON profiles(subscription_tier);
-CREATE INDEX idx_profiles_country ON profiles(country);
+CREATE INDEX idx_profiles_stripe_customer ON profiles(stripe_customer_id);
 
 -- ─── ROW LEVEL SECURITY ───
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trips ENABLE ROW LEVEL SECURITY;
 ALTER TABLE parcels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE parcel_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ratings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscription_events ENABLE ROW LEVEL SECURITY;
 
--- Profiles: anyone can read, only owner can update
-CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
-CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+-- Profiles: public read (the app selects only safe display fields),
+-- owner can update/insert own row.
+-- NOTE: phone & whatsapp are protected by column privileges below.
+CREATE POLICY "profiles_public_read" ON profiles FOR SELECT USING (true);
+CREATE POLICY "profiles_owner_update" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "profiles_owner_insert" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Trips: anyone can read active, owner can CRUD
-CREATE POLICY "Active trips viewable by everyone" ON trips FOR SELECT USING (status = 'active' OR user_id = auth.uid());
-CREATE POLICY "Users can create trips" ON trips FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own trips" ON trips FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can delete own trips" ON trips FOR DELETE USING (auth.uid() = user_id);
+-- Hide phone/whatsapp from the public API: only the service role
+-- (used by /api/contact after a Premium check) can read them.
+REVOKE SELECT (phone, whatsapp) ON profiles FROM anon, authenticated;
 
--- Parcels: anyone can read open, owner can CRUD
-CREATE POLICY "Open parcels viewable by everyone" ON parcels FOR SELECT USING (status = 'open' OR user_id = auth.uid());
-CREATE POLICY "Users can create parcels" ON parcels FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own parcels" ON parcels FOR UPDATE USING (auth.uid() = user_id);
+-- Trips: everyone can browse active trips; owners manage their own.
+CREATE POLICY "trips_public_read" ON trips FOR SELECT USING (status = 'active' OR user_id = auth.uid());
+CREATE POLICY "trips_owner_insert" ON trips FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "trips_owner_update" ON trips FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "trips_owner_delete" ON trips FOR DELETE USING (auth.uid() = user_id);
 
--- Bookings: only participants can see
-CREATE POLICY "Booking participants can view" ON bookings FOR SELECT USING (sender_id = auth.uid() OR traveler_id = auth.uid());
-CREATE POLICY "Users can create bookings" ON bookings FOR INSERT WITH CHECK (sender_id = auth.uid() OR traveler_id = auth.uid());
-CREATE POLICY "Participants can update bookings" ON bookings FOR UPDATE USING (sender_id = auth.uid() OR traveler_id = auth.uid());
+-- Parcels: everyone can browse open parcels; owners manage their own.
+-- Guests may post without an account (sender_id NULL + guest_name set);
+-- their contact goes into parcel_contacts via the API, never into this table.
+CREATE POLICY "parcels_public_read" ON parcels FOR SELECT USING (status = 'open' OR sender_id = auth.uid());
+CREATE POLICY "parcels_user_insert" ON parcels FOR INSERT TO authenticated WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "parcels_guest_insert" ON parcels FOR INSERT TO anon WITH CHECK (sender_id IS NULL AND guest_name IS NOT NULL);
+CREATE POLICY "parcels_owner_update" ON parcels FOR UPDATE USING (auth.uid() = sender_id);
 
--- Ratings: public read, only rater can create
-CREATE POLICY "Ratings are public" ON ratings FOR SELECT USING (true);
-CREATE POLICY "Users can create ratings" ON ratings FOR INSERT WITH CHECK (auth.uid() = rater_id);
+-- Parcel contacts: guests can leave their contact when posting.
+-- NO select policy → nobody can read them from the browser.
+CREATE POLICY "parcel_contacts_insert" ON parcel_contacts FOR INSERT WITH CHECK (true);
 
--- ─── FUNCTIONS ───
--- Auto-update avg_rating when a new rating is added
+-- Bookings: only participants can see and manage.
+CREATE POLICY "bookings_participants_read" ON bookings FOR SELECT USING (sender_id = auth.uid() OR traveler_id = auth.uid());
+CREATE POLICY "bookings_participants_insert" ON bookings FOR INSERT WITH CHECK (sender_id = auth.uid() OR traveler_id = auth.uid());
+CREATE POLICY "bookings_participants_update" ON bookings FOR UPDATE USING (sender_id = auth.uid() OR traveler_id = auth.uid());
+
+-- Ratings: public read, only the rater can create.
+CREATE POLICY "ratings_public_read" ON ratings FOR SELECT USING (true);
+CREATE POLICY "ratings_rater_insert" ON ratings FOR INSERT WITH CHECK (auth.uid() = rater_id);
+
+-- Subscription events: not readable from the browser (webhook/admin only).
+
+-- ─── FUNCTIONS & TRIGGERS ───
+
+-- Keep avg_rating in sync
 CREATE OR REPLACE FUNCTION update_user_rating()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -202,13 +201,13 @@ BEGIN
   WHERE id = NEW.rated_id;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 CREATE TRIGGER on_rating_insert
   AFTER INSERT ON ratings
   FOR EACH ROW EXECUTE FUNCTION update_user_rating();
 
--- Auto-create profile on signup
+-- Auto-create a profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

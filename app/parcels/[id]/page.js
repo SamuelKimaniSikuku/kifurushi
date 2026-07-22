@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Package, MapPin, Weight, Clock, Star, CheckCircle, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Package, MapPin, Weight, Clock, Star, CheckCircle, ArrowLeft, User } from 'lucide-react';
+import ContactButton from '@/components/ContactButton';
 
 export default function ParcelDetailPage() {
   const { id } = useParams();
@@ -93,31 +94,32 @@ export default function ParcelDetailPage() {
             <h3 className="font-semibold mb-4">Sender</h3>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-full bg-accent text-white flex items-center justify-center text-lg font-bold">
-                {profile?.full_name?.charAt(0) || '?'}
+                {(profile?.full_name || parcel.guest_name || '?').charAt(0)}
               </div>
               <div>
                 <p className="font-semibold flex items-center gap-1">
-                  {profile?.full_name}
+                  {profile?.full_name || parcel.guest_name || 'Guest'}
                   {profile?.subscription_tier === 'pro' && <span className="badge-pro">PRO</span>}
                   {profile?.subscription_tier === 'premium' && <span className="badge-premium">PREMIUM</span>}
                 </p>
                 {profile?.city && <p className="text-sm text-gray-500">{profile.city}, {profile.country}</p>}
+                {!profile && <p className="text-sm text-gray-500 flex items-center gap-1"><User className="h-3 w-3" /> Community guest post</p>}
               </div>
             </div>
             <div className="space-y-2 text-sm">
               {profile?.is_verified && (
                 <div className="flex items-center gap-2 text-kenya-green"><CheckCircle className="h-4 w-4" /> ID Verified</div>
               )}
-              <div className="flex items-center gap-2 text-gray-600">
-                <Star className="h-4 w-4 text-gold" /> {profile?.avg_rating?.toFixed(1) || 'N/A'} ({profile?.total_ratings || 0} reviews)
-              </div>
+              {profile && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Star className="h-4 w-4 text-gold" /> {profile?.avg_rating?.toFixed(1) || 'N/A'} ({profile?.total_ratings || 0} reviews)
+                </div>
+              )}
             </div>
           </div>
 
           {parcel.status === 'open' && (
-            <button className="w-full btn-primary flex items-center justify-center gap-2">
-              <MessageCircle className="h-4 w-4" /> Offer to Carry
-            </button>
+            <ContactButton type="parcel" id={id} label="Offer to Carry — Contact Sender" />
           )}
         </div>
       </div>

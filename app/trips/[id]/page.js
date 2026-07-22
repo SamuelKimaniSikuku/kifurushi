@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Plane, Calendar, Package, Star, Shield, CheckCircle, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Plane, Calendar, Package, Star, Shield, CheckCircle, ArrowLeft } from 'lucide-react';
+import ContactButton from '@/components/ContactButton';
 
 export default function TripDetailPage() {
   const { id } = useParams();
@@ -114,9 +115,7 @@ export default function TripDetailPage() {
             </div>
           </div>
 
-          <button className="w-full btn-primary flex items-center justify-center gap-2">
-            <MessageCircle className="h-4 w-4" /> Contact Traveler
-          </button>
+          <ContactButton type="trip" id={id} label="Contact Traveler" />
         </div>
       </div>
     </div>

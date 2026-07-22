@@ -28,8 +28,10 @@ export async function middleware(request) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Protected routes - redirect to login if not authenticated
-  const protectedPaths = ['/dashboard', '/trips/new', '/parcels/new'];
+  // Protected routes - redirect to login if not authenticated.
+  // NOTE: /parcels/new is intentionally NOT protected — guests can post
+  // a parcel without an account.
+  const protectedPaths = ['/dashboard', '/trips/new'];
   const isProtected = protectedPaths.some(path => request.nextUrl.pathname.startsWith(path));
 
   if (isProtected && !user) {
@@ -47,5 +49,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/trips/new', '/parcels/new', '/login'],
+  matcher: ['/dashboard/:path*', '/trips/new', '/login'],
 };
