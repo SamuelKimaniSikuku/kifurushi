@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plane, ArrowRight } from 'lucide-react';
+import CitySelect from '@/components/CitySelect';
+import { splitCityValue, OTHER_VALUE } from '@/lib/locations';
 
 export default function NewTripPage() {
   const [form, setForm] = useState({
@@ -11,6 +13,18 @@ export default function NewTripPage() {
     destination_city: '', destination_country: '',
     departure_date: '', available_weight_kg: '', price_per_kg: '', notes: '',
   });
+  const [originSel, setOriginSel] = useState('');
+  const [destSel, setDestSel] = useState('');
+  const handleOrigin = (v) => {
+    setOriginSel(v);
+    const { city, country } = splitCityValue(v);
+    setForm((f) => ({ ...f, origin_city: v === OTHER_VALUE ? '' : city, origin_country: v === OTHER_VALUE ? '' : country }));
+  };
+  const handleDest = (v) => {
+    setDestSel(v);
+    const { city, country } = splitCityValue(v);
+    setForm((f) => ({ ...f, destination_city: v === OTHER_VALUE ? '' : city, destination_country: v === OTHER_VALUE ? '' : country }));
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -51,29 +65,44 @@ export default function NewTripPage() {
       <form onSubmit={handleSubmit} className="card p-8 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">From City *</label>
-            <input type="text" value={form.origin_city} onChange={update('origin_city')} required
-              placeholder="e.g. Berlin" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">From *</label>
+            <CitySelect allowOther required value={originSel} onChange={handleOrigin} placeholder="Select departure city…" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">From Country</label>
-            <input type="text" value={form.origin_country} onChange={update('origin_country')}
-              placeholder="e.g. Germany" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">To *</label>
+            <CitySelect allowOther required value={destSel} onChange={handleDest} placeholder="Select destination city…" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To City *</label>
-            <input type="text" value={form.destination_city} onChange={update('destination_city')} required
-              placeholder="e.g. Nairobi" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+        {originSel === OTHER_VALUE && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">From City *</label>
+              <input type="text" value={form.origin_city} onChange={update('origin_city')} required
+                placeholder="e.g. Berlin" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">From Country</label>
+              <input type="text" value={form.origin_country} onChange={update('origin_country')}
+                placeholder="e.g. Germany" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To Country</label>
-            <input type="text" value={form.destination_country} onChange={update('destination_country')}
-              placeholder="e.g. Kenya" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+        )}
+
+        {destSel === OTHER_VALUE && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">To City *</label>
+              <input type="text" value={form.destination_city} onChange={update('destination_city')} required
+                placeholder="e.g. Nairobi" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">To Country</label>
+              <input type="text" value={form.destination_country} onChange={update('destination_country')}
+                placeholder="e.g. Kenya" className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Departure Date *</label>

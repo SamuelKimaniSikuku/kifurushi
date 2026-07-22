@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Package, Search, MapPin, Weight, Clock, Plus } from 'lucide-react';
+import CitySelect from '@/components/CitySelect';
+import { splitCityValue } from '@/lib/locations';
 
 export default function ParcelsPage() {
   const [parcels, setParcels] = useState([]);
@@ -17,8 +19,8 @@ export default function ParcelsPage() {
   const fetchParcels = async () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
+    if (from) params.set('from', splitCityValue(from).city);
+    if (to) params.set('to', splitCityValue(to).city);
 
     const res = await fetch(`/api/parcels?${params.toString()}`);
     const data = await res.json();
@@ -48,14 +50,12 @@ export default function ParcelsPage() {
       <form onSubmit={handleSearch} className="card p-4 mb-8">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="From (city or country)" value={from} onChange={(e) => setFrom(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <CitySelect compact value={from} onChange={setFrom} placeholder="From: any city" />
           </div>
           <div className="flex-1 relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <input type="text" placeholder="To (city or country)" value={to} onChange={(e) => setTo(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green focus:border-transparent" />
+            <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400 pointer-events-none z-10" />
+            <CitySelect compact value={to} onChange={setTo} placeholder="To: any city" />
           </div>
           <button type="submit" className="btn-primary flex items-center gap-2 py-2.5">
             <Search className="h-4 w-4" /> Search
