@@ -26,39 +26,71 @@ function AuthForm() {
     router.push(next.startsWith("/") ? next : "/dashboard");
   }
 
+  const passwordDescribedBy =
+    [errors.password ? "password-error" : "", mode === "signup" ? "password-hint" : ""]
+      .filter(Boolean)
+      .join(" ") || undefined;
+
   return (
     <div className="mx-auto max-w-md px-4 py-14">
-      <h1 className="text-center text-3xl font-extrabold text-[var(--forest)]">
+      <h1 className="text-center font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
         {mode === "signup" ? "Join Kifurushi" : "Welcome back"}
       </h1>
-      <p className="mt-2 text-center text-sm text-[#5c6b63]">
+      <p className="mt-2 text-center text-sm text-muted">
         One account for sending and travelling.
       </p>
 
-      <form onSubmit={submit} className="card mt-6 space-y-4 p-6" noValidate>
+      <form onSubmit={submit} className="card mt-6 space-y-4 p-6 sm:p-8" noValidate>
         {mode === "signup" && (
           <div>
             <label className="field-label" htmlFor="name">Full name</label>
-            <input id="name" className="field" autoComplete="name" value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            {errors.name && <p className="field-error">{errors.name}</p>}
+            <input
+              id="name"
+              className={`field ${errors.name ? "field-invalid" : ""}`}
+              autoComplete="name"
+              value={form.name}
+              aria-invalid={!!errors.name}
+              aria-describedby={errors.name ? "name-error" : undefined}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            {errors.name && (
+              <p id="name-error" className="field-error">{errors.name}</p>
+            )}
           </div>
         )}
         <div>
           <label className="field-label" htmlFor="email">Email</label>
-          <input id="email" type="email" className="field" autoComplete="email" value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          {errors.email && <p className="field-error">{errors.email}</p>}
+          <input
+            id="email"
+            type="email"
+            className={`field ${errors.email ? "field-invalid" : ""}`}
+            autoComplete="email"
+            value={form.email}
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+          {errors.email && (
+            <p id="email-error" className="field-error">{errors.email}</p>
+          )}
         </div>
         <div>
           <label className="field-label" htmlFor="password">Password</label>
-          <input id="password" type="password" className="field"
+          <input
+            id="password"
+            type="password"
+            className={`field ${errors.password ? "field-invalid" : ""}`}
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          {errors.password && <p className="field-error">{errors.password}</p>}
-          {mode === "signup" && !errors.password && (
-            <p className="mt-1 text-xs text-[#5c6b63]">
+            aria-invalid={!!errors.password}
+            aria-describedby={passwordDescribedBy}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+          {errors.password && (
+            <p id="password-error" className="field-error">{errors.password}</p>
+          )}
+          {mode === "signup" && (
+            <p id="password-hint" className="mt-1 text-xs text-muted">
               At least 10 characters with upper, lower and a number.
             </p>
           )}
@@ -68,16 +100,22 @@ function AuthForm() {
           {mode === "signup" ? "Create account" : "Sign in"}
         </button>
 
-        <p className="text-center text-xs text-[#5c6b63]">
+        <p className="text-center text-xs text-muted">
           {mode === "signup" ? "Already a member?" : "New to Kifurushi?"}{" "}
-          <button type="button" className="font-semibold text-[var(--forest)] underline"
-            onClick={() => setMode(mode === "signup" ? "signin" : "signup")}>
+          <button
+            type="button"
+            className="-my-2 inline-flex min-h-[44px] items-center rounded-lg px-1.5 py-2 font-semibold text-forest underline transition hover:text-forest-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+            onClick={() => {
+              setMode(mode === "signup" ? "signin" : "signup");
+              setErrors({});
+            }}
+          >
             {mode === "signup" ? "Sign in" : "Create an account"}
           </button>
         </p>
       </form>
 
-      <p className="mt-4 text-center text-xs text-[#8a8574]">
+      <p className="mt-4 text-center text-xs text-faint">
         Demo mode: accounts are stored only in this browser. Production uses
         Supabase Auth with email verification and row-level security.
       </p>

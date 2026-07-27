@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Menu, Package, X } from "lucide-react";
 import { getSession, Session } from "@/lib/store";
 
 const links = [
@@ -24,12 +25,30 @@ export default function Nav() {
     setOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e5ddcd] bg-[var(--sand)]/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-line bg-white/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="display flex items-center gap-2 text-xl font-extrabold text-[var(--forest)]">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--forest)] text-lg text-white">📦</span>
-          Kifurushi<span className="text-[var(--clay)]">.</span>
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 rounded-xl font-display text-xl font-bold tracking-tight text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+        >
+          <span
+            aria-hidden
+            className="grid h-9 w-9 place-items-center rounded-xl bg-forest text-white"
+          >
+            <Package size={20} strokeWidth={2} />
+          </span>
+          <span>
+            Kifurushi<span className="text-clay">.</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -37,10 +56,11 @@ export default function Nav() {
             <Link
               key={l.href}
               href={l.href}
-              className={`text-sm font-medium transition ${
+              aria-current={pathname === l.href ? "page" : undefined}
+              className={`rounded-md text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
                 pathname === l.href
-                  ? "text-[var(--forest)] underline decoration-[var(--clay)] decoration-2 underline-offset-8"
-                  : "text-[#5c6b63] hover:text-[var(--forest)]"
+                  ? "text-forest underline decoration-clay decoration-2 underline-offset-8"
+                  : "text-muted hover:text-forest"
               }`}
             >
               {l.label}
@@ -59,26 +79,53 @@ export default function Nav() {
         </div>
 
         <button
-          className="rounded-lg border border-[#d8cfbc] p-2 md:hidden"
+          type="button"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] md:hidden"
           onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          aria-label={open ? "Close menu" : "Open menu"}
         >
-          ☰
+          {open ? (
+            <X size={20} strokeWidth={2} aria-hidden />
+          ) : (
+            <Menu size={20} strokeWidth={2} aria-hidden />
+          )}
         </button>
       </div>
 
-      {open && (
-        <nav className="border-t border-[#e5ddcd] bg-[var(--sand)] px-4 py-3 md:hidden">
+      <nav
+        id="mobile-nav"
+        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out md:hidden ${
+          open
+            ? "visible max-h-[480px] border-line opacity-100"
+            : "invisible max-h-0 border-transparent opacity-0"
+        }`}
+      >
+        <div className="px-4 py-3">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="block py-2 text-sm font-medium text-[#3d4a43]">
+            <Link
+              key={l.href}
+              href={l.href}
+              aria-current={pathname === l.href ? "page" : undefined}
+              className={`block rounded-lg px-3 py-3 text-sm font-medium transition ${
+                pathname === l.href
+                  ? "bg-sand text-forest"
+                  : "text-muted hover:bg-sand hover:text-forest"
+              }`}
+            >
               {l.label}
             </Link>
           ))}
-          <Link href={session ? "/dashboard" : "/auth"} className="block py-2 text-sm font-semibold text-[var(--forest)]">
+          <div className="my-3 border-t border-line" />
+          <Link
+            href={session ? "/dashboard" : "/auth"}
+            className="btn-primary w-full"
+          >
             {session ? "Dashboard" : "Sign in"}
           </Link>
-        </nav>
-      )}
+        </div>
+      </nav>
     </header>
   );
 }

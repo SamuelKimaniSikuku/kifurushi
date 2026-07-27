@@ -1,64 +1,139 @@
 "use client";
 
+import { Calendar, Check, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
+import Avatar from "@/components/ui/Avatar";
+import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 export default function TripCard({
   trip,
   onRequest,
+  requested,
 }: {
   trip: Trip;
   onRequest?: (trip: Trip) => void;
+  requested?: boolean;
 }) {
   const date = new Date(trip.departDate).toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",
     month: "short",
   });
+  const anchorPrice = Math.round(trip.pricePerKg * 5);
+  const capacityPct = Math.min(100, Math.max(0, Math.round((trip.spaceKg / 23) * 100)));
+  const shownCategories = trip.categoriesAccepted.slice(0, 3);
+  const extraCategories = trip.categoriesAccepted.length - shownCategories.length;
 
   return (
-    <article className="card flex flex-col gap-3 p-5">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <div className="flex items-center gap-2 font-semibold">
-            {trip.travelerName}
-            {trip.travelerVerified && (
-              <span title="ID verified" className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
-                ✓ Verified
+    <article className="card card-lift group flex h-full flex-col gap-3 p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          <Avatar name={trip.travelerName} />
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="truncate text-base font-semibold text-ink">
+                {trip.travelerName}
               </span>
+              {trip.travelerVerified ? (
+                <VerifiedBadge small />
+              ) : (
+                <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
+                  Unverified
+                </span>
+              )}
+            </div>
+            {trip.tripsCompleted > 0 ? (
+              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+                <Star
+                  size={13}
+                  strokeWidth={2}
+                  className="shrink-0 fill-gold text-gold-deep"
+                  aria-hidden
+                />
+                <span className="font-semibold text-ink">
+                  {trip.travelerRating.toFixed(1)}
+                </span>
+                <span>({trip.tripsCompleted})</span>
+              </div>
+            ) : (
+              <div className="mt-0.5 text-xs text-muted">
+                New traveller · no deliveries yet
+              </div>
             )}
           </div>
-          <div className="text-xs text-[#5c6b63]">
-            ★ {trip.travelerRating.toFixed(1)} · {trip.tripsCompleted} deliveries
+        </div>
+
+        <div className="w-24 shrink-0 text-right">
+          <div className="font-display text-2xl font-extrabold leading-none text-forest">
+            ${trip.pricePerKg}
+            <span className="text-xs font-medium text-muted">/kg</span>
+          </div>
+          <div className="mt-1 text-xs text-muted">
+            ~ ${anchorPrice} for 5 kg
+          </div>
+          <div className="mt-1.5">
+            <div className="text-xs text-muted">{trip.spaceKg} kg free</div>
+            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-sand-deep">
+              <div
+                className="h-full rounded-full bg-leaf"
+                style={{ width: `${capacityPct}%` }}
+              />
+            </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-lg font-extrabold text-[var(--forest)]">${trip.pricePerKg}<span className="text-xs font-medium text-[#5c6b63]">/kg</span></div>
-          <div className="text-xs text-[#5c6b63]">{trip.spaceKg} kg free</div>
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className="truncate font-semibold text-ink">{trip.fromCity}</span>
+          <span className="flex min-w-[3rem] flex-1 items-center gap-1.5" aria-hidden>
+            <span className="flex-1 border-t border-dashed border-line-strong" />
+            <Plane size={16} strokeWidth={2} className="shrink-0 rotate-45 text-clay" />
+            <span className="flex-1 border-t border-dashed border-line-strong" />
+          </span>
+          <span className="truncate text-right font-semibold text-ink">{trip.toCity}</span>
+        </div>
+        <div className="mt-1 text-xs text-muted">
+          {label(trip.fromCountry)} → {label(trip.toCountry)}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <span>{label(trip.fromCountry)}</span>
-        <span className="text-[var(--clay)]">✈</span>
-        <span>{label(trip.toCountry)}</span>
-      </div>
-      <div className="text-xs text-[#5c6b63]">
-        {trip.fromCity} → {trip.toCity} · departs {date}
+      <div className="flex items-center gap-1.5 text-xs text-muted">
+        <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />
+        departs {date}
       </div>
 
-      {trip.notes && <p className="text-sm text-[#3d4a43]">{trip.notes}</p>}
+      {trip.notes && (
+        <p className="line-clamp-2 text-sm text-muted">{trip.notes}</p>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
-        {trip.categoriesAccepted.map((cat) => (
-          <span key={cat} className="chip">{CATEGORY_LABELS[cat]}</span>
+        {shownCategories.map((cat) => (
+          <span key={cat} className="chip">
+            {CATEGORY_LABELS[cat]}
+          </span>
         ))}
+        {extraCategories > 0 && <span className="chip">+{extraCategories}</span>}
       </div>
 
       {onRequest && (
-        <button className="btn-accent mt-1 w-full" onClick={() => onRequest(trip)}>
-          Request this traveller
-        </button>
+        <div className="mt-auto pt-1">
+          {requested ? (
+            <button
+              type="button"
+              disabled
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success-bg px-5 py-2.5 text-sm font-semibold text-success"
+            >
+              <Check size={16} strokeWidth={2} aria-hidden />
+              Request sent
+            </button>
+          ) : (
+            <button className="btn-accent w-full" onClick={() => onRequest(trip)}>
+              Request this traveller
+            </button>
+          )}
+        </div>
       )}
     </article>
   );
