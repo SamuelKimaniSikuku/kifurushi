@@ -17,10 +17,30 @@ import {
   getSession, getMembership, joinMembership, BillingPlan, Membership,
 } from "@/lib/store";
 
-const PLANS: Record<BillingPlan, { price: string; period: string; label: string }> = {
-  monthly: { price: "$5", period: "/month", label: "Monthly" },
-  yearly: { price: "$29", period: "/year", label: "Yearly" },
-};
+const PLANS: {
+  key: BillingPlan;
+  label: string;
+  price: string;
+  period: string;
+  note: string;
+  badge?: string;
+}[] = [
+  {
+    key: "monthly",
+    label: "Monthly",
+    price: "$5",
+    period: "/month",
+    note: "Billed monthly. Cancel anytime.",
+  },
+  {
+    key: "yearly",
+    label: "Yearly",
+    price: "$29",
+    period: "/year",
+    note: "Just $2.42 a month, billed once — save $31.",
+    badge: "Best value · Save 52%",
+  },
+];
 
 const FREE_FEATURES = [
   "Browse every trip and parcel request",
@@ -66,16 +86,28 @@ function ContactBanner() {
   );
 }
 
+function FeatureList({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-6 space-y-3">
+      {items.map((f) => (
+        <li key={f} className="flex gap-2.5 text-sm text-ink">
+          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2} />
+          <span>{f}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [plan, setPlan] = useState<BillingPlan>("yearly");
 
   useEffect(() => {
     setMembership(getMembership());
   }, []);
 
-  function join() {
+  function join(plan: BillingPlan) {
     if (!getSession()) {
       router.push("/auth?next=/pricing");
       return;
@@ -84,9 +116,11 @@ export default function PricingPage() {
   }
 
   const isMember = membership?.status === "member";
+  const currentPlan: BillingPlan = membership?.plan ?? "yearly";
+  const currentLabel = currentPlan === "monthly" ? "monthly" : "yearly";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 py-12">
       <Suspense fallback={null}>
         <ContactBanner />
       </Suspense>
@@ -100,125 +134,115 @@ export default function PricingPage() {
         travellers earn.
       </p>
 
-      {/* Billing toggle */}
-      <div className="mt-8 flex justify-center">
-        <div
-          role="group"
-          aria-label="Billing period"
-          className="inline-flex items-center gap-1 rounded-full border border-line bg-white p-1"
-        >
-          {(Object.keys(PLANS) as BillingPlan[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setPlan(key)}
-              aria-pressed={plan === key}
-              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
-                plan === key
-                  ? "bg-forest text-white"
-                  : "text-muted hover:text-forest"
+      <div className="mt-12 grid items-stretch gap-6 md:grid-cols-3">
+        {/* Free */}
+        <div className="card flex flex-col p-7">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-faint">
+            Free
+          </div>
+          <div className="mt-2 font-display text-4xl font-extrabold text-ink">
+            $0
+          </div>
+          <p className="mt-1 text-sm text-muted">Look around, receive, track.</p>
+          <FeatureList items={FREE_FEATURES} />
+          <div className="mt-auto pt-7">
+            <Link href="/trips" className="btn-ghost w-full">
+              Browse trips
+            </Link>
+          </div>
+        </div>
+
+        {/* Monthly + Yearly */}
+        {PLANS.map((p) => {
+          const highlighted = p.key === "yearly";
+          return (
+            <div
+              key={p.key}
+              className={`card relative flex flex-col p-7 ${
+                highlighted ? "border-2 border-forest" : ""
               }`}
             >
-              {PLANS[key].label}
-              {key === "yearly" && (
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                    plan === key ? "bg-gold text-ink" : "bg-sand-deep text-forest"
-                  }`}
-                >
-                  Save 52%
-                </span>
+              {p.badge && (
+                <div className="-mt-10 mb-2 flex justify-center">
+                  <span className="rounded-full bg-forest px-4 py-1.5 text-xs font-semibold text-white">
+                    {p.badge}
+                  </span>
+                </div>
               )}
-            </button>
-          ))}
-        </div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">
+                {p.label}
+              </div>
+              <div className="mt-2 font-display text-4xl font-extrabold text-forest">
+                {p.price}
+                <span className="font-body text-lg font-semibold text-muted">
+                  {p.period}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted">{p.note}</p>
+
+              <FeatureList items={MEMBER_FEATURES} />
+
+              <div className="mt-auto pt-7">
+                {isMember ? (
+                  p.key === currentPlan ? (
+                    <div className="flex items-center justify-center gap-2 rounded-xl bg-success-bg px-4 py-3 text-center text-sm font-semibold text-success">
+                      <BadgeCheck className="h-5 w-5 shrink-0" strokeWidth={2} />
+                      <span>
+                        Your plan
+                        {membership?.since &&
+                          ` since ${new Date(membership.since).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="py-3 text-center text-sm text-muted">
+                      You&apos;re on the {currentLabel} plan.
+                    </p>
+                  )
+                ) : (
+                  <>
+                    <button
+                      onClick={() => join(p.key)}
+                      className={`${highlighted ? "btn-accent btn-lg" : "btn-primary"} w-full`}
+                    >
+                      Join for {p.price}
+                      {p.period}
+                    </button>
+                    <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-faint">
+                      <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                      Secure checkout - cancel anytime
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        {/* Free */}
-        <div className="card p-7">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-faint">Free</div>
-          <div className="mt-2 font-display text-4xl font-extrabold text-ink">$0</div>
-          <p className="mt-1 text-sm text-muted">Look around, receive, track.</p>
-          <ul className="mt-6 space-y-3">
-            {FREE_FEATURES.map((f) => (
-              <li key={f} className="flex gap-2.5 text-sm text-ink">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2} />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-          <Link href="/trips" className="btn-ghost mt-7 w-full">Browse trips</Link>
+      {/* What the membership fee is — and is not */}
+      <div className="mt-8 rounded-2xl bg-forest px-5 py-5 text-white sm:px-7">
+        <div className="flex items-center gap-2 text-sm font-bold">
+          <Plane className="h-4 w-4 shrink-0 text-gold" strokeWidth={2} />
+          Make money travelling - save on every parcel
         </div>
-
-        {/* Member */}
-        <div className="card relative border-2 border-forest p-7">
-          <div className="-mt-10 mb-2 flex justify-center">
-            <span className="rounded-full bg-forest px-4 py-1.5 text-xs font-semibold text-white">
-              Pays for itself on parcel #1
-            </span>
+        <div className="mt-2 grid gap-2 text-sm text-white/80 md:grid-cols-3 md:gap-6">
+          <div>
+            <b className="text-white">$5/month or $29/year is for the platform only</b>{" "}
+            — unlimited parcels, both directions.
           </div>
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">Membership</div>
-          <div className="mt-2 font-display text-4xl font-extrabold text-forest">
-            {PLANS[plan].price}
-            <span className="font-body text-lg font-semibold text-muted">
-              {PLANS[plan].period}
-            </span>
+          <div>
+            The delivery fee you{" "}
+            <b className="text-white">negotiate directly with the traveller</b>{" "}
+            (typically ~$45 per 5 kg vs $60+ courier). Kifurushi takes no cut.
           </div>
-          <p className="mt-1 text-sm text-muted">
-            {plan === "yearly"
-              ? "Sender, receiver and traveller — all in one. Or $5/month."
-              : "Sender, receiver and traveller — all in one. $29/year saves you $31."}
-          </p>
-
-          <div className="mt-5 rounded-xl bg-forest px-4 py-3.5 text-white">
-            <div className="flex items-center gap-2 text-sm font-bold">
-              <Plane className="h-4 w-4 shrink-0 text-gold" strokeWidth={2} />
-              Make money travelling - save on every parcel
-            </div>
-            <div className="mt-2 space-y-1 text-xs text-white/80">
-              <div>
-                <b className="text-white">
-                  {PLANS[plan].price}{PLANS[plan].period} is for the platform only
-                </b>{" "}
-                — unlimited parcels, both directions.
-              </div>
-              <div>The delivery fee you <b className="text-white">negotiate directly with the traveller</b> (typically ~$45 per 5 kg vs $60+ courier). Kifurushi takes no cut.</div>
-              <div className="pt-0.5 font-semibold text-gold">5 parcels a year = $150+ saved.</div>
-            </div>
+          <div className="font-semibold text-gold">
+            5 parcels a year = $150+ saved.
           </div>
-
-          <ul className="mt-5 space-y-3">
-            {MEMBER_FEATURES.map((f) => (
-              <li key={f} className="flex gap-2.5 text-sm text-ink">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" strokeWidth={2} />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-          {isMember ? (
-            <div className="mt-7 flex items-center justify-center gap-2 rounded-xl bg-success-bg px-4 py-3 text-center text-sm font-semibold text-success">
-              <BadgeCheck className="h-5 w-5 shrink-0" strokeWidth={2} />
-              <span>
-                You&apos;re a member{membership?.since && ` since ${new Date(membership.since).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`}
-              </span>
-            </div>
-          ) : (
-            <>
-              <button onClick={join} className="btn-accent btn-lg mt-7 w-full">
-                Join for {PLANS[plan].price}{PLANS[plan].period}
-              </button>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-faint">
-                <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
-                Secure checkout - cancel anytime
-              </p>
-            </>
-          )}
         </div>
       </div>
 
       {/* Why one price */}
-      <div className="card mt-10 grid gap-8 p-7 md:grid-cols-3 md:gap-6">
+      <div className="card mt-8 grid gap-8 p-7 md:grid-cols-3 md:gap-6">
         <div>
           <div className="grid h-10 w-10 place-items-center rounded-full bg-sand-deep">
             <Wallet className="h-5 w-5 text-forest" strokeWidth={2} />
