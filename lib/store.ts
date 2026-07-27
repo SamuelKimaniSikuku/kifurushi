@@ -247,8 +247,12 @@ export function addTransitUpdate(matchId: string, note: string): TransitUpdate {
 }
 
 // ---- Reviews ----
+export function getReviews(): Review[] {
+  return read<Review[]>(KEYS.reviews, []);
+}
+
 export function getReview(matchId: string): Review | undefined {
-  return read<Review[]>(KEYS.reviews, []).find((r) => r.matchId === matchId);
+  return getReviews().find((r) => r.matchId === matchId);
 }
 
 export function addReview(
@@ -267,7 +271,7 @@ export function addReview(
     comment,
     createdAt: new Date().toISOString(),
   };
-  write(KEYS.reviews, [...read<Review[]>(KEYS.reviews, []), review]);
+  write(KEYS.reviews, [...getReviews(), review]);
   return review;
 }
 
@@ -320,17 +324,24 @@ export function isVerified(): boolean {
 // One $29/year membership covers sending, receiving and travelling.
 // Demo: joining is instant. Production: Stripe Billing / Paystack / Flutterwave
 // subscription, with the webhook (service role) flipping the status.
+export type BillingPlan = "monthly" | "yearly";
+
 export interface Membership {
   status: "free" | "member";
   since: string | null;
+  plan?: BillingPlan;
 }
 
 export function getMembership(): Membership {
   return read<Membership>(KEYS.membership, { status: "free", since: null });
 }
 
-export function joinMembership(): Membership {
-  const m: Membership = { status: "member", since: new Date().toISOString() };
+export function joinMembership(plan: BillingPlan = "yearly"): Membership {
+  const m: Membership = {
+    status: "member",
+    since: new Date().toISOString(),
+    plan,
+  };
   write(KEYS.membership, m);
   return m;
 }

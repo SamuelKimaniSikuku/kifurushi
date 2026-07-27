@@ -83,7 +83,7 @@ export default function DashboardPage() {
               </span>
             ) : (
               <Link href="/pricing" className="ml-2 inline-flex items-center rounded-full bg-sand-deep px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest underline">
-                Free plan — join for $29/yr
+                Free plan — join from $5/mo
               </Link>
             )}
           </p>

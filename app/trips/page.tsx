@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftRight } from "lucide-react";
 import TripCard from "@/components/TripCard";
@@ -9,11 +8,12 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getTrips, getSession, requestMatch, getParcels, isMember } from "@/lib/store";
+import { getTrips, getSession, requestMatch, getParcels } from "@/lib/store";
+import { useContactGate } from "@/lib/useContactGate";
 import { Trip } from "@/lib/types";
 
 export default function TripsPage() {
-  const router = useRouter();
+  const gate = useContactGate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -46,17 +46,10 @@ export default function TripsPage() {
   }
 
   function handleRequest(trip: Trip) {
+    if (!gate()) return;
     const session = getSession();
-    if (!session) {
-      router.push("/auth?next=/trips");
-      return;
-    }
-    if (!isMember()) {
-      router.push("/pricing?reason=contact");
-      return;
-    }
     // Demo: attach the user's most recent parcel, or create the request directly.
-    const myParcel = getParcels().find((p) => p.senderName === session.name);
+    const myParcel = getParcels().find((p) => p.senderName === session?.name);
     requestMatch(trip.id, myParcel?.id ?? "pending");
     setRequestedIds((prev) => new Set(prev).add(trip.id));
     setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);

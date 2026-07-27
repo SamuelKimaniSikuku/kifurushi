@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { Calendar, Check, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
+import { personHref } from "@/lib/people";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -32,9 +34,12 @@ export default function TripCard({
           <Avatar name={trip.travelerName} />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="truncate text-base font-semibold text-ink">
+              <Link
+                href={personHref(trip.travelerName)}
+                className="truncate rounded text-base font-semibold text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+              >
                 {trip.travelerName}
-              </span>
+              </Link>
               {trip.travelerVerified ? (
                 <VerifiedBadge small />
               ) : (

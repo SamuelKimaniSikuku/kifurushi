@@ -192,7 +192,7 @@ export default function Home() {
             {[
               ["54", "African countries"],
               ["3–7 days", "typical delivery"],
-              ["$29/yr", "one membership, 0% commission"],
+              ["$5/mo", "or $29/yr — 0% commission"],
               ["ID + code", "verified handover"],
             ].map(([n, l]) => (
               <div key={l} className="rounded-2xl bg-white/5 px-4 py-4">

@@ -13,7 +13,14 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { getSession, getMembership, joinMembership, Membership } from "@/lib/store";
+import {
+  getSession, getMembership, joinMembership, BillingPlan, Membership,
+} from "@/lib/store";
+
+const PLANS: Record<BillingPlan, { price: string; period: string; label: string }> = {
+  monthly: { price: "$5", period: "/month", label: "Monthly" },
+  yearly: { price: "$29", period: "/year", label: "Yearly" },
+};
 
 const FREE_FEATURES = [
   "Browse every trip and parcel request",
@@ -62,6 +69,7 @@ function ContactBanner() {
 export default function PricingPage() {
   const router = useRouter();
   const [membership, setMembership] = useState<Membership | null>(null);
+  const [plan, setPlan] = useState<BillingPlan>("yearly");
 
   useEffect(() => {
     setMembership(getMembership());
@@ -72,7 +80,7 @@ export default function PricingPage() {
       router.push("/auth?next=/pricing");
       return;
     }
-    setMembership(joinMembership());
+    setMembership(joinMembership(plan));
   }
 
   const isMember = membership?.status === "member";
@@ -92,7 +100,41 @@ export default function PricingPage() {
         travellers earn.
       </p>
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2">
+      {/* Billing toggle */}
+      <div className="mt-8 flex justify-center">
+        <div
+          role="group"
+          aria-label="Billing period"
+          className="inline-flex items-center gap-1 rounded-full border border-line bg-white p-1"
+        >
+          {(Object.keys(PLANS) as BillingPlan[]).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPlan(key)}
+              aria-pressed={plan === key}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
+                plan === key
+                  ? "bg-forest text-white"
+                  : "text-muted hover:text-forest"
+              }`}
+            >
+              {PLANS[key].label}
+              {key === "yearly" && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                    plan === key ? "bg-gold text-ink" : "bg-sand-deep text-forest"
+                  }`}
+                >
+                  Save 52%
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-6 md:grid-cols-2">
         {/* Free */}
         <div className="card p-7">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-faint">Free</div>
@@ -118,10 +160,15 @@ export default function PricingPage() {
           </div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">Membership</div>
           <div className="mt-2 font-display text-4xl font-extrabold text-forest">
-            $29<span className="font-body text-lg font-semibold text-muted">/year</span>
+            {PLANS[plan].price}
+            <span className="font-body text-lg font-semibold text-muted">
+              {PLANS[plan].period}
+            </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Sender, receiver and traveller — all in one.
+            {plan === "yearly"
+              ? "Sender, receiver and traveller — all in one. Or $5/month."
+              : "Sender, receiver and traveller — all in one. $29/year saves you $31."}
           </p>
 
           <div className="mt-5 rounded-xl bg-forest px-4 py-3.5 text-white">
@@ -130,7 +177,12 @@ export default function PricingPage() {
               Make money travelling - save on every parcel
             </div>
             <div className="mt-2 space-y-1 text-xs text-white/80">
-              <div><b className="text-white">$29/year is for the platform only</b> — unlimited parcels, both directions.</div>
+              <div>
+                <b className="text-white">
+                  {PLANS[plan].price}{PLANS[plan].period} is for the platform only
+                </b>{" "}
+                — unlimited parcels, both directions.
+              </div>
               <div>The delivery fee you <b className="text-white">negotiate directly with the traveller</b> (typically ~$45 per 5 kg vs $60+ courier). Kifurushi takes no cut.</div>
               <div className="pt-0.5 font-semibold text-gold">5 parcels a year = $150+ saved.</div>
             </div>
@@ -154,7 +206,7 @@ export default function PricingPage() {
           ) : (
             <>
               <button onClick={join} className="btn-accent btn-lg mt-7 w-full">
-                Join for $29/year
+                Join for {PLANS[plan].price}{PLANS[plan].period}
               </button>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-faint">
                 <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
@@ -174,7 +226,8 @@ export default function PricingPage() {
           <div className="mt-3 text-base font-semibold text-ink">Cheaper than one courier shipment</div>
           <p className="mt-1 text-sm text-muted">
             A 5 kg parcel London → Lagos costs $50–80 with a courier. One year of
-            Kifurushi costs $29 — and a traveller charges you around $45.
+            Kifurushi costs $29 (or $5/month) — and a traveller charges you
+            around $45.
           </p>
         </div>
         <div>

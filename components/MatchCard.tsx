@@ -7,6 +7,7 @@ import {
   advanceMatch, getTransitUpdates, addTransitUpdate, getReview, addReview,
 } from "@/lib/store";
 import { transitUpdateSchema, reviewSchema } from "@/lib/validation";
+import Stars from "@/components/ui/Stars";
 
 export default function MatchCard({
   match,
@@ -167,22 +168,7 @@ export default function MatchCard({
 
           {review ? (
             <div className="mt-3">
-              <div
-                role="img"
-                aria-label={`${review.rating} out of 5 stars`}
-                className="flex items-center gap-0.5"
-              >
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <Star
-                    key={n}
-                    className={`h-5 w-5 ${
-                      n <= review.rating ? "fill-gold text-gold-deep" : "text-line-strong"
-                    }`}
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                ))}
-              </div>
+              <Stars rating={review.rating} />
               {review.comment && (
                 <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink">
                   “{review.comment}”

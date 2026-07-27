@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftRight } from "lucide-react";
 import ParcelCard from "@/components/ParcelCard";
@@ -9,11 +8,12 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getParcels, getSession, requestMatch, getTrips, isMember } from "@/lib/store";
+import { getParcels, getSession, requestMatch, getTrips } from "@/lib/store";
+import { useContactGate } from "@/lib/useContactGate";
 import { ParcelRequest } from "@/lib/types";
 
 export default function ParcelsPage() {
-  const router = useRouter();
+  const gate = useContactGate();
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -46,16 +46,9 @@ export default function ParcelsPage() {
   }
 
   function handleOffer(parcel: ParcelRequest) {
+    if (!gate()) return;
     const session = getSession();
-    if (!session) {
-      router.push("/auth?next=/parcels");
-      return;
-    }
-    if (!isMember()) {
-      router.push("/pricing?reason=contact");
-      return;
-    }
-    const myTrip = getTrips().find((t) => t.travelerName === session.name);
+    const myTrip = getTrips().find((t) => t.travelerName === session?.name);
     requestMatch(myTrip?.id ?? "pending", parcel.id);
     setRequestedIds((prev) => new Set(prev).add(parcel.id));
     setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, Calendar, Check, Scale } from "lucide-react";
 import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
+import { personHref } from "@/lib/people";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -26,9 +28,12 @@ export default function ParcelCard({
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={parcel.senderName} />
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="truncate text-base font-semibold text-ink">
+            <Link
+              href={personHref(parcel.senderName)}
+              className="truncate rounded text-base font-semibold text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+            >
               {parcel.senderName}
-            </span>
+            </Link>
             {parcel.senderVerified ? (
               <VerifiedBadge small />
             ) : (
