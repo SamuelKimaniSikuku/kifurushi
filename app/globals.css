@@ -3,34 +3,74 @@
 @tailwind utilities;
 
 :root {
-  --kenya-green: #006B3F;
-  --kenya-red: #BB1600;
-  --kenya-black: #1a1a1a;
-  --accent-gold: #F5A623;
+  --ink: #14201b;
+  --forest: #0b3d2e;
+  --forest-deep: #072b20;
+  --leaf: #1a6b4f;
+  --sand: #faf6ef;
+  --sand-deep: #f1e9da;
+  --clay: #e85d26;
+  --clay-deep: #c74a1a;
+  --gold: #f2b705;
+  --font-body: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Avenir Next", "Segoe UI", ui-sans-serif, -apple-system, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: var(--kenya-black);
+  background: var(--sand);
+  color: var(--ink);
+  font-family: var(--font-body);
 }
 
-@layer components {
-  .btn-primary {
-    @apply bg-kenya-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors;
-  }
-  .btn-secondary {
-    @apply bg-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors;
-  }
-  .btn-outline {
-    @apply border-2 border-kenya-green text-kenya-green px-6 py-3 rounded-lg font-semibold hover:bg-kenya-green hover:text-white transition-colors;
-  }
-  .card {
-    @apply bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden;
-  }
-  .badge-premium {
-    @apply bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full;
-  }
-  .badge-pro {
-    @apply bg-gold text-white text-xs font-bold px-2 py-0.5 rounded-full;
-  }
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Kente-inspired accent strip */
+.kente-strip {
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--forest) 0 48px,
+    var(--gold) 48px 60px,
+    var(--clay) 60px 108px,
+    var(--ink) 108px 120px
+  );
+}
+
+.card {
+  @apply rounded-2xl border border-[#e5ddcd] bg-white shadow-[0_1px_3px_rgba(20,32,27,0.06)];
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--forest)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--forest-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--leaf)] focus:ring-offset-2;
+}
+
+.btn-accent {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--clay)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--clay-deep)] focus:outline-none focus:ring-2 focus:ring-[var(--clay)] focus:ring-offset-2;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-[#d8cfbc] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--forest)] transition hover:border-[var(--forest)];
+}
+
+.field {
+  @apply w-full rounded-xl border border-[#d8cfbc] bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[var(--leaf)] focus:ring-2 focus:ring-[rgba(26,107,79,0.25)];
+}
+
+.field-label {
+  @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[#5c6b63];
+}
+
+.field-error {
+  @apply mt-1 text-xs font-medium text-red-700;
+}
+
+.chip {
+  @apply inline-flex items-center gap-1 rounded-full bg-[var(--sand-deep)] px-2.5 py-1 text-xs font-medium text-[#4a5a51];
 }

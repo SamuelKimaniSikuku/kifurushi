@@ -1,139 +1,57 @@
-# Kifurushi - Peer-to-Peer Parcel Delivery Platform
+# Kifurushi Global 📦
 
-Connecting the Kenyan diaspora in Europe through trusted peer-to-peer parcel delivery. Save up to 70% on shipping costs by matching travelers with people who need parcels delivered.
+Africa's peer-to-peer parcel network — connecting senders and receivers between
+**all 54 African countries** and **22 diaspora destinations** (Europe, North
+America, the Gulf, Asia-Pacific) via verified travellers with spare luggage
+space. Escrow-protected, ID-verified, delivery-code confirmed.
 
-## Tech Stack
-
-- **Frontend**: Next.js 14 (App Router) + Tailwind CSS
-- **Backend**: Next.js API Routes
-- **Database**: Supabase (PostgreSQL + Auth + Row Level Security)
-- **Payments**: Stripe (Subscriptions + Customer Portal)
-- **Icons**: Lucide React
-
-## Features
-
-- **Trip Postings** - Travelers post upcoming trips with available capacity
-- **Parcel Requests** - Senders post parcels they need delivered
-- **Search & Filter** - Find trips/parcels by route, date, weight
-- **User Profiles** - Ratings, verification, trust badges
-- **Guest Posting** - Senders can post a parcel without creating an account
-- **Premium Subscriptions** - Free + Premium (KES 150/week, ≈ €1)
-- **Stripe Integration** - Checkout, webhooks, customer portal
-
-## Getting Started
-
-### 1. Clone and install
+## Run it
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kifurushi.git
-cd kifurushi
 npm install
+npm run dev        # http://localhost:3000
 ```
 
-### 2. Set up Supabase
+The app starts in **demo mode**: listings, accounts and matches live in your
+browser's localStorage (pre-seeded with sample trips and parcels), so you can
+explore every flow with no backend.
 
-1. Create a project at [supabase.com](https://supabase.com)
-2. Go to SQL Editor and run the contents of `supabase/schema.sql`
-3. Enable Google OAuth in Authentication > Providers (optional)
-4. Copy your project URL and anon key
+## Pages
 
-### 3. Set up Stripe
+| Route | What |
+|---|---|
+| `/` | Landing — value prop, how it works, corridors, security |
+| `/trips` | Browse travellers with spare space, filter by origin/destination |
+| `/parcels` | Browse parcel requests (traveller side) |
+| `/post/trip` | Publish a trip (auth required, zod-validated) |
+| `/post/parcel` | Post a parcel request (auth required, zod-validated) |
+| `/pricing` | One membership — $29/year covers sender, receiver and traveller; 0% commission |
+| `/verify` | 3-step ID verification wizard (phone → ID → selfie) |
+| `/dashboard` | Your deliveries: handover timeline, journey updates, reviews |
+| `/auth` | Sign up / sign in (demo auth) |
+| `/safety` | Trust & safety: protected handover, verification, inspect-and-seal, prohibited items |
 
-1. Create an account at [stripe.com](https://stripe.com)
-2. Create one subscription product:
-   - **Premium** - KES 150, recurring **weekly**
-3. Copy its Price ID
-4. Set up a webhook endpoint pointing to `YOUR_URL/api/stripe/webhook`
-5. Subscribe to these webhook events:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_failed`
-6. Copy your webhook signing secret
+## Business model
 
-### 4. Configure environment variables
+Subscription platform, not a marketplace middleman: **$29/year membership**
+(one price for sending, receiving and travelling), free tier for browsing,
+receiving and tracking. Carriage fees are agreed and paid directly between
+sender and traveller — Kifurushi takes 0% commission and never holds delivery
+money, which keeps it outside money-transmitter licensing. Protection comes
+from ID verification, on-platform agreed terms, co-sealed photo logs, one-time
+delivery codes and immutable reviews. (The escrow state machine in
+`supabase/schema.sql` is kept dormant in case a "protected payment" premium
+feature is added later.)
 
-```bash
-cp .env.example .env.local
-```
+## Going to production
 
-Fill in all the values in `.env.local`:
+1. Create a Supabase project and run `supabase/schema.sql` — it ships full
+   row-level security, an escrow state machine, and hashed delivery codes.
+2. Replace the functions in `lib/store.ts` with Supabase queries (shapes match
+   the SQL schema 1:1) and swap demo auth for Supabase Auth.
+3. Read `SECURITY.md` for the full security architecture and the
+   before-real-money checklist (licensed escrow provider, KYC, rate limiting).
 
-```
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+## Stack
 
-STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_PREMIUM_PRICE_ID=price_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
-
-### 5. Run the development server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-## Project Structure
-
-```
-kifurushi/
-├── app/
-│   ├── api/
-│   │   ├── auth/callback/     # Supabase OAuth callback
-│   │   ├── stripe/
-│   │   │   ├── checkout/      # Create Stripe checkout session
-│   │   │   ├── webhook/       # Handle Stripe webhook events
-│   │   │   └── portal/        # Stripe customer portal
-│   │   ├── trips/             # CRUD for trips
-│   │   └── parcels/           # CRUD for parcels
-│   ├── dashboard/             # User dashboard
-│   ├── login/                 # Authentication page
-│   ├── premium/               # Subscription plans page
-│   ├── trips/                 # Browse & create trips
-│   │   ├── [id]/              # Trip detail page
-│   │   └── new/               # Create new trip
-│   ├── parcels/               # Browse & create parcels
-│   │   ├── [id]/              # Parcel detail page
-│   │   └── new/               # Create new parcel request
-│   ├── layout.js              # Root layout with navbar & footer
-│   ├── page.js                # Landing page
-│   └── globals.css            # Tailwind styles
-├── components/
-│   └── Navbar.js              # Navigation bar
-├── lib/
-│   ├── stripe.js              # Stripe config, plans, escrow rates
-│   ├── supabase.js            # Browser Supabase client
-│   └── supabase-server.js     # Server Supabase client + admin
-├── supabase/
-│   └── schema.sql             # Full database schema with RLS
-├── middleware.js               # Auth middleware for protected routes
-└── .env.example               # Environment variable template
-```
-
-## Subscription Tiers
-
-| Feature | Free | Premium (KES 150/week) |
-|---|---|---|
-| Browse trips & parcels | Yes | Yes |
-| Post parcels (even without an account) | Yes | Yes |
-| Post trips | Yes | Yes |
-| Contact details of matches | - | Yes |
-| Priority listing | - | Yes |
-| Premium badge | - | Yes |
-
-## Deployment
-
-See **DEPLOY.md** for the full step-by-step guide, including connecting the kifurushiapp.com domain.
-
-Update your Stripe webhook URL to `https://your-domain.vercel.app/api/stripe/webhook`
-
-## License
-
-MIT
+Next.js 14 (App Router) · TypeScript · Tailwind CSS · zod · Supabase-ready
