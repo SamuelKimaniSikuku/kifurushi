@@ -62,10 +62,18 @@ const SUB_STATUS_MAP: Record<string, "active" | "past_due" | "canceled"> = {
   paused: "canceled",
 };
 
-function planFromPrice(priceId: string | undefined): "monthly" | "yearly" | null {
-  if (!priceId) return null;
-  if (priceId === Deno.env.get("STRIPE_PRICE_MONTHLY")) return "monthly";
-  if (priceId === Deno.env.get("STRIPE_PRICE_YEARLY")) return "yearly";
+// Plan comes from the price's billing interval, so prices created anywhere
+// (API, dashboard, payment links) map correctly; configured ids are a
+// fallback for prices without an expanded recurring object.
+function planFromPrice(price: {
+  id?: string;
+  recurring?: { interval?: string };
+} | undefined): "monthly" | "yearly" | null {
+  const interval = price?.recurring?.interval;
+  if (interval === "month") return "monthly";
+  if (interval === "year") return "yearly";
+  if (price?.id === Deno.env.get("STRIPE_PRICE_MONTHLY")) return "monthly";
+  if (price?.id === Deno.env.get("STRIPE_PRICE_YEARLY")) return "yearly";
   return null;
 }
 
@@ -122,7 +130,7 @@ Deno.serve(async (req) => {
     if (!userId || !subId) return respond({ ok: true, ignored: "no user/sub" });
 
     const sub = await fetchSubscription(subId);
-    const plan = planFromPrice(sub.items?.data?.[0]?.price?.id);
+    const plan = planFromPrice(sub.items?.data?.[0]?.price);
     const end = periodEnd(sub);
     if (!plan || !end) {
       console.error("unmappable subscription", subId);
@@ -153,7 +161,7 @@ Deno.serve(async (req) => {
       event.type === "customer.subscription.deleted"
         ? "canceled"
         : SUB_STATUS_MAP[sub.status] ?? "canceled";
-    const plan = planFromPrice(sub.items?.data?.[0]?.price?.id);
+    const plan = planFromPrice(sub.items?.data?.[0]?.price);
     const end = periodEnd(sub);
 
     const patch: Record<string, unknown> = { status, provider: "stripe", provider_ref: sub.id };
