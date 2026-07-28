@@ -107,6 +107,24 @@ export async function fetchIsMember(): Promise<boolean> {
   return (await fetchMembership()).status === "member";
 }
 
+// Which join flow the pricing page uses. "beta" = free self-enrolment
+// (test-mode Stripe keys are configured, so real cards can't be charged yet).
+// Flip to "stripe" together with the live-key swap — see the Stripe go-live
+// notes in the repo history.
+export const BILLING_MODE: "beta" | "stripe" =
+  process.env.NEXT_PUBLIC_BILLING === "stripe" ? "stripe" : "beta";
+
+/** Stripe Checkout: returns the hosted payment URL to redirect to. */
+export async function startCheckout(plan: BillingPlan): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+    body: { plan },
+  });
+  if (error) throw error;
+  const url = (data as { url?: string })?.url;
+  if (!url) throw new Error("No checkout URL returned");
+  return url;
+}
+
 /** Beta self-enrolment: writes a real membership row, no payment yet. */
 export async function joinMembership(plan: BillingPlan): Promise<Membership> {
   const { data: auth } = await supabase.auth.getSession();

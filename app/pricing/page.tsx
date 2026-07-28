@@ -14,7 +14,8 @@ import {
   X,
 } from "lucide-react";
 import {
-  fetchSession, fetchMembership, joinMembership, BillingPlan, Membership,
+  fetchSession, fetchMembership, joinMembership, startCheckout,
+  BILLING_MODE, BillingPlan, Membership,
 } from "@/lib/auth";
 
 const PLANS: {
@@ -66,11 +67,19 @@ const REASON_MESSAGES: Record<string, string> = {
     "Membership is needed to post trips and parcel requests — one membership covers your whole year.",
 };
 
+const CHECKOUT_MESSAGES: Record<string, string> = {
+  success:
+    "Payment received — your membership activates within a few seconds.",
+  cancelled: "Checkout cancelled — you haven't been charged.",
+};
+
 function ContactBanner() {
   const params = useSearchParams();
   const [dismissed, setDismissed] = useState(false);
 
-  const message = REASON_MESSAGES[params.get("reason") ?? ""];
+  const message =
+    REASON_MESSAGES[params.get("reason") ?? ""] ??
+    CHECKOUT_MESSAGES[params.get("checkout") ?? ""];
   if (!message || dismissed) return null;
 
   return (
@@ -112,6 +121,17 @@ export default function PricingPage() {
 
   useEffect(() => {
     fetchMembership().then(setMembership);
+    // Back from Stripe Checkout: the webhook activates the membership a
+    // beat later — poll briefly so the page catches up on its own.
+    if (new URLSearchParams(window.location.search).get("checkout") === "success") {
+      let tries = 0;
+      const t = setInterval(async () => {
+        const m = await fetchMembership();
+        setMembership(m);
+        if (m.status === "member" || ++tries >= 10) clearInterval(t);
+      }, 2000);
+      return () => clearInterval(t);
+    }
   }, []);
 
   async function join(plan: BillingPlan) {
@@ -122,6 +142,11 @@ export default function PricingPage() {
     }
     setJoining(plan);
     try {
+      if (BILLING_MODE === "stripe") {
+        // Hosted Stripe Checkout; the webhook activates the membership.
+        window.location.href = await startCheckout(plan);
+        return;
+      }
       setMembership(await joinMembership(plan));
     } catch {
       setJoinError("Could not activate your membership. Please try again.");
