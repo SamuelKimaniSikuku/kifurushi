@@ -99,32 +99,29 @@ export default function Home() {
                 ALL 54 AFRICAN COUNTRIES · 22 DIASPORA DESTINATIONS
               </span>
               <h1 className="max-w-xl font-display text-4xl font-bold tracking-tight md:text-6xl">
-                Your parcel travels with someone who&apos;s{" "}
-                <span className="text-gold">already going home</span>
+                Flying home? Your spare kilos are worth{" "}
+                <span className="text-gold">$100+ every trip</span>
               </h1>
               <p className="mt-5 max-w-xl text-base text-white/75 md:text-lg">
-                Kifurushi connects people sending parcels between Africa and
-                abroad with verified travellers who have spare luggage space —
-                faster than post, cheaper than courier, and we never take a cut.
-              </p>
-              <p className="mt-6 max-w-xl font-display text-2xl font-bold tracking-tight text-gold md:text-3xl">
-                Flying home? Your spare kilos can earn you $100+ per trip —
-                and you keep every cent.
+                Carry parcels for people sending things between Africa and
+                abroad — you keep 100% of what you charge, Kifurushi takes no
+                cut. And when you&apos;re the one sending, your parcel travels
+                with a verified traveller who&apos;s already going home.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
-                  href="/post/parcel"
-                  className="btn-accent btn-lg w-full sm:w-auto sm:whitespace-nowrap"
-                >
-                  <Package className="h-5 w-5" strokeWidth={2} aria-hidden />
-                  Send a parcel
-                </Link>
-                <Link
                   href="/post/trip"
-                  className="btn-outline-inverse btn-lg w-full sm:w-auto sm:whitespace-nowrap"
+                  className="btn-accent btn-lg w-full sm:w-auto sm:whitespace-nowrap"
                 >
                   <Plane className="h-5 w-5" strokeWidth={2} aria-hidden />
                   I&apos;m travelling — earn from my luggage
+                </Link>
+                <Link
+                  href="/post/parcel"
+                  className="btn-outline-inverse btn-lg w-full sm:w-auto sm:whitespace-nowrap"
+                >
+                  <Package className="h-5 w-5" strokeWidth={2} aria-hidden />
+                  Send a parcel
                 </Link>
               </div>
             </div>
