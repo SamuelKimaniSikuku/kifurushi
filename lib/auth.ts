@@ -107,12 +107,12 @@ export async function fetchIsMember(): Promise<boolean> {
   return (await fetchMembership()).status === "member";
 }
 
-// Which join flow the pricing page uses. "beta" = free self-enrolment
-// (test-mode Stripe keys are configured, so real cards can't be charged yet).
-// Flip to "stripe" together with the live-key swap — see the Stripe go-live
-// notes in the repo history.
+// Which join flow the pricing page uses. "stripe" sends Join through
+// hosted Checkout — currently on TEST keys (test card 4242… only) while
+// the Stripe account awaits live activation. Set NEXT_PUBLIC_BILLING=beta
+// to fall back to free self-enrolment.
 export const BILLING_MODE: "beta" | "stripe" =
-  process.env.NEXT_PUBLIC_BILLING === "stripe" ? "stripe" : "beta";
+  process.env.NEXT_PUBLIC_BILLING === "beta" ? "beta" : "stripe";
 
 /** Stripe Checkout: returns the hosted payment URL to redirect to. */
 export async function startCheckout(plan: BillingPlan): Promise<string> {
