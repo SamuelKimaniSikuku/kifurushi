@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addTrip, isVerified } from "@/lib/store";
-import { useSession } from "@/lib/auth";
+import { addTrip } from "@/lib/db";
+import { useSession, fetchIsMember } from "@/lib/auth";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
@@ -35,6 +35,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 export default function PostTripPage() {
   const router = useRouter();
   const { session, loading } = useSession();
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
@@ -44,7 +45,15 @@ export default function PostTripPage() {
   const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
-    if (!loading && !session) router.replace("/auth?next=/post/trip");
+    if (loading) return;
+    if (!session) {
+      router.replace("/auth?next=/post/trip");
+      return;
+    }
+    // Posting is a member action (enforced server-side by RLS too).
+    fetchIsMember().then((member) => {
+      if (!member) router.replace("/pricing?reason=post");
+    });
   }, [loading, session, router]);
 
   useEffect(() => {
@@ -57,7 +66,7 @@ export default function PostTripPage() {
     setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = tripSchema.safeParse(form);
     if (!parsed.success) {
@@ -72,16 +81,15 @@ export default function PostTripPage() {
       focusFirstInvalid(errs);
       return;
     }
-    if (!session) return;
-    addTrip({
-      ...parsed.data,
-      travelerName: session.name,
-      travelerVerified: isVerified(),
-      travelerRating: 5,
-      tripsCompleted: 0,
-      categoriesAccepted: cats,
-    });
-    router.push("/trips");
+    if (!session || submitting) return;
+    setSubmitting(true);
+    try {
+      await addTrip({ ...parsed.data, categoriesAccepted: cats });
+      router.push("/trips");
+    } catch {
+      setErrors({ _submit: "Could not post your trip — please try again." });
+      setSubmitting(false);
+    }
   }
 
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -269,8 +277,11 @@ export default function PostTripPage() {
           </p>
         </div>
 
-        <button type="submit" className="btn-primary mt-6 w-full py-3">
-          Publish trip
+        {errors._submit && (
+          <p role="alert" className="field-error mt-4">{errors._submit}</p>
+        )}
+        <button type="submit" className="btn-primary mt-6 w-full py-3" disabled={submitting}>
+          {submitting ? "Publishing…" : "Publish trip"}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

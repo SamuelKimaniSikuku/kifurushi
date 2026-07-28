@@ -6,8 +6,8 @@ import {
   BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, Upload,
 } from "lucide-react";
 import {
-  getVerification, submitVerification, approveVerification, Verification,
-} from "@/lib/store";
+  fetchVerification, submitVerification, VerificationState,
+} from "@/lib/db";
 import { fetchSession } from "@/lib/auth";
 import { verificationSchema, validateUpload, zodErrors, FieldErrors } from "@/lib/validation";
 
@@ -21,7 +21,7 @@ const STEPS = ["Phone", "ID document", "Selfie"];
 
 export default function VerifyPage() {
   const router = useRouter();
-  const [verification, setVerification] = useState<Verification | null>(null);
+  const [verification, setVerification] = useState<VerificationState | null>(null);
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [phone, setPhone] = useState("");
@@ -33,13 +33,14 @@ export default function VerifyPage() {
 
   useEffect(() => {
     let mounted = true;
-    fetchSession().then((s) => {
+    fetchSession().then(async (s) => {
       if (!mounted) return;
       if (!s) {
         router.replace("/auth?next=/verify");
         return;
       }
-      setVerification(getVerification());
+      const v = await fetchVerification().catch(() => null);
+      if (mounted && v) setVerification(v);
     });
     return () => {
       mounted = false;
@@ -47,6 +48,29 @@ export default function VerifyPage() {
   }, [router]);
 
   if (!verification) return null;
+
+  if (verification.status === "pending") {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-sand-deep text-forest">
+          <ShieldCheck className="h-8 w-8" strokeWidth={2} aria-hidden />
+        </div>
+        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
+          Verification submitted
+        </h1>
+        <p className="mt-2 text-sm text-muted">
+          We&apos;re reviewing your details — you&apos;ll see the ✓ Verified badge
+          on your profile once it&apos;s approved, usually within a day.
+        </p>
+        <button
+          className="btn-primary mt-6 min-h-[44px]"
+          onClick={() => router.push("/dashboard")}
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
 
   if (verification.status === "verified") {
     return (
@@ -88,7 +112,7 @@ export default function VerifyPage() {
     setStep(3);
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: FieldErrors = {};
     const selfieErr = validateUpload(selfieFile, "Selfie");
@@ -99,13 +123,15 @@ export default function VerifyPage() {
 
     setErrors({});
     setProcessing(true);
-    submitVerification(phone, idType);
-    // Demo: simulate the KYC provider's asynchronous approval webhook.
-    // In production this state change comes from the server, never the client.
-    setTimeout(() => {
-      setVerification(approveVerification());
+    try {
+      // Only the outcome row is stored; the images never leave the browser
+      // until a KYC provider is wired in.
+      setVerification(await submitVerification(phone, idType));
+    } catch {
+      setErrors({ consent: "Could not submit — please try again." });
+    } finally {
       setProcessing(false);
-    }, 2500);
+    }
   }
 
   return (
@@ -341,20 +367,13 @@ export default function VerifyPage() {
                 {processing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
-                    Checking…
+                    Submitting…
                   </>
                 ) : (
                   "Submit for verification"
                 )}
               </button>
             </div>
-            {processing && (
-              <p className="text-center text-xs text-muted">
-                Demo: simulating the identity provider&apos;s check (~2 s). In
-                production this is Smile ID / Stripe Identity and takes seconds
-                to minutes.
-              </p>
-            )}
           </>
         )}
       </form>
@@ -362,8 +381,8 @@ export default function VerifyPage() {
       <p className="mt-4 flex items-start justify-center gap-1.5 text-center text-xs text-faint">
         <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
         <span>
-          Demo mode never uploads or stores your images — only the pass/fail
-          outcome is kept, which is also the production policy.
+          Kifurushi never stores your images — only the pass/fail outcome is
+          kept on your account.
         </span>
       </p>
     </div>

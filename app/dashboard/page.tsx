@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Hand, IdCard, Package, PackageSearch, Plane, Star } from "lucide-react";
 import {
-  getMatches, getTrips, getParcels, getVerification,
-} from "@/lib/store";
-import {
   fetchSession, fetchMembership, signOut, Session, Membership,
 } from "@/lib/auth";
-import { Match } from "@/lib/types";
-import { label } from "@/lib/countries";
+import {
+  fetchMyMatches, fetchVerification, MatchDetail, VerificationState,
+} from "@/lib/db";
 import MatchCard from "@/components/MatchCard";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -42,7 +40,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<MatchDetail[]>([]);
+  const [verification, setVerification] = useState<VerificationState | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -55,9 +54,16 @@ export default function DashboardPage() {
         return;
       }
       setSession(s);
-      setMatches(getMatches());
+      const [m, ms, v] = await Promise.all([
+        fetchMyMatches().catch(() => []),
+        fetchMembership(),
+        fetchVerification().catch(() => null),
+      ]);
+      if (!mounted) return;
+      setMatches(m);
+      setMembership(ms);
+      setVerification(v);
       setReady(true);
-      setMembership(await fetchMembership());
     })();
     return () => {
       mounted = false;
@@ -65,17 +71,6 @@ export default function DashboardPage() {
   }, [router]);
 
   if (!ready || !session) return <DashboardSkeleton />;
-
-  const trips = getTrips();
-  const parcels = getParcels();
-
-  function describe(m: Match): string {
-    const trip = trips.find((t) => t.id === m.tripId);
-    const parcel = parcels.find((p) => p.id === m.parcelId);
-    if (trip) return `${label(trip.fromCountry)} → ${label(trip.toCountry)} with ${trip.travelerName}`;
-    if (parcel) return `${label(parcel.fromCountry)} → ${label(parcel.toCountry)} for ${parcel.senderName}`;
-    return "Pending match";
-  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -122,7 +117,7 @@ export default function DashboardPage() {
           <div className="mt-3 text-base font-semibold">Send a parcel</div>
           <div className="mt-0.5 text-xs text-muted">Get matched in hours</div>
         </Link>
-        {getVerification().status === "verified" ? (
+        {verification?.status === "verified" ? (
           <div className="card border-success bg-success-bg p-5">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-white text-success" aria-hidden>
               <IdCard size={20} strokeWidth={2} />
@@ -133,6 +128,16 @@ export default function DashboardPage() {
             </div>
             <div className="mt-0.5 text-xs text-muted">
               Your badge shows on everything you post
+            </div>
+          </div>
+        ) : verification?.status === "pending" ? (
+          <div className="card p-5">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-sand-deep text-forest" aria-hidden>
+              <IdCard size={20} strokeWidth={2} />
+            </span>
+            <div className="mt-3 text-base font-semibold">Verification pending</div>
+            <div className="mt-0.5 text-xs text-muted">
+              We&apos;re reviewing your ID — usually within a day
             </div>
           </div>
         ) : (
@@ -149,9 +154,6 @@ export default function DashboardPage() {
       </div>
 
       <h2 className="mt-10 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
-      <p className="mt-1 text-xs text-faint">
-        Demo: use “Advance status” to walk a delivery through the handover flow.
-      </p>
 
       {matches.length === 0 ? (
         <div className="card mt-4 flex flex-col items-center px-6 py-12 text-center">
@@ -174,9 +176,10 @@ export default function DashboardPage() {
             <MatchCard
               key={m.id}
               match={m}
-              title={describe(m)}
-              authorName={session.name}
-              onChanged={() => setMatches(getMatches())}
+              myUserId={session.userId}
+              onChanged={() =>
+                fetchMyMatches().then(setMatches).catch(() => {})
+              }
             />
           ))}
         </div>

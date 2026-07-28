@@ -59,21 +59,26 @@ const MEMBER_FEATURES = [
   "Dispute support with the full delivery record",
 ];
 
+const REASON_MESSAGES: Record<string, string> = {
+  contact:
+    "Membership is needed to contact travellers and senders — one membership covers your whole year.",
+  post:
+    "Membership is needed to post trips and parcel requests — one membership covers your whole year.",
+};
+
 function ContactBanner() {
   const params = useSearchParams();
   const [dismissed, setDismissed] = useState(false);
 
-  if (params.get("reason") !== "contact" || dismissed) return null;
+  const message = REASON_MESSAGES[params.get("reason") ?? ""];
+  if (!message || dismissed) return null;
 
   return (
     <div className="card mb-8 flex items-center gap-3 p-4" role="status">
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sand-deep">
         <Lock className="h-4 w-4 text-forest" strokeWidth={2} />
       </span>
-      <p className="flex-1 text-sm text-ink">
-        Membership is needed to contact travellers and senders — one membership
-        covers your whole year.
-      </p>
+      <p className="flex-1 text-sm text-ink">{message}</p>
       <button
         type="button"
         onClick={() => setDismissed(true)}

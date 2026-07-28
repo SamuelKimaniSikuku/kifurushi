@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftRight } from "lucide-react";
 import ParcelCard from "@/components/ParcelCard";
@@ -8,12 +9,12 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getParcels, requestMatch, getTrips } from "@/lib/store";
-import { fetchSession } from "@/lib/auth";
+import { fetchParcels, fetchMyOpenTrips, requestMatch } from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
 import { ParcelRequest } from "@/lib/types";
 
 export default function ParcelsPage() {
+  const router = useRouter();
   const gate = useContactGate();
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
   const [from, setFrom] = useState("");
@@ -23,8 +24,10 @@ export default function ParcelsPage() {
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setParcels(getParcels());
-    setLoaded(true);
+    fetchParcels()
+      .then(setParcels)
+      .catch(() => setToast("Could not load parcel requests — please refresh."))
+      .finally(() => setLoaded(true));
   }, []);
 
   const filtered = useMemo(
@@ -48,11 +51,19 @@ export default function ParcelsPage() {
 
   async function handleOffer(parcel: ParcelRequest) {
     if (!(await gate())) return;
-    const session = await fetchSession();
-    const myTrip = getTrips().find((t) => t.travelerName === session?.name);
-    requestMatch(myTrip?.id ?? "pending", parcel.id);
-    setRequestedIds((prev) => new Set(prev).add(parcel.id));
-    setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
+    try {
+      // An offer links this parcel to one of YOUR trips — post one first.
+      const [myTrip] = await fetchMyOpenTrips();
+      if (!myTrip) {
+        router.push("/post/trip?then=offer");
+        return;
+      }
+      await requestMatch(myTrip.id, parcel.id);
+      setRequestedIds((prev) => new Set(prev).add(parcel.id));
+      setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
+    } catch {
+      setToast("Could not send the offer — please try again.");
+    }
   }
 
   return (

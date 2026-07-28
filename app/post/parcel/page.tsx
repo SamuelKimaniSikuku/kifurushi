@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Ban } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addParcel, isVerified } from "@/lib/store";
-import { useSession } from "@/lib/auth";
+import { addParcel } from "@/lib/db";
+import { useSession, fetchIsMember } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/types";
 
 const FIELD_ORDER = [
@@ -33,6 +33,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 export default function PostParcelPage() {
   const router = useRouter();
   const { session, loading } = useSession();
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
@@ -41,7 +42,15 @@ export default function PostParcelPage() {
   const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
-    if (!loading && !session) router.replace("/auth?next=/post/parcel");
+    if (loading) return;
+    if (!session) {
+      router.replace("/auth?next=/post/parcel");
+      return;
+    }
+    // Posting is a member action (enforced server-side by RLS too).
+    fetchIsMember().then((member) => {
+      if (!member) router.replace("/pricing?reason=post");
+    });
   }, [loading, session, router]);
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function PostParcelPage() {
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parcelSchema.safeParse(form);
     if (!parsed.success) {
@@ -59,13 +68,15 @@ export default function PostParcelPage() {
       focusFirstInvalid(errs);
       return;
     }
-    if (!session) return;
-    addParcel({
-      ...parsed.data,
-      senderName: session.name,
-      senderVerified: isVerified(),
-    });
-    router.push("/parcels");
+    if (!session || submitting) return;
+    setSubmitting(true);
+    try {
+      await addParcel(parsed.data);
+      router.push("/parcels");
+    } catch {
+      setErrors({ _submit: "Could not post your parcel — please try again." });
+      setSubmitting(false);
+    }
   }
 
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -237,7 +248,10 @@ export default function PostParcelPage() {
           </p>
         </div>
 
-        <button type="submit" className="btn-accent mt-6 w-full py-3">
+        {errors._submit && (
+          <p role="alert" className="field-error mt-4">{errors._submit}</p>
+        )}
+        <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting}>
           Post parcel request
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>

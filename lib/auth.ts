@@ -1,8 +1,7 @@
 "use client";
 
-// Real auth + membership, backed by Supabase. Replaces the localStorage
-// session/membership demo in lib/store.ts. Trips/parcels/matches remain on
-// the demo store until they are migrated in turn.
+// Real auth + membership, backed by Supabase. Marketplace data (trips,
+// parcels, matches, reviews) lives in lib/db.ts.
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";

@@ -1,106 +1,411 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight, Plane, Send, Star } from "lucide-react";
-import { Match, STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review } from "@/lib/types";
+import { useCallback, useEffect, useState } from "react";
+import { Copy, KeyRound, Plane, Send, Star } from "lucide-react";
 import {
-  advanceMatch, getTransitUpdates, addTransitUpdate, getReview, addReview,
-} from "@/lib/store";
+  STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus,
+} from "@/lib/types";
+import {
+  MatchDetail, respondMatch, advanceMatch, cancelMatch,
+  generateDeliveryCode, confirmDelivery,
+  fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
+} from "@/lib/db";
 import { transitUpdateSchema, reviewSchema } from "@/lib/validation";
 import Stars from "@/components/ui/Stars";
 
+const TERMINAL_NEGATIVE: MatchStatus[] = ["declined", "cancelled", "disputed"];
+
 export default function MatchCard({
   match,
-  title,
-  authorName,
+  myUserId,
   onChanged,
 }: {
-  match: Match;
-  title: string;
-  authorName: string;
+  match: MatchDetail;
+  myUserId: string;
   onChanged: () => void;
 }) {
-  const [updates, setUpdates] = useState<TransitUpdate[]>(() => getTransitUpdates(match.id));
-  const [review, setReview] = useState<Review | undefined>(() => getReview(match.id));
+  const [updates, setUpdates] = useState<TransitUpdate[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState("");
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
   const [reviewError, setReviewError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [code, setCode] = useState<string | null>(null); // sender: freshly minted
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [codeEntry, setCodeEntry] = useState("");
+  const [codeEntryError, setCodeEntryError] = useState("");
 
-  const idx = STATUS_ORDER.indexOf(match.status);
+  const isTraveler = match.role === "traveler";
   const done = match.status === "released";
+  const ended = TERMINAL_NEGATIVE.includes(match.status);
+  const idx = STATUS_ORDER.indexOf(match.status);
   const inTransit = match.status === "picked_up" || match.status === "in_transit";
-  const received = match.status === "delivered" || match.status === "released";
+  const received = match.status === "delivered" || done;
+  const cancellable = ["requested", "accepted", "escrow_paid"].includes(match.status);
+  const senderCodeWindow =
+    !isTraveler &&
+    ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
+      match.status
+    );
 
-  const noteId = `journey-update-${match.id}`;
-  const noteErrorId = `journey-update-error-${match.id}`;
-  const commentId = `review-comment-${match.id}`;
-  const reviewErrorId = `review-error-${match.id}`;
+  const title = isTraveler
+    ? `${match.route} — carrying for ${match.counterpartyName}`
+    : `${match.route} — with ${match.counterpartyName}`;
 
-  function postUpdate(e: React.FormEvent) {
+  useEffect(() => {
+    if (inTransit || received) {
+      fetchTransitUpdates(match.id).then(setUpdates).catch(() => {});
+    }
+    if (done) {
+      fetchMatchReviews(match.id).then(setReviews).catch(() => {});
+    }
+  }, [match.id, match.status, inTransit, received, done]);
+
+  const act = useCallback(
+    async (fn: () => Promise<unknown>, fallbackMessage: string) => {
+      if (busy) return;
+      setBusy(true);
+      setActionError("");
+      try {
+        await fn();
+        onChanged();
+      } catch {
+        setActionError(fallbackMessage);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, onChanged]
+  );
+
+  async function postUpdate(e: React.FormEvent) {
     e.preventDefault();
     const parsed = transitUpdateSchema.safeParse(note);
     if (!parsed.success) {
       setNoteError(parsed.error.issues[0]?.message ?? "Invalid update");
       return;
     }
-    addTransitUpdate(match.id, parsed.data);
-    setUpdates(getTransitUpdates(match.id));
-    setNote("");
-    setNoteError("");
+    try {
+      await addTransitUpdate(match.id, parsed.data);
+      setUpdates(await fetchTransitUpdates(match.id));
+      setNote("");
+      setNoteError("");
+    } catch {
+      setNoteError("Could not post the update — please try again.");
+    }
   }
 
-  function submitReview(e: React.FormEvent) {
+  async function submitReview(e: React.FormEvent) {
     e.preventDefault();
     const parsed = reviewSchema.safeParse({ rating, comment });
     if (!parsed.success) {
       setReviewError(parsed.error.issues[0]?.message ?? "Invalid review");
       return;
     }
-    setReview(addReview(match.id, authorName, parsed.data.rating, parsed.data.comment));
-    setReviewError("");
+    if (!match.counterpartyId) {
+      setReviewError("Could not identify your match partner.");
+      return;
+    }
+    try {
+      await addReview(match.id, match.counterpartyId, parsed.data.rating, parsed.data.comment);
+      setReviews(await fetchMatchReviews(match.id));
+      setReviewError("");
+    } catch {
+      setReviewError("Could not submit the review — please try again.");
+    }
   }
+
+  async function mintCode() {
+    if (busy) return;
+    setBusy(true);
+    setActionError("");
+    try {
+      setCode(await generateDeliveryCode(match.id));
+      setCodeCopied(false);
+      onChanged(); // refreshes hasCode
+    } catch {
+      setActionError("Could not generate the code — please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(codeEntry)) {
+      setCodeEntryError("Enter the 6-digit code the receiver reads out.");
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    setCodeEntryError("");
+    try {
+      const ok = await confirmDelivery(match.id, codeEntry);
+      if (ok) {
+        onChanged();
+      } else {
+        setCodeEntryError("Wrong code — ask the receiver to read it again.");
+      }
+    } catch {
+      setCodeEntryError("Too many attempts or the code isn't ready — try again later.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const myReview = reviews.find((r) => r.authorId === myUserId);
+  const theirReview = reviews.find((r) => r.authorId !== myUserId);
 
   return (
     <div className="card p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="font-semibold text-base">{title}</div>
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-          done ? "bg-success-bg text-success" : "bg-warn-bg text-warn"
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+            done
+              ? "bg-success-bg text-success"
+              : ended
+                ? "bg-sand-deep text-muted"
+                : "bg-warn-bg text-warn"
+          }`}
+        >
           {STATUS_LABELS[match.status]}
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="mt-4 flex items-center gap-1">
-        {STATUS_ORDER.map((s, i) => (
-          <div key={s} className="flex-1">
-            <div className={`h-1.5 rounded-full ${i <= idx ? "bg-forest" : "bg-sand-deep"}`} />
-            <div className={`mt-1.5 hidden text-[10px] uppercase tracking-wide sm:block ${
-              i <= idx ? "font-semibold text-forest" : "text-faint"
-            }`}>
-              {STATUS_LABELS[s]}
-            </div>
+      {/* Progress bar — happy path only */}
+      {idx >= 0 && (
+        <>
+          <div className="mt-4 flex items-center gap-1">
+            {STATUS_ORDER.map((s, i) => (
+              <div key={s} className="flex-1">
+                <div className={`h-1.5 rounded-full ${i <= idx ? "bg-forest" : "bg-sand-deep"}`} />
+                <div
+                  className={`mt-1.5 hidden text-[10px] uppercase tracking-wide sm:block ${
+                    i <= idx ? "font-semibold text-forest" : "text-faint"
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="mt-2 text-xs text-muted sm:hidden">
-        {STATUS_LABELS[match.status]}
-        {!done && ` · next: ${STATUS_LABELS[STATUS_ORDER[idx + 1]]}`}
-      </p>
+          <p className="mt-2 text-xs text-muted sm:hidden">
+            {STATUS_LABELS[match.status]}
+          </p>
+        </>
+      )}
 
-      {!done && (
-        <button
-          className="btn-ghost mt-4 min-h-[44px] text-xs"
-          onClick={() => { advanceMatch(match.id); onChanged(); }}
-        >
-          Advance status
-          <ChevronRight className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          {STATUS_LABELS[STATUS_ORDER[idx + 1]]}
-        </button>
+      {/* Role-aware actions */}
+      {!done && !ended && (
+        <div className="mt-4 space-y-3">
+          {match.status === "requested" &&
+            (isTraveler ? (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="btn-primary min-h-[44px]"
+                  disabled={busy}
+                  onClick={() =>
+                    act(() => respondMatch(match.id, true), "Could not accept — try again.")
+                  }
+                >
+                  Accept request
+                </button>
+                <button
+                  className="btn-ghost min-h-[44px]"
+                  disabled={busy}
+                  onClick={() =>
+                    act(() => respondMatch(match.id, false), "Could not decline — try again.")
+                  }
+                >
+                  Decline
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted">
+                Waiting for {match.counterpartyName} to accept.
+              </p>
+            ))}
+
+          {match.status === "accepted" && (
+            <>
+              <p className="text-sm text-muted">
+                Agree the carriage fee and handover details with{" "}
+                {match.counterpartyName} — then confirm below. Payment is between
+                the two of you; Kifurushi never takes a cut.
+              </p>
+              <button
+                className="btn-primary min-h-[44px]"
+                disabled={busy}
+                onClick={() =>
+                  act(() => advanceMatch(match.id), "Could not update — try again.")
+                }
+              >
+                Terms agreed
+              </button>
+            </>
+          )}
+
+          {match.status === "escrow_paid" &&
+            (isTraveler ? (
+              <>
+                <p className="text-sm text-muted">
+                  Inspect the parcel together, seal it, photograph it — then mark
+                  it picked up.
+                </p>
+                <button
+                  className="btn-primary min-h-[44px]"
+                  disabled={busy}
+                  onClick={() =>
+                    act(() => advanceMatch(match.id), "Could not update — try again.")
+                  }
+                >
+                  Mark sealed &amp; picked up
+                </button>
+              </>
+            ) : (
+              <p className="text-sm text-muted">
+                Waiting for {match.counterpartyName} to collect and seal the parcel.
+              </p>
+            ))}
+
+          {match.status === "picked_up" && isTraveler && (
+            <button
+              className="btn-primary min-h-[44px]"
+              disabled={busy}
+              onClick={() =>
+                act(() => advanceMatch(match.id), "Could not update — try again.")
+              }
+            >
+              Mark in transit
+            </button>
+          )}
+
+          {match.status === "in_transit" && isTraveler && (
+            <button
+              className="btn-primary min-h-[44px]"
+              disabled={busy}
+              onClick={() =>
+                act(() => advanceMatch(match.id), "Could not update — try again.")
+              }
+            >
+              Mark delivered
+            </button>
+          )}
+
+          {match.status === "delivered" &&
+            (isTraveler ? (
+              <form onSubmit={submitCode} className="space-y-2">
+                <p className="text-sm text-muted">
+                  Ask the receiver for their 6-digit delivery code to complete the
+                  handover.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    aria-label="Delivery code"
+                    inputMode="numeric"
+                    maxLength={6}
+                    className={`field w-36 text-center font-mono text-lg tracking-[0.3em] ${
+                      codeEntryError ? "field-invalid" : ""
+                    }`}
+                    placeholder="000000"
+                    value={codeEntry}
+                    onChange={(e) => setCodeEntry(e.target.value.replace(/\D/g, ""))}
+                  />
+                  <button type="submit" className="btn-accent min-h-[44px]" disabled={busy}>
+                    <KeyRound className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                    Confirm delivery
+                  </button>
+                </div>
+                {codeEntryError && <p className="field-error">{codeEntryError}</p>}
+              </form>
+            ) : (
+              <p className="text-sm text-muted">
+                {match.counterpartyName} has marked the parcel delivered. The
+                receiver confirms the handover with the delivery code below.
+              </p>
+            ))}
+
+          {/* Sender: the one-time delivery code */}
+          {senderCodeWindow && (
+            <div className="rounded-xl bg-sand p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
+                <KeyRound className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                Delivery code
+              </div>
+              {code ? (
+                <div className="mt-2">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-2xl font-bold tracking-[0.3em] text-forest">
+                      {code}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn-ghost min-h-[44px] text-xs"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(code);
+                        setCodeCopied(true);
+                      }}
+                    >
+                      <Copy className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                      {codeCopied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-muted">
+                    Share it with the <b>receiver only</b> — it&apos;s shown once and
+                    releases the delivery at handover.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <p className="text-xs text-muted">
+                    {match.hasCode
+                      ? "A code exists. Generating a new one replaces it."
+                      : "Generate the one-time code and share it with the receiver — the traveller needs it at handover."}
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-primary mt-2 min-h-[44px] text-xs"
+                    disabled={busy}
+                    onClick={mintCode}
+                  >
+                    {match.hasCode ? "Regenerate code" : "Generate code"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {cancellable && (
+            <button
+              className="btn-ghost min-h-[44px] text-xs"
+              disabled={busy}
+              onClick={() =>
+                act(() => cancelMatch(match.id), "Could not cancel — try again.")
+              }
+            >
+              Cancel this match
+            </button>
+          )}
+
+          {actionError && <p role="alert" className="field-error">{actionError}</p>}
+        </div>
+      )}
+
+      {ended && (
+        <p className="mt-3 text-sm text-muted">
+          {match.status === "declined" &&
+            (isTraveler
+              ? "You declined this request."
+              : `${match.counterpartyName} declined this request.`)}
+          {match.status === "cancelled" && "This match was cancelled."}
+          {match.status === "disputed" &&
+            "This delivery is disputed — support has the full record."}
+        </p>
       )}
 
       {/* Journey updates: visible from pickup onward */}
@@ -131,17 +436,17 @@ export default function MatchCard({
             </ul>
           ) : (
             <p className="mt-2 text-xs text-faint">
-              No updates yet — post the first one so the sender and receiver can follow along.
+              {isTraveler
+                ? "No updates yet — post the first one so the sender and receiver can follow along."
+                : "No updates yet — the traveller posts them as the journey progresses."}
             </p>
           )}
 
-          {inTransit && (
+          {inTransit && isTraveler && (
             <form onSubmit={postUpdate} className="mt-3 flex gap-2">
               <input
-                id={noteId}
                 aria-label="Journey update"
                 aria-invalid={noteError ? true : undefined}
-                aria-describedby={noteError ? noteErrorId : undefined}
                 className={`field flex-1 ${noteError ? "field-invalid" : ""}`}
                 placeholder="e.g. Landed in Lagos, heading to Ikeja pickup point"
                 value={note}
@@ -154,38 +459,47 @@ export default function MatchCard({
               </button>
             </form>
           )}
-          {noteError && <p id={noteErrorId} className="field-error">{noteError}</p>}
+          {noteError && <p className="field-error">{noteError}</p>}
         </div>
       )}
 
-      {/* Review: available once the parcel has been received */}
-      {received && (
+      {/* Reviews: two-way, once the code has released the delivery */}
+      {done && (
         <div className="mt-5 rounded-xl bg-sand p-4">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
             <Star className="h-4 w-4 shrink-0 fill-gold text-gold" strokeWidth={2} aria-hidden />
             Rate this delivery
           </div>
 
-          {review ? (
+          {theirReview && (
             <div className="mt-3">
-              <Stars rating={review.rating} />
-              {review.comment && (
+              <Stars rating={theirReview.rating} />
+              {theirReview.comment && (
                 <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink">
-                  “{review.comment}”
+                  “{theirReview.comment}”
                 </blockquote>
               )}
               <p className="mt-2 text-xs text-faint">
-                By {review.authorName} · reviews are public and can&apos;t be edited.
+                By {theirReview.authorName} · reviews are public and can&apos;t be edited.
+              </p>
+            </div>
+          )}
+
+          {myReview ? (
+            <div className="mt-3">
+              <Stars rating={myReview.rating} />
+              {myReview.comment && (
+                <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink">
+                  “{myReview.comment}”
+                </blockquote>
+              )}
+              <p className="mt-2 text-xs text-faint">
+                Your review · public and can&apos;t be edited.
               </p>
             </div>
           ) : (
             <form onSubmit={submitReview} className="mt-3 space-y-3">
-              <div
-                role="group"
-                aria-label="Rating"
-                aria-describedby={reviewError ? reviewErrorId : undefined}
-                className="flex gap-1"
-              >
+              <div role="group" aria-label="Rating" className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
@@ -207,22 +521,16 @@ export default function MatchCard({
                   </button>
                 ))}
               </div>
-              <label htmlFor={commentId} className="sr-only">
-                Review comment
-              </label>
               <textarea
-                id={commentId}
+                aria-label="Review comment"
                 aria-invalid={reviewError ? true : undefined}
-                aria-describedby={reviewError ? reviewErrorId : undefined}
                 className={`field min-h-[70px] ${reviewError ? "field-invalid" : ""}`}
                 placeholder="How was the delivery? Your review is public and helps the next sender."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 maxLength={300}
               />
-              {reviewError && (
-                <p id={reviewErrorId} className="field-error">{reviewError}</p>
-              )}
+              {reviewError && <p className="field-error">{reviewError}</p>}
               <button type="submit" className="btn-accent min-h-[44px]">Submit review</button>
             </form>
           )}

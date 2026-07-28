@@ -11,14 +11,18 @@ export type ParcelCategory =
 export type MatchStatus =
   | "requested"
   | "accepted"
+  | "declined"
   | "escrow_paid"
   | "picked_up"
   | "in_transit"
   | "delivered"
-  | "released";
+  | "released"
+  | "cancelled"
+  | "disputed";
 
 export interface Trip {
   id: string;
+  travelerId: string;
   travelerName: string;
   travelerVerified: boolean;
   travelerRating: number; // 0–5
@@ -37,6 +41,7 @@ export interface Trip {
 
 export interface ParcelRequest {
   id: string;
+  senderId: string;
   senderName: string;
   senderVerified: boolean;
   fromCountry: string;
@@ -69,6 +74,7 @@ export interface TransitUpdate {
 export interface Review {
   id: string;
   matchId: string;
+  authorId: string;
   authorName: string;
   rating: number; // 1–5
   comment: string;
@@ -89,13 +95,18 @@ export const CATEGORY_LABELS: Record<ParcelCategory, string> = {
 export const STATUS_LABELS: Record<MatchStatus, string> = {
   requested: "Requested",
   accepted: "Accepted",
+  declined: "Declined",
   escrow_paid: "Terms agreed",
   picked_up: "Sealed & picked up",
   in_transit: "In transit",
   delivered: "Delivered",
   released: "Completed",
+  cancelled: "Cancelled",
+  disputed: "Disputed",
 };
 
+// The happy path shown on the progress bar. Terminal negatives
+// (declined/cancelled/disputed) sit outside it.
 export const STATUS_ORDER: MatchStatus[] = [
   "requested",
   "accepted",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -19,15 +20,10 @@ import Stars from "@/components/ui/Stars";
 import EmptyState from "@/components/ui/EmptyState";
 import Toast from "@/components/ui/Toast";
 import {
-  getTrips,
-  getParcels,
-  getMatches,
-  getReviews,
-  requestMatch,
-} from "@/lib/store";
-import { fetchSession } from "@/lib/auth";
+  fetchPersonProfile, fetchMyOpenParcels, fetchMyOpenTrips, requestMatch,
+  PersonProfile,
+} from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
-import { buildPersonProfile, PersonProfile } from "@/lib/people";
 import { ParcelRequest, Trip } from "@/lib/types";
 
 function ProfileSkeleton() {
@@ -55,6 +51,7 @@ export default function PersonProfilePage({
 }: {
   params: { slug: string };
 }) {
+  const router = useRouter();
   const gate = useContactGate();
   const [person, setPerson] = useState<PersonProfile | null>(null);
   const [ready, setReady] = useState(false);
@@ -64,33 +61,42 @@ export default function PersonProfilePage({
   const { slug } = params;
 
   useEffect(() => {
-    setPerson(
-      buildPersonProfile(slug, {
-        trips: getTrips(),
-        parcels: getParcels(),
-        matches: getMatches(),
-        reviews: getReviews(),
-      })
-    );
-    setReady(true);
+    fetchPersonProfile(slug)
+      .then(setPerson)
+      .catch(() => setPerson(null))
+      .finally(() => setReady(true));
   }, [slug]);
 
   async function handleRequest(trip: Trip) {
     if (!(await gate())) return;
-    const session = await fetchSession();
-    const myParcel = getParcels().find((p) => p.senderName === session?.name);
-    requestMatch(trip.id, myParcel?.id ?? "pending");
-    setRequestedIds((prev) => new Set(prev).add(trip.id));
-    setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
+    try {
+      const [myParcel] = await fetchMyOpenParcels();
+      if (!myParcel) {
+        router.push("/post/parcel?then=request");
+        return;
+      }
+      await requestMatch(trip.id, myParcel.id);
+      setRequestedIds((prev) => new Set(prev).add(trip.id));
+      setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
+    } catch {
+      setToast("Could not send the request — please try again.");
+    }
   }
 
   async function handleOffer(parcel: ParcelRequest) {
     if (!(await gate())) return;
-    const session = await fetchSession();
-    const myTrip = getTrips().find((t) => t.travelerName === session?.name);
-    requestMatch(myTrip?.id ?? "pending", parcel.id);
-    setRequestedIds((prev) => new Set(prev).add(parcel.id));
-    setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
+    try {
+      const [myTrip] = await fetchMyOpenTrips();
+      if (!myTrip) {
+        router.push("/post/trip?then=offer");
+        return;
+      }
+      await requestMatch(myTrip.id, parcel.id);
+      setRequestedIds((prev) => new Set(prev).add(parcel.id));
+      setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
+    } catch {
+      setToast("Could not send the offer — please try again.");
+    }
   }
 
   if (!ready) return <ProfileSkeleton />;

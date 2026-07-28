@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftRight } from "lucide-react";
 import TripCard from "@/components/TripCard";
@@ -8,12 +9,12 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getTrips, requestMatch, getParcels } from "@/lib/store";
-import { fetchSession } from "@/lib/auth";
+import { fetchTrips, fetchMyOpenParcels, requestMatch } from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
 import { Trip } from "@/lib/types";
 
 export default function TripsPage() {
+  const router = useRouter();
   const gate = useContactGate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [from, setFrom] = useState("");
@@ -23,8 +24,10 @@ export default function TripsPage() {
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setTrips(getTrips());
-    setLoaded(true);
+    fetchTrips()
+      .then(setTrips)
+      .catch(() => setToast("Could not load trips — please refresh."))
+      .finally(() => setLoaded(true));
   }, []);
 
   const filtered = useMemo(
@@ -48,12 +51,19 @@ export default function TripsPage() {
 
   async function handleRequest(trip: Trip) {
     if (!(await gate())) return;
-    const session = await fetchSession();
-    // Demo: attach the user's most recent parcel, or create the request directly.
-    const myParcel = getParcels().find((p) => p.senderName === session?.name);
-    requestMatch(trip.id, myParcel?.id ?? "pending");
-    setRequestedIds((prev) => new Set(prev).add(trip.id));
-    setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
+    try {
+      // A match links this trip to one of YOUR parcels — post one first.
+      const [myParcel] = await fetchMyOpenParcels();
+      if (!myParcel) {
+        router.push("/post/parcel?then=request");
+        return;
+      }
+      await requestMatch(trip.id, myParcel.id);
+      setRequestedIds((prev) => new Set(prev).add(trip.id));
+      setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
+    } catch {
+      setToast("Could not send the request — please try again.");
+    }
   }
 
   return (
