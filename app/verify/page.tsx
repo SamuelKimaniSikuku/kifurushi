@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, Upload,
+  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck,
 } from "lucide-react";
 import {
   fetchVerification, submitVerification, VerificationState,
 } from "@/lib/db";
 import { fetchSession } from "@/lib/auth";
-import { verificationSchema, validateUpload, zodErrors, FieldErrors } from "@/lib/validation";
+import { verificationSchema, zodErrors, FieldErrors } from "@/lib/validation";
 
 const ID_TYPES = [
   { value: "passport", label: "Passport", Icon: BookUser },
@@ -17,7 +17,7 @@ const ID_TYPES = [
   { value: "drivers_licence", label: "Driver's licence", Icon: Car },
 ];
 
-const STEPS = ["Phone", "ID document", "Selfie"];
+const STEPS = ["Phone", "Identity check"];
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -26,8 +26,6 @@ export default function VerifyPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [phone, setPhone] = useState("");
   const [idType, setIdType] = useState("");
-  const [idFile, setIdFile] = useState<File | null>(null);
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
   const [processing, setProcessing] = useState(false);
 
@@ -56,11 +54,11 @@ export default function VerifyPage() {
           <ShieldCheck className="h-8 w-8" strokeWidth={2} aria-hidden />
         </div>
         <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-          Verification submitted
+          Verification in progress
         </h1>
         <p className="mt-2 text-sm text-muted">
-          We&apos;re reviewing your details — you&apos;ll see the ✓ Verified badge
-          on your profile once it&apos;s approved, usually within a day.
+          Your identity check is being processed — the ✓ Verified badge appears
+          on your profile as soon as it&apos;s approved, usually within minutes.
         </p>
         <button
           className="btn-primary mt-6 min-h-[44px]"
@@ -102,34 +100,19 @@ export default function VerifyPage() {
     setStep(2);
   }
 
-  function nextFromStep2() {
-    const errs: FieldErrors = {};
-    if (!idType) errs.idType = "Pick an ID type";
-    const idErr = validateUpload(idFile, "ID photo");
-    if (idErr) errs.idFile = idErr;
-    if (Object.keys(errs).length) return setErrors(errs);
-    setErrors({});
-    setStep(3);
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const errs: FieldErrors = {};
-    const selfieErr = validateUpload(selfieFile, "Selfie");
-    if (selfieErr) errs.selfieFile = selfieErr;
     const parsed = verificationSchema.safeParse({ phone, idType, consent });
-    if (!parsed.success) Object.assign(errs, zodErrors(parsed.error));
-    if (Object.keys(errs).length) return setErrors(errs);
+    if (!parsed.success) return setErrors(zodErrors(parsed.error));
 
     setErrors({});
     setProcessing(true);
     try {
-      // Only the outcome row is stored; the images never leave the browser
-      // until a KYC provider is wired in.
-      setVerification(await submitVerification(phone, idType));
+      // Hand off to Didit's hosted flow — ID photo and selfie are captured
+      // there and never touch Kifurushi.
+      window.location.href = await submitVerification(phone, idType);
     } catch {
-      setErrors({ consent: "Could not submit — please try again." });
-    } finally {
+      setErrors({ consent: "Could not start the identity check — please try again." });
       setProcessing(false);
     }
   }
@@ -245,91 +228,13 @@ export default function VerifyPage() {
               </div>
               {errors.idType && <p id="idType-error" className="field-error">{errors.idType}</p>}
             </div>
-            <div>
-              <label className="field-label" htmlFor="idFile">Photo of your ID</label>
-              <label
-                htmlFor="idFile"
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed p-4 transition hover:border-forest focus-within:ring-2 focus-within:ring-leaf ${
-                  errors.idFile ? "border-danger" : "border-line-strong"
-                }`}
-              >
-                <input
-                  id="idFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic"
-                  className="sr-only"
-                  aria-invalid={!!errors.idFile}
-                  aria-describedby={errors.idFile ? "idFile-error idFile-hint" : "idFile-hint"}
-                  onChange={(e) => setIdFile(e.target.files?.[0] ?? null)}
-                />
-                <span
-                  aria-hidden
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sand-deep text-forest"
-                >
-                  <Upload className="h-[18px] w-[18px]" strokeWidth={2} />
-                </span>
-                <span className="min-w-0 truncate text-sm font-semibold text-ink">
-                  {idFile ? idFile.name : "Choose a photo of your ID"}
-                </span>
-              </label>
-              {errors.idFile && <p id="idFile-error" className="field-error">{errors.idFile}</p>}
-              <p id="idFile-hint" className="mt-1 text-xs text-muted">
-                All four corners visible, no glare. JPEG/PNG/WebP/HEIC, max 8 MB.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="btn-ghost min-h-[44px] flex-1"
-                onClick={() => setStep(1)}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="btn-primary min-h-[44px] flex-1"
-                onClick={nextFromStep2}
-              >
-                Continue
-              </button>
-            </div>
-          </>
-        )}
 
-        {step === 3 && (
-          <>
-            <div>
-              <label className="field-label" htmlFor="selfieFile">Selfie</label>
-              <label
-                htmlFor="selfieFile"
-                className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed p-4 transition hover:border-forest focus-within:ring-2 focus-within:ring-leaf ${
-                  errors.selfieFile ? "border-danger" : "border-line-strong"
-                }`}
-              >
-                <input
-                  id="selfieFile" type="file" accept="image/jpeg,image/png,image/webp,image/heic"
-                  capture="user" className="sr-only"
-                  aria-invalid={!!errors.selfieFile}
-                  aria-describedby={
-                    errors.selfieFile ? "selfieFile-error selfieFile-hint" : "selfieFile-hint"
-                  }
-                  onChange={(e) => setSelfieFile(e.target.files?.[0] ?? null)}
-                />
-                <span
-                  aria-hidden
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sand-deep text-forest"
-                >
-                  <Upload className="h-[18px] w-[18px]" strokeWidth={2} />
-                </span>
-                <span className="min-w-0 truncate text-sm font-semibold text-ink">
-                  {selfieFile ? selfieFile.name : "Take or choose a selfie"}
-                </span>
-              </label>
-              {errors.selfieFile && (
-                <p id="selfieFile-error" className="field-error">{errors.selfieFile}</p>
-              )}
-              <p id="selfieFile-hint" className="mt-1 text-xs text-muted">
-                Plain background, face uncovered — it&apos;s matched against your ID photo.
-              </p>
-            </div>
+            <p className="rounded-xl bg-sand p-4 text-xs text-muted">
+              Next you&apos;ll be taken to our identity partner{" "}
+              <b className="text-ink">Didit</b> to photograph your ID and take a
+              quick selfie. It takes about two minutes and works on any phone or
+              laptop with a camera.
+            </p>
 
             <label
               htmlFor="consent"
@@ -343,9 +248,10 @@ export default function VerifyPage() {
                 onChange={(e) => setConsent(e.target.checked)}
               />
               <span>
-                I consent to my ID and selfie being checked by Kifurushi&apos;s identity
-                partner. Images are sent directly to the verification provider and
-                are never stored by Kifurushi.
+                I consent to my ID and selfie being checked by Didit,
+                Kifurushi&apos;s identity partner. Images go directly to Didit and
+                are never stored by Kifurushi — we keep only the pass/fail
+                outcome.
               </span>
             </label>
             {errors.consent && <p id="consent-error" className="field-error">{errors.consent}</p>}
@@ -354,7 +260,7 @@ export default function VerifyPage() {
               <button
                 type="button"
                 className="btn-ghost min-h-[44px] flex-1"
-                onClick={() => setStep(2)}
+                onClick={() => setStep(1)}
                 disabled={processing}
               >
                 Back
@@ -367,10 +273,10 @@ export default function VerifyPage() {
                 {processing ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} aria-hidden />
-                    Submitting…
+                    Starting…
                   </>
                 ) : (
-                  "Submit for verification"
+                  "Start identity check"
                 )}
               </button>
             </div>

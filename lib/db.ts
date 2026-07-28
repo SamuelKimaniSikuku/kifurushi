@@ -501,9 +501,11 @@ export async function fetchPersonProfile(slug: string): Promise<PersonProfile | 
 }
 
 // ---------------------------------------------------------------------------
-// Verification — outcome rows only; images never touch our storage. The
-// pending row is resolved by the KYC provider webhook (service role), which
-// also flips profiles.id_verified.
+// Verification — Didit hosted KYC. submitVerification stores the phone,
+// asks the didit-session edge function to open a hosted session, and returns
+// the URL to redirect to. The didit-webhook function resolves the row and
+// flips profiles.id_verified when Didit approves. Images never touch our
+// storage — the whole capture happens on Didit's side.
 // ---------------------------------------------------------------------------
 
 export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
@@ -535,19 +537,25 @@ export async function fetchVerification(): Promise<VerificationState> {
   };
 }
 
+/** Returns the Didit hosted-flow URL to redirect the user to. */
 export async function submitVerification(
   phone: string,
   idType: string
-): Promise<VerificationState> {
+): Promise<string> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error("Not signed in");
 
-  const [{ error: vErr }, { error: cErr }] = await Promise.all([
-    supabase.from("verifications").insert({ user_id: uid, id_type: idType }),
-    supabase.from("private_contacts").upsert({ user_id: uid, phone }),
-  ]);
-  if (vErr) throw vErr;
+  const { error: cErr } = await supabase
+    .from("private_contacts")
+    .upsert({ user_id: uid, phone });
   if (cErr) throw cErr;
-  return fetchVerification();
+
+  const { data, error } = await supabase.functions.invoke("didit-session", {
+    body: { id_type: idType },
+  });
+  if (error) throw error;
+  const url = (data as { url?: string })?.url;
+  if (!url) throw new Error("No verification URL returned");
+  return url;
 }
