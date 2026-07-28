@@ -8,7 +8,8 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getParcels, getSession, requestMatch, getTrips } from "@/lib/store";
+import { getParcels, requestMatch, getTrips } from "@/lib/store";
+import { fetchSession } from "@/lib/auth";
 import { useContactGate } from "@/lib/useContactGate";
 import { ParcelRequest } from "@/lib/types";
 
@@ -45,9 +46,9 @@ export default function ParcelsPage() {
     setTo(from);
   }
 
-  function handleOffer(parcel: ParcelRequest) {
-    if (!gate()) return;
-    const session = getSession();
+  async function handleOffer(parcel: ParcelRequest) {
+    if (!(await gate())) return;
+    const session = await fetchSession();
     const myTrip = getTrips().find((t) => t.travelerName === session?.name);
     requestMatch(myTrip?.id ?? "pending", parcel.id);
     setRequestedIds((prev) => new Set(prev).add(parcel.id));

@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Ban } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addParcel, getSession, isVerified } from "@/lib/store";
+import { addParcel, isVerified } from "@/lib/store";
+import { useSession } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/types";
 
 const FIELD_ORDER = [
@@ -31,6 +32,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 
 export default function PostParcelPage() {
   const router = useRouter();
+  const { session, loading } = useSession();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
@@ -39,8 +41,8 @@ export default function PostParcelPage() {
   const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
-    if (!getSession()) router.replace("/auth?next=/post/parcel");
-  }, [router]);
+    if (!loading && !session) router.replace("/auth?next=/post/parcel");
+  }, [loading, session, router]);
 
   useEffect(() => {
     const d = new Date();
@@ -57,7 +59,7 @@ export default function PostParcelPage() {
       focusFirstInvalid(errs);
       return;
     }
-    const session = getSession()!;
+    if (!session) return;
     addParcel({
       ...parsed.data,
       senderName: session.name,

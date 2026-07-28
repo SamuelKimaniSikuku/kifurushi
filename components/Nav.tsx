@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, Package, X } from "lucide-react";
-import { getSession, Session } from "@/lib/store";
+import { useSession } from "@/lib/auth";
 
 const links = [
   { href: "/trips", label: "Find a traveller" },
@@ -17,11 +17,10 @@ const links = [
 
 export default function Nav() {
   const pathname = usePathname();
-  const [session, setSession] = useState<Session | null>(null);
+  const { session } = useSession();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setSession(getSession());
     setOpen(false);
   }, [pathname]);
 

@@ -2,19 +2,25 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MailCheck } from "lucide-react";
 import { signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { signIn } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 
 function AuthForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
+  const safeNext = next.startsWith("/") ? next : "/dashboard";
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmSent, setConfirmSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setAuthError(null);
     const parsed = signUpSchema.safeParse(
       mode === "signin" ? { ...form, name: form.name || "Member" } : form
     );
@@ -22,14 +28,77 @@ function AuthForm() {
       setErrors(zodErrors(parsed.error));
       return;
     }
-    signIn(parsed.data.name, parsed.data.email);
-    router.push(next.startsWith("/") ? next : "/dashboard");
+    setErrors({});
+    setSubmitting(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email: parsed.data.email,
+          password: form.password,
+          options: { data: { full_name: parsed.data.name } },
+        });
+        if (error) {
+          setAuthError(error.message);
+          return;
+        }
+        // Email confirmation on: no session until the link is clicked.
+        if (!data.session) {
+          setConfirmSent(true);
+          return;
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: parsed.data.email,
+          password: form.password,
+        });
+        if (error) {
+          setAuthError(
+            error.message === "Invalid login credentials"
+              ? "Wrong email or password. Try again, or create an account."
+              : error.message
+          );
+          return;
+        }
+      }
+      router.push(safeNext);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const passwordDescribedBy =
     [errors.password ? "password-error" : "", mode === "signup" ? "password-hint" : ""]
       .filter(Boolean)
       .join(" ") || undefined;
+
+  if (confirmSent) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-14">
+        <div className="card p-8 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sand-deep">
+            <MailCheck className="h-6 w-6 text-forest" strokeWidth={2} />
+          </span>
+          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
+            Check your email
+          </h1>
+          <p className="mt-2 text-sm text-muted">
+            We sent a confirmation link to <b className="text-ink">{form.email}</b>.
+            Click it to activate your account, then sign in.
+          </p>
+          <button
+            type="button"
+            className="btn-ghost mt-6 w-full"
+            onClick={() => {
+              setConfirmSent(false);
+              setMode("signin");
+            }}
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-md px-4 py-14">
@@ -96,8 +165,16 @@ function AuthForm() {
           )}
         </div>
 
-        <button type="submit" className="btn-primary w-full py-3">
-          {mode === "signup" ? "Create account" : "Sign in"}
+        {authError && (
+          <p role="alert" className="field-error">{authError}</p>
+        )}
+
+        <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>
+          {submitting
+            ? "One moment…"
+            : mode === "signup"
+              ? "Create account"
+              : "Sign in"}
         </button>
 
         <p className="text-center text-xs text-muted">
@@ -108,17 +185,13 @@ function AuthForm() {
             onClick={() => {
               setMode(mode === "signup" ? "signin" : "signup");
               setErrors({});
+              setAuthError(null);
             }}
           >
             {mode === "signup" ? "Sign in" : "Create an account"}
           </button>
         </p>
       </form>
-
-      <p className="mt-4 text-center text-xs text-faint">
-        Demo mode: accounts are stored only in this browser. Production uses
-        Supabase Auth with email verification and row-level security.
-      </p>
     </div>
   );
 }

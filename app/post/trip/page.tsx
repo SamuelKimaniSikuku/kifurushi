@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addTrip, getSession, isVerified } from "@/lib/store";
+import { addTrip, isVerified } from "@/lib/store";
+import { useSession } from "@/lib/auth";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
@@ -33,6 +34,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 
 export default function PostTripPage() {
   const router = useRouter();
+  const { session, loading } = useSession();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
@@ -42,8 +44,8 @@ export default function PostTripPage() {
   const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
-    if (!getSession()) router.replace("/auth?next=/post/trip");
-  }, [router]);
+    if (!loading && !session) router.replace("/auth?next=/post/trip");
+  }, [loading, session, router]);
 
   useEffect(() => {
     const d = new Date();
@@ -70,7 +72,7 @@ export default function PostTripPage() {
       focusFirstInvalid(errs);
       return;
     }
-    const session = getSession()!;
+    if (!session) return;
     addTrip({
       ...parsed.data,
       travelerName: session.name,

@@ -7,23 +7,23 @@
 
 import { useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { getSession, isMember } from "@/lib/store";
+import { fetchSession, fetchIsMember } from "@/lib/auth";
 
 /**
  * Returns a function to call before any contact action. It performs the
- * redirect itself and returns false when the user is blocked; true means the
+ * redirect itself and resolves false when the user is blocked; true means the
  * caller may proceed.
  */
-export function useContactGate(): () => boolean {
+export function useContactGate(): () => Promise<boolean> {
   const router = useRouter();
   const pathname = usePathname();
 
-  return useCallback(() => {
-    if (!getSession()) {
+  return useCallback(async () => {
+    if (!(await fetchSession())) {
       router.push(`/auth?next=${encodeURIComponent(pathname)}`);
       return false;
     }
-    if (!isMember()) {
+    if (!(await fetchIsMember())) {
       router.push("/pricing?reason=contact");
       return false;
     }

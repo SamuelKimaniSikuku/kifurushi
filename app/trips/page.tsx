@@ -8,7 +8,8 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { getTrips, getSession, requestMatch, getParcels } from "@/lib/store";
+import { getTrips, requestMatch, getParcels } from "@/lib/store";
+import { fetchSession } from "@/lib/auth";
 import { useContactGate } from "@/lib/useContactGate";
 import { Trip } from "@/lib/types";
 
@@ -45,9 +46,9 @@ export default function TripsPage() {
     setTo(from);
   }
 
-  function handleRequest(trip: Trip) {
-    if (!gate()) return;
-    const session = getSession();
+  async function handleRequest(trip: Trip) {
+    if (!(await gate())) return;
+    const session = await fetchSession();
     // Demo: attach the user's most recent parcel, or create the request directly.
     const myParcel = getParcels().find((p) => p.senderName === session?.name);
     requestMatch(trip.id, myParcel?.id ?? "pending");

@@ -20,11 +20,6 @@ const KEYS = {
   seeded: "kifurushi.seeded.v1",
 };
 
-export interface Session {
-  name: string;
-  email: string;
-}
-
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -320,47 +315,6 @@ export function isVerified(): boolean {
   return getVerification().status === "verified";
 }
 
-// ---- Membership (one price, every role) ----
-// One $29/year membership covers sending, receiving and travelling.
-// Demo: joining is instant. Production: Stripe Billing / Paystack / Flutterwave
-// subscription, with the webhook (service role) flipping the status.
-export type BillingPlan = "monthly" | "yearly";
-
-export interface Membership {
-  status: "free" | "member";
-  since: string | null;
-  plan?: BillingPlan;
-}
-
-export function getMembership(): Membership {
-  return read<Membership>(KEYS.membership, { status: "free", since: null });
-}
-
-export function joinMembership(plan: BillingPlan = "yearly"): Membership {
-  const m: Membership = {
-    status: "member",
-    since: new Date().toISOString(),
-    plan,
-  };
-  write(KEYS.membership, m);
-  return m;
-}
-
-export function isMember(): boolean {
-  return getMembership().status === "member";
-}
-
-// ---- Session (demo auth) ----
-export function getSession(): Session | null {
-  return read<Session | null>(KEYS.session, null);
-}
-
-export function signIn(name: string, email: string): Session {
-  const s = { name, email };
-  write(KEYS.session, s);
-  return s;
-}
-
-export function signOut() {
-  localStorage.removeItem(KEYS.session);
-}
+// Session and membership moved to lib/auth.ts (real Supabase auth +
+// public.memberships). Trips/parcels/matches below are still demo-local and
+// migrate next.

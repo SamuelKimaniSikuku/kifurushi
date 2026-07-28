@@ -23,9 +23,9 @@ import {
   getParcels,
   getMatches,
   getReviews,
-  getSession,
   requestMatch,
 } from "@/lib/store";
+import { fetchSession } from "@/lib/auth";
 import { useContactGate } from "@/lib/useContactGate";
 import { buildPersonProfile, PersonProfile } from "@/lib/people";
 import { ParcelRequest, Trip } from "@/lib/types";
@@ -75,18 +75,18 @@ export default function PersonProfilePage({
     setReady(true);
   }, [slug]);
 
-  function handleRequest(trip: Trip) {
-    if (!gate()) return;
-    const session = getSession();
+  async function handleRequest(trip: Trip) {
+    if (!(await gate())) return;
+    const session = await fetchSession();
     const myParcel = getParcels().find((p) => p.senderName === session?.name);
     requestMatch(trip.id, myParcel?.id ?? "pending");
     setRequestedIds((prev) => new Set(prev).add(trip.id));
     setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
   }
 
-  function handleOffer(parcel: ParcelRequest) {
-    if (!gate()) return;
-    const session = getSession();
+  async function handleOffer(parcel: ParcelRequest) {
+    if (!(await gate())) return;
+    const session = await fetchSession();
     const myTrip = getTrips().find((t) => t.travelerName === session?.name);
     requestMatch(myTrip?.id ?? "pending", parcel.id);
     setRequestedIds((prev) => new Set(prev).add(parcel.id));

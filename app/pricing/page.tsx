@@ -14,8 +14,8 @@ import {
   X,
 } from "lucide-react";
 import {
-  getSession, getMembership, joinMembership, BillingPlan, Membership,
-} from "@/lib/store";
+  fetchSession, fetchMembership, joinMembership, BillingPlan, Membership,
+} from "@/lib/auth";
 
 const PLANS: {
   key: BillingPlan;
@@ -102,17 +102,27 @@ function FeatureList({ items }: { items: string[] }) {
 export default function PricingPage() {
   const router = useRouter();
   const [membership, setMembership] = useState<Membership | null>(null);
+  const [joining, setJoining] = useState<BillingPlan | null>(null);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMembership(getMembership());
+    fetchMembership().then(setMembership);
   }, []);
 
-  function join(plan: BillingPlan) {
-    if (!getSession()) {
+  async function join(plan: BillingPlan) {
+    setJoinError(null);
+    if (!(await fetchSession())) {
       router.push("/auth?next=/pricing");
       return;
     }
-    setMembership(joinMembership(plan));
+    setJoining(plan);
+    try {
+      setMembership(await joinMembership(plan));
+    } catch {
+      setJoinError("Could not activate your membership. Please try again.");
+    } finally {
+      setJoining(null);
+    }
   }
 
   const isMember = membership?.status === "member";
@@ -202,11 +212,18 @@ export default function PricingPage() {
                   <>
                     <button
                       onClick={() => join(p.key)}
+                      disabled={joining !== null}
                       className={`${highlighted ? "btn-accent btn-lg" : "btn-primary"} w-full`}
                     >
-                      Join for {p.price}
-                      {p.period}
+                      {joining === p.key
+                        ? "Activating…"
+                        : `Join for ${p.price}${p.period}`}
                     </button>
+                    {joinError && (
+                      <p role="alert" className="mt-3 text-center text-xs text-danger">
+                        {joinError}
+                      </p>
+                    )}
                     <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-faint">
                       <Lock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                       Secure checkout - cancel anytime

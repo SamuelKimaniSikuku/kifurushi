@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Hand, IdCard, Package, PackageSearch, Plane, Star } from "lucide-react";
 import {
-  getSession, signOut, getMatches, getTrips, getParcels, getVerification,
-  getMembership, Session,
+  getMatches, getTrips, getParcels, getVerification,
 } from "@/lib/store";
+import {
+  fetchSession, fetchMembership, signOut, Session, Membership,
+} from "@/lib/auth";
 import { Match } from "@/lib/types";
 import { label } from "@/lib/countries";
 import MatchCard from "@/components/MatchCard";
@@ -39,18 +41,27 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
+  const [membership, setMembership] = useState<Membership | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const s = getSession();
-    if (!s) {
-      router.replace("/auth?next=/dashboard");
-      return;
-    }
-    setSession(s);
-    setMatches(getMatches());
-    setReady(true);
+    let mounted = true;
+    (async () => {
+      const s = await fetchSession();
+      if (!mounted) return;
+      if (!s) {
+        router.replace("/auth?next=/dashboard");
+        return;
+      }
+      setSession(s);
+      setMatches(getMatches());
+      setReady(true);
+      setMembership(await fetchMembership());
+    })();
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   if (!ready || !session) return <DashboardSkeleton />;
@@ -76,21 +87,21 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-sm text-muted">
             {session.email}
-            {getMembership().status === "member" ? (
+            {membership?.status === "member" ? (
               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-0.5 align-middle text-[11px] font-bold text-white">
                 <Star size={12} strokeWidth={2} className="fill-gold stroke-gold" aria-hidden />
                 Member
               </span>
-            ) : (
+            ) : membership ? (
               <Link href="/pricing" className="ml-2 inline-flex items-center rounded-full bg-sand-deep px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest underline">
                 Free plan — join from $5/mo
               </Link>
-            )}
+            ) : null}
           </p>
         </div>
         <button
           className="btn-ghost"
-          onClick={() => { signOut(); router.push("/"); }}
+          onClick={async () => { await signOut(); router.push("/"); }}
         >
           Sign out
         </button>

@@ -6,9 +6,9 @@ import {
   BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, Upload,
 } from "lucide-react";
 import {
-  getSession, getVerification, submitVerification, approveVerification,
-  Verification,
+  getVerification, submitVerification, approveVerification, Verification,
 } from "@/lib/store";
+import { fetchSession } from "@/lib/auth";
 import { verificationSchema, validateUpload, zodErrors, FieldErrors } from "@/lib/validation";
 
 const ID_TYPES = [
@@ -32,11 +32,18 @@ export default function VerifyPage() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    if (!getSession()) {
-      router.replace("/auth?next=/verify");
-      return;
-    }
-    setVerification(getVerification());
+    let mounted = true;
+    fetchSession().then((s) => {
+      if (!mounted) return;
+      if (!s) {
+        router.replace("/auth?next=/verify");
+        return;
+      }
+      setVerification(getVerification());
+    });
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 
   if (!verification) return null;
