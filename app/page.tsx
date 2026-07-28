@@ -107,6 +107,10 @@ export default function Home() {
                 abroad with verified travellers who have spare luggage space —
                 faster than post, cheaper than courier, and we never take a cut.
               </p>
+              <p className="mt-6 max-w-xl font-display text-2xl font-bold tracking-tight text-gold md:text-3xl">
+                Flying home? Your spare kilos can earn you $100+ per trip —
+                and you keep every cent.
+              </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                   href="/post/parcel"
