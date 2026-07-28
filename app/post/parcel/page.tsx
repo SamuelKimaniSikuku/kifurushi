@@ -9,6 +9,12 @@ import { addParcel } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/types";
 
+// What a courier typically charges per kg on Africa ↔ diaspora routes, and
+// the range travellers usually ask — powers the budget guidance below.
+const COURIER_RATE_PER_KG = 14;
+const TRAVELLER_RATE_LOW = 7;
+const TRAVELLER_RATE_HIGH = 12;
+
 const FIELD_ORDER = [
   "fromCountry",
   "fromCity",
@@ -78,6 +84,28 @@ export default function PostParcelPage() {
       setSubmitting(false);
     }
   }
+
+  // Budget guidance: what travellers usually ask for this weight, and what a
+  // courier would charge, so the sender can judge their budget in context.
+  const weightNum = parseFloat(form.weightKg);
+  const budgetNum = parseFloat(form.budgetUsd);
+  const rateGuide =
+    Number.isFinite(weightNum) && weightNum > 0
+      ? {
+          kg: weightNum,
+          low: Math.round(weightNum * TRAVELLER_RATE_LOW),
+          high: Math.round(weightNum * TRAVELLER_RATE_HIGH),
+        }
+      : null;
+  const comparison =
+    rateGuide && Number.isFinite(budgetNum) && budgetNum > 0
+      ? {
+          kg: weightNum,
+          budget: Math.round(budgetNum),
+          courier: Math.round(weightNum * COURIER_RATE_PER_KG),
+          savings: Math.round(weightNum * COURIER_RATE_PER_KG - budgetNum),
+        }
+      : null;
 
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -199,8 +227,34 @@ export default function PostParcelPage() {
             {errors.budgetUsd && (
               <p id="budgetUsd-error" className="field-error">{errors.budgetUsd}</p>
             )}
+            {rateGuide && (
+              <p id="budgetUsd-hint" className="mt-1 text-xs text-muted">
+                Travellers typically ask ${rateGuide.low}–{rateGuide.high} for{" "}
+                {rateGuide.kg} kg.
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Live budget vs courier comparison */}
+        {comparison && (
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
+            <span className="font-semibold text-forest">
+              A courier would charge ~${comparison.courier} for {comparison.kg} kg
+            </span>
+            {comparison.savings > 0 ? (
+              <span className="text-muted">
+                At your ${comparison.budget} budget you&apos;d save ~$
+                {comparison.savings}
+              </span>
+            ) : (
+              <span className="text-muted">
+                Your budget is above courier rates — most travellers will take
+                this route for less
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Extras */}
         <div className="mt-6 space-y-5 border-t border-line pt-5">
