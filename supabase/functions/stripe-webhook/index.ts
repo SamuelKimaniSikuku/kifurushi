@@ -125,9 +125,21 @@ Deno.serve(async (req) => {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const userId = session.client_reference_id;
     const subId = session.subscription;
-    if (!userId || !subId) return respond({ ok: true, ignored: "no user/sub" });
+    let userId = session.client_reference_id;
+    // Payment-link purchases carry no user id — fall back to matching the
+    // payer's email against the auth users (service-role-only lookup).
+    if (!userId) {
+      const email = session.customer_details?.email ?? session.customer_email;
+      if (email) {
+        const { data } = await admin.rpc("user_id_by_email", { p_email: email });
+        userId = data ?? null;
+      }
+    }
+    if (!userId || !subId) {
+      console.error("unattributable checkout session", session.id);
+      return respond({ ok: true, ignored: "no user/sub" });
+    }
 
     const sub = await fetchSubscription(subId);
     const plan = planFromPrice(sub.items?.data?.[0]?.price);
