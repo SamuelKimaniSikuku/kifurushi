@@ -99,14 +99,15 @@ export default function Home() {
                 ALL 54 AFRICAN COUNTRIES · 22 DIASPORA DESTINATIONS
               </span>
               <h1 className="max-w-xl font-display text-4xl font-bold tracking-tight md:text-6xl">
-                Flying home? Your spare kilos are worth{" "}
-                <span className="text-gold">$100+ every trip</span>
+                Make money{" "}
+                <span className="text-gold">while travelling home</span>
               </h1>
               <p className="mt-5 max-w-xl text-base text-white/75 md:text-lg">
-                Carry parcels for people sending things between Africa and
-                abroad — you keep 100% of what you charge, Kifurushi takes no
-                cut. And when you&apos;re the one sending, your parcel travels
-                with a verified traveller who&apos;s already going home.
+                Your spare kilos are worth $100+ every trip. Carry parcels for
+                people sending things between Africa and abroad — you keep 100%
+                of what you charge, Kifurushi takes no cut. And when
+                you&apos;re the one sending, your parcel travels with a
+                verified traveller who&apos;s already going home.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
