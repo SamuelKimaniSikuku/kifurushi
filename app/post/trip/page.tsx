@@ -11,6 +11,10 @@ import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 
+// What senders typically pay a courier per kg on Africa ↔ diaspora routes —
+// baseline for the earnings/savings comparison shown on the form.
+const COURIER_RATE_PER_KG = 14;
+
 const FIELD_ORDER = [
   "fromCountry",
   "fromCity",
@@ -91,6 +95,17 @@ export default function PostTripPage() {
       setSubmitting(false);
     }
   }
+
+  // Live earnings maths for the comparison band. Courier baseline matches
+  // the marketing copy (5 kg London→Lagos runs $50–80 by courier).
+  const spaceNum = parseFloat(form.spaceKg);
+  const priceNum = parseFloat(form.pricePerKg);
+  const valid =
+    Number.isFinite(spaceNum) && spaceNum > 0 &&
+    Number.isFinite(priceNum) && priceNum > 0;
+  const earnings = valid ? Math.round(spaceNum * priceNum) : 0;
+  const courierCost = valid ? Math.round(spaceNum * COURIER_RATE_PER_KG) : 0;
+  const senderSavings = Math.max(0, courierCost - earnings);
 
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -212,8 +227,26 @@ export default function PostTripPage() {
             {errors.pricePerKg && (
               <p id="pricePerKg-error" className="field-error">{errors.pricePerKg}</p>
             )}
+            <p id="pricePerKg-hint" className="mt-1 text-xs text-muted">
+              Most travellers charge $7–12/kg. Couriers average ~${COURIER_RATE_PER_KG}/kg.
+            </p>
           </div>
         </div>
+
+        {/* Live earnings vs courier comparison */}
+        {earnings > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
+            <span className="font-semibold text-forest">
+              You&apos;d earn ~${earnings} on this trip
+            </span>
+            {senderSavings > 0 && (
+              <span className="text-muted">
+                Senders pay ~${courierCost} for the same weight by courier —
+                they save ~${senderSavings} with you
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Extras */}
         <div className="mt-6 space-y-5 border-t border-line pt-5">
