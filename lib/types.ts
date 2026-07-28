@@ -71,6 +71,15 @@ export interface TransitUpdate {
   createdAt: string;
 }
 
+export interface Message {
+  id: string;
+  matchId: string;
+  senderId: string;
+  senderName: string;
+  body: string;
+  createdAt: string;
+}
+
 export interface Review {
   id: string;
   matchId: string;

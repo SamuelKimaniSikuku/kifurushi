@@ -8,6 +8,7 @@
 import { supabase } from "./supabase";
 import {
   Trip, ParcelRequest, MatchStatus, ParcelCategory, TransitUpdate, Review,
+  Message,
 } from "./types";
 import { personSlug } from "./people";
 
@@ -385,6 +386,50 @@ export async function addTransitUpdate(matchId: string, note: string): Promise<v
     match_id: matchId,
     author_id: uid,
     note,
+  });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Messages — match-scoped chat. RLS: only the two parties can read, only
+// active members can send, and the log is immutable.
+// ---------------------------------------------------------------------------
+
+export async function fetchMessages(matchId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select(
+      "id, match_id, sender_id, body, created_at, sender:profiles!messages_sender_id_fkey(full_name)"
+    )
+    .eq("match_id", matchId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  interface MessageRow {
+    id: string;
+    match_id: string;
+    sender_id: string;
+    body: string;
+    created_at: string;
+    sender: { full_name: string } | null;
+  }
+  return ((data ?? []) as unknown as MessageRow[]).map((r) => ({
+    id: r.id,
+    matchId: r.match_id,
+    senderId: r.sender_id,
+    senderName: r.sender?.full_name ?? "Member",
+    body: r.body,
+    createdAt: r.created_at,
+  }));
+}
+
+export async function sendMessage(matchId: string, body: string): Promise<void> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  if (!uid) throw new Error("Not signed in");
+  const { error } = await supabase.from("messages").insert({
+    match_id: matchId,
+    sender_id: uid,
+    body,
   });
   if (error) throw error;
 }

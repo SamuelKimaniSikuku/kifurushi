@@ -1,17 +1,167 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { Copy, KeyRound, Plane, Send, Star } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus,
+  ChevronDown, Copy, KeyRound, MessageSquare, Plane, Send, Star,
+} from "lucide-react";
+import {
+  STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
 } from "@/lib/types";
 import {
   MatchDetail, respondMatch, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
+  fetchMessages, sendMessage,
 } from "@/lib/db";
-import { transitUpdateSchema, reviewSchema } from "@/lib/validation";
+import { transitUpdateSchema, reviewSchema, messageSchema } from "@/lib/validation";
 import Stars from "@/components/ui/Stars";
+
+const CHAT_POLL_MS = 5000;
+
+function ChatPanel({
+  matchId,
+  myUserId,
+  counterpartyName,
+}: {
+  matchId: string;
+  myUserId: string;
+  counterpartyName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Poll while the panel is open so the other side's messages appear.
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    const load = () =>
+      fetchMessages(matchId)
+        .then((m) => {
+          if (live) setMessages(m);
+        })
+        .catch(() => {});
+    load();
+    const t = setInterval(load, CHAT_POLL_MS);
+    return () => {
+      live = false;
+      clearInterval(t);
+    };
+  }, [open, matchId]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, open]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const parsed = messageSchema.safeParse(draft);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Invalid message");
+      return;
+    }
+    if (sending) return;
+    setSending(true);
+    setError("");
+    try {
+      await sendMessage(matchId, parsed.data);
+      setDraft("");
+      setMessages(await fetchMessages(matchId));
+    } catch {
+      setError("Could not send — please try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-xl bg-sand p-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 rounded text-xs font-semibold uppercase tracking-[0.18em] text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
+      >
+        <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+        Messages
+        <ChevronDown
+          className={`ml-auto h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          strokeWidth={2}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <>
+          <div
+            ref={scrollRef}
+            className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1"
+            aria-live="polite"
+          >
+            {messages.length === 0 ? (
+              <p className="text-xs text-faint">
+                No messages yet — agree the handover details with{" "}
+                {counterpartyName} here.
+              </p>
+            ) : (
+              messages.map((m) => {
+                const mine = m.senderId === myUserId;
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
+                        mine
+                          ? "rounded-br-md bg-forest text-white"
+                          : "rounded-bl-md bg-white text-ink"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                      <p
+                        className={`mt-0.5 text-[10px] ${mine ? "text-white/60" : "text-faint"}`}
+                      >
+                        {new Date(m.createdAt).toLocaleString(undefined, {
+                          day: "numeric", month: "short",
+                          hour: "2-digit", minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <form onSubmit={submit} className="mt-3 flex gap-2">
+            <input
+              aria-label={`Message ${counterpartyName}`}
+              className={`field flex-1 ${error ? "field-invalid" : ""}`}
+              placeholder={`Message ${counterpartyName}…`}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              maxLength={2000}
+            />
+            <button
+              type="submit"
+              className="btn-primary min-h-[44px] shrink-0"
+              disabled={sending}
+            >
+              <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+              Send
+            </button>
+          </form>
+          {error && <p className="field-error">{error}</p>}
+        </>
+      )}
+    </div>
+  );
+}
 
 const TERMINAL_NEGATIVE: MatchStatus[] = ["declined", "cancelled", "disputed"];
 
@@ -406,6 +556,15 @@ export default function MatchCard({
           {match.status === "disputed" &&
             "This delivery is disputed — support has the full record."}
         </p>
+      )}
+
+      {/* Match-scoped chat — everywhere except dead matches */}
+      {match.status !== "declined" && match.status !== "cancelled" && (
+        <ChatPanel
+          matchId={match.id}
+          myUserId={myUserId}
+          counterpartyName={match.counterpartyName}
+        />
       )}
 
       {/* Journey updates: visible from pickup onward */}

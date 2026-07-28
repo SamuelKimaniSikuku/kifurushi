@@ -81,6 +81,12 @@ export const signUpSchema = z.object({
     .regex(/[0-9]/, "Add a number"),
 });
 
+export const messageSchema = z
+  .string()
+  .trim()
+  .min(1, "Message is empty")
+  .max(2000, "Keep messages under 2,000 characters");
+
 export const transitUpdateSchema = z
   .string()
   .trim()
