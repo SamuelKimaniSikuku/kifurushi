@@ -7,6 +7,7 @@ import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { addTrip } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
@@ -39,6 +40,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 export default function PostTripPage() {
   const router = useRouter();
   const { session, loading } = useSession();
+  const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
@@ -80,7 +82,7 @@ export default function PostTripPage() {
       return;
     }
     if (cats.length === 0) {
-      const errs = { cats: "Pick at least one category you'll accept" };
+      const errs = { cats: t.postTrip.categoriesError };
       setErrors(errs);
       focusFirstInvalid(errs);
       return;
@@ -91,7 +93,7 @@ export default function PostTripPage() {
       await addTrip({ ...parsed.data, categoriesAccepted: cats });
       router.push("/trips");
     } catch {
-      setErrors({ _submit: "Could not post your trip — please try again." });
+      setErrors({ _submit: t.postTrip.submitError });
       setSubmitting(false);
     }
   }
@@ -118,17 +120,17 @@ export default function PostTripPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        Post a trip
+        {t.postTrip.title}
       </h1>
       <p className="mt-2 text-sm text-muted">
-        Tell senders where you&apos;re flying and how much space you have.
+        {t.postTrip.sub}
       </p>
 
       <form onSubmit={submit} className="card mt-6 p-6 sm:p-8" noValidate>
         {/* Location */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="fromCountry" className="field-label">From country</label>
+            <label htmlFor="fromCountry" className="field-label">{t.postTrip.fromCountry}</label>
             <div className={errors.fromCountry ? "[&>select]:border-danger" : undefined}>
               <CountrySelect id="fromCountry" value={form.fromCountry} onChange={set("fromCountry")} />
             </div>
@@ -137,13 +139,13 @@ export default function PostTripPage() {
             )}
           </div>
           <div>
-            <label htmlFor="fromCity" className="field-label">From city</label>
+            <label htmlFor="fromCity" className="field-label">{t.postTrip.fromCity}</label>
             <input
               id="fromCity"
               className={cls("fromCity")}
               value={form.fromCity}
               onChange={(e) => set("fromCity")(e.target.value)}
-              placeholder="e.g. London"
+              placeholder={t.postTrip.cityFromPlaceholder}
               {...err("fromCity")}
             />
             {errors.fromCity && (
@@ -151,7 +153,7 @@ export default function PostTripPage() {
             )}
           </div>
           <div>
-            <label htmlFor="toCountry" className="field-label">To country</label>
+            <label htmlFor="toCountry" className="field-label">{t.postTrip.toCountry}</label>
             <div className={errors.toCountry ? "[&>select]:border-danger" : undefined}>
               <CountrySelect id="toCountry" value={form.toCountry} onChange={set("toCountry")} />
             </div>
@@ -160,13 +162,13 @@ export default function PostTripPage() {
             )}
           </div>
           <div>
-            <label htmlFor="toCity" className="field-label">To city</label>
+            <label htmlFor="toCity" className="field-label">{t.postTrip.toCity}</label>
             <input
               id="toCity"
               className={cls("toCity")}
               value={form.toCity}
               onChange={(e) => set("toCity")(e.target.value)}
-              placeholder="e.g. Lagos"
+              placeholder={t.postTrip.cityToPlaceholder}
               {...err("toCity")}
             />
             {errors.toCity && (
@@ -178,7 +180,7 @@ export default function PostTripPage() {
         {/* Details */}
         <div className="mt-6 grid gap-4 border-t border-line pt-5 sm:grid-cols-3">
           <div>
-            <label htmlFor="departDate" className="field-label">Departure date</label>
+            <label htmlFor="departDate" className="field-label">{t.postTrip.departureDate}</label>
             <input
               id="departDate"
               type="date"
@@ -193,7 +195,7 @@ export default function PostTripPage() {
             )}
           </div>
           <div>
-            <label htmlFor="spaceKg" className="field-label">Space (kg)</label>
+            <label htmlFor="spaceKg" className="field-label">{t.postTrip.space}</label>
             <input
               id="spaceKg"
               type="number"
@@ -211,7 +213,7 @@ export default function PostTripPage() {
             )}
           </div>
           <div>
-            <label htmlFor="pricePerKg" className="field-label">Price per kg (USD)</label>
+            <label htmlFor="pricePerKg" className="field-label">{t.postTrip.pricePerKg}</label>
             <input
               id="pricePerKg"
               type="number"
@@ -228,7 +230,7 @@ export default function PostTripPage() {
               <p id="pricePerKg-error" className="field-error">{errors.pricePerKg}</p>
             )}
             <p id="pricePerKg-hint" className="mt-1 text-xs text-muted">
-              Most travellers charge $7–12/kg. Couriers average ~${COURIER_RATE_PER_KG}/kg.
+              {t.postTrip.priceHint(COURIER_RATE_PER_KG)}
             </p>
           </div>
         </div>
@@ -237,12 +239,11 @@ export default function PostTripPage() {
         {earnings > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
             <span className="font-semibold text-forest">
-              You&apos;d earn ~${earnings} on this trip
+              {t.postTrip.earnBand(earnings)}
             </span>
             {senderSavings > 0 && (
               <span className="text-muted">
-                Senders pay ~${courierCost} for the same weight by courier —
-                they save ~${senderSavings} with you
+                {t.postTrip.saveBand(courierCost, senderSavings)}
               </span>
             )}
           </div>
@@ -251,7 +252,7 @@ export default function PostTripPage() {
         {/* Extras */}
         <div className="mt-6 space-y-5 border-t border-line pt-5">
           <div>
-            <span id="cats-label" className="field-label">Categories you&apos;ll accept</span>
+            <span id="cats-label" className="field-label">{t.postTrip.categoriesLabel}</span>
             <div
               id="cats"
               tabIndex={-1}
@@ -286,13 +287,13 @@ export default function PostTripPage() {
           </div>
 
           <div>
-            <label htmlFor="notes" className="field-label">Notes (optional)</label>
+            <label htmlFor="notes" className="field-label">{t.postTrip.notes}</label>
             <textarea
               id="notes"
               className={`${cls("notes")} min-h-[80px]`}
               value={form.notes}
               onChange={(e) => set("notes")(e.target.value)}
-              placeholder="Airline, pickup arrangements, anything senders should know…"
+              placeholder={t.postTrip.notesPlaceholder}
               {...err("notes")}
             />
             {errors.notes && (
@@ -304,9 +305,8 @@ export default function PostTripPage() {
         <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-sand-deep px-4 py-3 text-xs leading-relaxed text-muted">
           <ShieldCheck size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-forest" />
           <p>
-            You&apos;ll inspect and co-seal every parcel before carrying it. Never
-            accept a sealed package you haven&apos;t seen inside — see{" "}
-            <a href="/safety" className="font-semibold underline">traveller safety rules</a>.
+            {t.postTrip.safetyNote}{" "}
+            <a href="/safety" className="font-semibold underline">{t.postTrip.safetyLink}</a>.
           </p>
         </div>
 
@@ -314,7 +314,7 @@ export default function PostTripPage() {
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-primary mt-6 w-full py-3" disabled={submitting}>
-          {submitting ? "Publishing…" : "Publish trip"}
+          {submitting ? t.postTrip.publishing : t.postTrip.publish}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

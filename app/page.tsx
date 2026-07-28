@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useT } from "@/lib/i18n";
 import {
   ArrowRight,
   BadgeCheck,
@@ -14,71 +17,28 @@ import {
 } from "lucide-react";
 
 const corridors = [
-  { from: "🇬🇧 London", to: "🇳🇬 Lagos", price: "from $8/kg" },
-  { from: "🇫🇷 Paris", to: "🇸🇳 Dakar", price: "from $7/kg" },
-  { from: "🇺🇸 Atlanta", to: "🇰🇪 Nairobi", price: "from $10/kg" },
-  { from: "🇦🇪 Dubai", to: "🇪🇬 Cairo", price: "from $6/kg" },
-  { from: "🇩🇪 Frankfurt", to: "🇬🇭 Accra", price: "from $8/kg" },
-  { from: "🇨🇦 Toronto", to: "🇪🇹 Addis Ababa", price: "from $11/kg" },
-  { from: "🇿🇦 Joburg", to: "🇬🇧 Manchester", price: "from $9/kg" },
-  { from: "🇳🇬 Lagos", to: "🇺🇸 Chicago", price: "from $12/kg" },
+  { from: "🇬🇧 London", to: "🇳🇬 Lagos", price: "$8" },
+  { from: "🇫🇷 Paris", to: "🇸🇳 Dakar", price: "$7" },
+  { from: "🇺🇸 Atlanta", to: "🇰🇪 Nairobi", price: "$10" },
+  { from: "🇦🇪 Dubai", to: "🇪🇬 Cairo", price: "$6" },
+  { from: "🇩🇪 Frankfurt", to: "🇬🇭 Accra", price: "$8" },
+  { from: "🇨🇦 Toronto", to: "🇪🇹 Addis Ababa", price: "$11" },
+  { from: "🇿🇦 Joburg", to: "🇬🇧 Manchester", price: "$9" },
+  { from: "🇳🇬 Lagos", to: "🇺🇸 Chicago", price: "$12" },
 ];
 
-const steps = [
-  {
-    n: "1",
-    title: "Post or find",
-    body: "Senders post what they need moved; travellers post spare suitcase space on upcoming flights.",
-  },
-  {
-    n: "2",
-    title: "Match & verify",
-    body: "We match routes and dates. Both sides see ID-verification status, ratings and delivery history before agreeing.",
-  },
-  {
-    n: "3",
-    title: "Agree & seal",
-    body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with a photo log.",
-  },
-  {
-    n: "4",
-    title: "Deliver & confirm",
-    body: "The receiver confirms delivery with a one-time code, which completes the record and unlocks reviews for both sides.",
-  },
-];
-
-const trustItems: Array<[typeof HeartHandshake, string]> = [
-  [HeartHandshake, "0% commission — travellers keep everything"],
-  [BadgeCheck, "Government-ID verification"],
-  [KeyRound, "One-time delivery codes"],
-  [Star, "Two-way ratings"],
-  [Ban, "Prohibited-items screening"],
-];
-
-const securityPoints: Array<[typeof ShieldCheck, string, string]> = [
-  [
-    ShieldCheck,
-    "Your money stays yours",
-    "Carriage fees are paid directly between sender and traveller — Kifurushi takes 0% and never holds your money.",
-  ],
-  [
-    BadgeCheck,
-    "Verified identities",
-    "Travellers upload government ID and a selfie check before their first carry.",
-  ],
-  [
-    PackageCheck,
-    "Sealed & inspected",
-    "Travellers inspect every item before sealing it together with the sender — no carrying unknowns.",
-  ],
-  [
-    KeyRound,
-    "One-time delivery codes",
-    "The receiver gets a 6-digit code; entering it completes the delivery record both sides rely on.",
-  ],
-];
+const TRUST_ICONS = [HeartHandshake, BadgeCheck, KeyRound, Star, Ban];
+const SECURITY_ICONS = [ShieldCheck, BadgeCheck, PackageCheck, KeyRound];
 
 export default function Home() {
+  const t = useT();
+  const steps = t.home.steps.map((s, i) => ({ n: String(i + 1), ...s }));
+  const trustItems = t.home.trustItems.map(
+    (label, i) => [TRUST_ICONS[i], label] as const
+  );
+  const securityPoints = t.home.securityPoints.map(
+    (p, i) => [SECURITY_ICONS[i], p.title, p.body] as const
+  );
   return (
     <>
       {/* Hero */}
@@ -96,18 +56,14 @@ export default function Home() {
             {/* Left: copy */}
             <div>
               <span className="mb-5 inline-flex items-center rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-gold [background:color-mix(in_srgb,var(--gold)_10%,transparent)] [border-color:color-mix(in_srgb,var(--gold)_40%,transparent)]">
-                ALL 54 AFRICAN COUNTRIES · 22 DIASPORA DESTINATIONS
+                {t.home.badge}
               </span>
               <h1 className="max-w-xl font-display text-4xl font-bold tracking-tight md:text-6xl">
-                Make money{" "}
-                <span className="text-gold">while travelling home</span>
+                {t.home.h1a}{" "}
+                <span className="text-gold">{t.home.h1b}</span>
               </h1>
               <p className="mt-5 max-w-xl text-base text-white/75 md:text-lg">
-                Your spare kilos are worth $100+ every trip. Carry parcels for
-                people sending things between Africa and abroad — you keep 100%
-                of what you charge, Kifurushi takes no cut. And when
-                you&apos;re the one sending, your parcel travels with a
-                verified traveller who&apos;s already going home.
+                {t.home.intro}
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
@@ -115,14 +71,14 @@ export default function Home() {
                   className="btn-accent btn-lg w-full sm:w-auto sm:whitespace-nowrap"
                 >
                   <Plane className="h-5 w-5" strokeWidth={2} aria-hidden />
-                  I&apos;m travelling — earn from my luggage
+                  {t.home.ctaTravel}
                 </Link>
                 <Link
                   href="/post/parcel"
                   className="btn-outline-inverse btn-lg w-full sm:w-auto sm:whitespace-nowrap"
                 >
                   <Package className="h-5 w-5" strokeWidth={2} aria-hidden />
-                  Send a parcel
+                  {t.home.ctaSend}
                 </Link>
               </div>
             </div>
@@ -143,7 +99,7 @@ export default function Home() {
                           strokeWidth={2}
                           aria-hidden
                         />
-                        Verified
+                        {t.home.verified}
                       </span>
                     </div>
                     <div className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-muted">
@@ -171,19 +127,19 @@ export default function Home() {
                 </div>
                 <div className="mt-3 flex items-center gap-2 text-sm text-muted">
                   <Calendar className="h-4 w-4" strokeWidth={2} aria-hidden />
-                  departs Sun 2 Aug
+                  {t.home.departs}
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
                   <div className="font-display text-2xl font-extrabold">
                     $9<span className="text-base font-bold">/kg</span>
                   </div>
-                  <span className="chip">18 kg free</span>
+                  <span className="chip">{t.home.kgFree}</span>
                 </div>
                 <span
                   aria-hidden
                   className="btn-accent pointer-events-none mt-4 w-full"
                 >
-                  Request this traveller
+                  {t.home.requestTraveller}
                 </span>
               </div>
             </div>
@@ -192,10 +148,10 @@ export default function Home() {
           {/* Stats */}
           <div className="mt-14 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             {[
-              ["54", "African countries"],
-              ["3–7 days", "typical delivery"],
-              ["$5/mo", "or $29/yr — 0% commission"],
-              ["ID + code", "verified handover"],
+              ["54", t.home.statCountries],
+              [t.home.statDeliveryValue, t.home.statDelivery],
+              ["$5/mo", t.home.statPrice],
+              [t.home.statHandoverValue, t.home.statHandover],
             ].map(([n, l]) => (
               <div key={l} className="rounded-2xl bg-white/5 px-4 py-4">
                 <div className="font-display text-2xl font-bold text-gold">
@@ -232,14 +188,13 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 py-16 md:py-24">
         <div className="text-center">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">
-            The process
+            {t.home.processLabel}
           </div>
           <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-            How Kifurushi works
+            {t.home.howTitle}
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-muted">
-            Built so that neither side has to trust a stranger — the platform
-            holds the risk, not you.
+            {t.home.howSub}
           </p>
         </div>
         <div className="relative mt-12 grid gap-10 md:grid-cols-4 md:gap-6">
@@ -266,10 +221,10 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="text-center">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">
-              Routes
+              {t.home.routesLabel}
             </div>
             <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-              Popular corridors this week
+              {t.home.corridorsTitle}
             </h2>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -283,7 +238,9 @@ export default function Home() {
                   <div className="text-sm font-semibold">
                     {c.from} <span className="text-clay">→</span> {c.to}
                   </div>
-                  <div className="mt-1 text-xs text-muted">{c.price}</div>
+                  <div className="mt-1 text-xs text-muted">
+                    {t.home.corridorFrom(c.price)}
+                  </div>
                 </div>
                 <ArrowRight
                   className="h-4 w-4 shrink-0 text-forest opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100"
@@ -294,12 +251,12 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-muted">
-            Any route works — if a traveller flies it, Kifurushi covers it.{" "}
+            {t.home.corridorsNote}{" "}
             <Link
               href="/trips"
               className="font-semibold text-forest underline underline-offset-2 hover:text-forest-deep"
             >
-              Browse all trips
+              {t.home.browseAll}
             </Link>
           </p>
         </div>
@@ -310,16 +267,13 @@ export default function Home() {
         <div className="grid items-center gap-10 lg:gap-14 md:grid-cols-2">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-clay">
-              Trust &amp; safety
+              {t.home.securityLabel}
             </div>
             <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-              Security is the product
+              {t.home.securityTitle}
             </h2>
             <p className="mt-4 text-muted">
-              Informal luggage-sharing already happens in every African
-              community abroad — WhatsApp groups, church notice boards, a cousin
-              of a cousin. Kifurushi keeps the community spirit and removes the
-              risk.
+              {t.home.securityIntro}
             </p>
             <ul className="mt-7 space-y-5">
               {securityPoints.map(([Icon, t, b]) => (
@@ -335,31 +289,26 @@ export default function Home() {
               ))}
             </ul>
             <Link href="/safety" className="btn-primary mt-8">
-              Read our trust &amp; safety standards
+              {t.home.readSafety}
             </Link>
           </div>
           <div className="card border-forest-deep bg-forest p-8 text-white md:p-10">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-gold">
-              Protected handover
+              {t.home.handoverLabel}
             </div>
             <ol className="relative mt-6 space-y-6">
               <div
                 aria-hidden
                 className="absolute bottom-4 left-3.5 top-4 w-px bg-white/15"
               />
-              {[
-                ["Fee agreed: $45", "Paid directly, traveller keeps 100%"],
-                ["Handover & seal", "Photos logged by both parties"],
-                ["In transit", "Journey updates for both sides"],
-                ["Code 4 8 2 9 1 7", "Receiver confirms — record complete"],
-              ].map(([t, b], i) => (
-                <li key={t} className="relative flex gap-3.5">
+              {t.home.handoverSteps.map((s, i) => (
+                <li key={s.title} className="relative flex gap-3.5">
                   <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gold font-display text-xs font-bold text-ink ring-4 ring-forest">
                     {i + 1}
                   </span>
                   <div>
-                    <div className="text-sm font-semibold">{t}</div>
-                    <div className="mt-0.5 text-xs text-white/65">{b}</div>
+                    <div className="text-sm font-semibold">{s.title}</div>
+                    <div className="mt-0.5 text-xs text-white/65">{s.body}</div>
                   </div>
                 </li>
               ))}
@@ -372,18 +321,17 @@ export default function Home() {
       <section className="mx-auto max-w-6xl px-4 pb-16 md:pb-24">
         <div className="card overflow-hidden border-transparent bg-gradient-to-br from-clay to-clay-deep p-10 text-center text-white md:p-14">
           <h2 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-            Something waiting to go home?
+            {t.home.ctaBandTitle}
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-white/85">
-            Post it in two minutes. Travellers on your route get notified
-            immediately.
+            {t.home.ctaBandBody}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/post/parcel" className="btn-inverse">
-              Send a parcel
+              {t.home.ctaBandSend}
             </Link>
             <Link href="/post/trip" className="btn-outline-inverse">
-              Earn as a traveller
+              {t.home.ctaBandEarn}
             </Link>
           </div>
         </div>

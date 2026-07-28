@@ -7,6 +7,7 @@ import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { addParcel } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
+import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS } from "@/lib/types";
 
 // What a courier typically charges per kg on Africa ↔ diaspora routes, and
@@ -39,6 +40,7 @@ function focusFirstInvalid(errs: FieldErrors) {
 export default function PostParcelPage() {
   const router = useRouter();
   const { session, loading } = useSession();
+  const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
@@ -80,7 +82,7 @@ export default function PostParcelPage() {
       await addParcel(parsed.data);
       router.push("/parcels");
     } catch {
-      setErrors({ _submit: "Could not post your parcel — please try again." });
+      setErrors({ _submit: t.postParcel.submitError });
       setSubmitting(false);
     }
   }
@@ -118,17 +120,17 @@ export default function PostParcelPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        Send a parcel
+        {t.postParcel.title}
       </h1>
       <p className="mt-2 text-sm text-muted">
-        Describe what you&apos;re sending — travellers on your route get notified.
+        {t.postParcel.sub}
       </p>
 
       <form onSubmit={submit} className="card mt-6 p-6 sm:p-8" noValidate>
         {/* Location */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="fromCountry" className="field-label">From country</label>
+            <label htmlFor="fromCountry" className="field-label">{t.postTrip.fromCountry}</label>
             <div className={errors.fromCountry ? "[&>select]:border-danger" : undefined}>
               <CountrySelect id="fromCountry" value={form.fromCountry} onChange={set("fromCountry")} />
             </div>
@@ -137,13 +139,13 @@ export default function PostParcelPage() {
             )}
           </div>
           <div>
-            <label htmlFor="fromCity" className="field-label">From city</label>
+            <label htmlFor="fromCity" className="field-label">{t.postTrip.fromCity}</label>
             <input
               id="fromCity"
               className={cls("fromCity")}
               value={form.fromCity}
               onChange={(e) => set("fromCity")(e.target.value)}
-              placeholder="e.g. Paris"
+              placeholder={t.postTrip.cityFromPlaceholder}
               {...err("fromCity")}
             />
             {errors.fromCity && (
@@ -151,7 +153,7 @@ export default function PostParcelPage() {
             )}
           </div>
           <div>
-            <label htmlFor="toCountry" className="field-label">To country</label>
+            <label htmlFor="toCountry" className="field-label">{t.postTrip.toCountry}</label>
             <div className={errors.toCountry ? "[&>select]:border-danger" : undefined}>
               <CountrySelect id="toCountry" value={form.toCountry} onChange={set("toCountry")} />
             </div>
@@ -160,13 +162,13 @@ export default function PostParcelPage() {
             )}
           </div>
           <div>
-            <label htmlFor="toCity" className="field-label">To city</label>
+            <label htmlFor="toCity" className="field-label">{t.postTrip.toCity}</label>
             <input
               id="toCity"
               className={cls("toCity")}
               value={form.toCity}
               onChange={(e) => set("toCity")(e.target.value)}
-              placeholder="e.g. Dakar"
+              placeholder={t.postTrip.cityToPlaceholder}
               {...err("toCity")}
             />
             {errors.toCity && (
@@ -178,7 +180,7 @@ export default function PostParcelPage() {
         {/* Details */}
         <div className="mt-6 grid gap-4 border-t border-line pt-5 sm:grid-cols-3">
           <div>
-            <label htmlFor="neededBy" className="field-label">Needed by</label>
+            <label htmlFor="neededBy" className="field-label">{t.postParcel.neededBy}</label>
             <input
               id="neededBy"
               type="date"
@@ -193,7 +195,7 @@ export default function PostParcelPage() {
             )}
           </div>
           <div>
-            <label htmlFor="weightKg" className="field-label">Weight (kg)</label>
+            <label htmlFor="weightKg" className="field-label">{t.postParcel.weight}</label>
             <input
               id="weightKg"
               type="number"
@@ -211,7 +213,7 @@ export default function PostParcelPage() {
             )}
           </div>
           <div>
-            <label htmlFor="budgetUsd" className="field-label">Budget (USD)</label>
+            <label htmlFor="budgetUsd" className="field-label">{t.postParcel.budget}</label>
             <input
               id="budgetUsd"
               type="number"
@@ -229,8 +231,7 @@ export default function PostParcelPage() {
             )}
             {rateGuide && (
               <p id="budgetUsd-hint" className="mt-1 text-xs text-muted">
-                Travellers typically ask ${rateGuide.low}–{rateGuide.high} for{" "}
-                {rateGuide.kg} kg.
+                {t.postParcel.budgetHint(rateGuide.low, rateGuide.high, rateGuide.kg)}
               </p>
             )}
           </div>
@@ -240,17 +241,15 @@ export default function PostParcelPage() {
         {comparison && (
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
             <span className="font-semibold text-forest">
-              A courier would charge ~${comparison.courier} for {comparison.kg} kg
+              {t.postParcel.courierBand(comparison.courier, comparison.kg)}
             </span>
             {comparison.savings > 0 ? (
               <span className="text-muted">
-                At your ${comparison.budget} budget you&apos;d save ~$
-                {comparison.savings}
+                {t.postParcel.saveNote(comparison.budget, comparison.savings)}
               </span>
             ) : (
               <span className="text-muted">
-                Your budget is above courier rates — most travellers will take
-                this route for less
+                {t.postParcel.aboveNote}
               </span>
             )}
           </div>
@@ -259,7 +258,7 @@ export default function PostParcelPage() {
         {/* Extras */}
         <div className="mt-6 space-y-5 border-t border-line pt-5">
           <div>
-            <label htmlFor="category" className="field-label">Category</label>
+            <label htmlFor="category" className="field-label">{t.postParcel.category}</label>
             <select
               id="category"
               className={cls("category")}
@@ -277,13 +276,13 @@ export default function PostParcelPage() {
           </div>
 
           <div>
-            <label htmlFor="description" className="field-label">What&apos;s inside?</label>
+            <label htmlFor="description" className="field-label">{t.postParcel.whatsInside}</label>
             <textarea
               id="description"
               className={`${cls("description")} min-h-[90px]`}
               value={form.description}
               onChange={(e) => set("description")(e.target.value)}
-              placeholder="Be specific — travellers will inspect the contents with you before sealing."
+              placeholder={t.postParcel.insidePlaceholder}
               {...err("description")}
             />
             {errors.description && (
@@ -295,10 +294,9 @@ export default function PostParcelPage() {
         <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-sand-deep px-4 py-3 text-xs leading-relaxed text-muted">
           <Ban size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-danger" />
           <p>
-            No cash, batteries loose in luggage, liquids over 100ml, perishables,
-            weapons, or anything illegal in either country — full list on the{" "}
-            <a href="/safety#prohibited" className="font-semibold underline">prohibited items page</a>.
-            Misdeclared contents forfeit platform protection.
+            {t.postParcel.prohibitedNote}{" "}
+            <a href="/safety#prohibited" className="font-semibold underline">{t.postParcel.prohibitedLink}</a>.{" "}
+            {t.postParcel.prohibitedNote2}
           </p>
         </div>
 
@@ -306,7 +304,7 @@ export default function PostParcelPage() {
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting}>
-          Post parcel request
+          {submitting ? t.postParcel.posting : t.postParcel.post}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

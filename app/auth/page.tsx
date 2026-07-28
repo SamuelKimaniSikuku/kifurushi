@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MailCheck } from "lucide-react";
 import { signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { supabase } from "@/lib/supabase";
+import { useT } from "@/lib/i18n";
 
 function AuthForm() {
   const router = useRouter();
@@ -17,6 +18,7 @@ function AuthForm() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const t = useT();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +56,7 @@ function AuthForm() {
         if (error) {
           setAuthError(
             error.message === "Invalid login credentials"
-              ? "Wrong email or password. Try again, or create an account."
+              ? t.auth.wrongCreds
               : error.message
           );
           return;
@@ -79,11 +81,11 @@ function AuthForm() {
             <MailCheck className="h-6 w-6 text-forest" strokeWidth={2} />
           </span>
           <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
-            Check your email
+            {t.auth.checkEmailTitle}
           </h1>
           <p className="mt-2 text-sm text-muted">
-            We sent a confirmation link to <b className="text-ink">{form.email}</b>.
-            Click it to activate your account, then sign in.
+            {t.auth.checkEmailBody1} <b className="text-ink">{form.email}</b>.{" "}
+            {t.auth.checkEmailBody2}
           </p>
           <button
             type="button"
@@ -93,7 +95,7 @@ function AuthForm() {
               setMode("signin");
             }}
           >
-            Back to sign in
+            {t.auth.backToSignIn}
           </button>
         </div>
       </div>
@@ -103,16 +105,16 @@ function AuthForm() {
   return (
     <div className="mx-auto max-w-md px-4 py-14">
       <h1 className="text-center font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        {mode === "signup" ? "Join Kifurushi" : "Welcome back"}
+        {mode === "signup" ? t.auth.joinTitle : t.auth.welcomeBack}
       </h1>
       <p className="mt-2 text-center text-sm text-muted">
-        One account for sending and travelling.
+        {t.auth.subtitle}
       </p>
 
       <form onSubmit={submit} className="card mt-6 space-y-4 p-6 sm:p-8" noValidate>
         {mode === "signup" && (
           <div>
-            <label className="field-label" htmlFor="name">Full name</label>
+            <label className="field-label" htmlFor="name">{t.auth.fullName}</label>
             <input
               id="name"
               className={`field ${errors.name ? "field-invalid" : ""}`}
@@ -128,7 +130,7 @@ function AuthForm() {
           </div>
         )}
         <div>
-          <label className="field-label" htmlFor="email">Email</label>
+          <label className="field-label" htmlFor="email">{t.auth.email}</label>
           <input
             id="email"
             type="email"
@@ -144,7 +146,7 @@ function AuthForm() {
           )}
         </div>
         <div>
-          <label className="field-label" htmlFor="password">Password</label>
+          <label className="field-label" htmlFor="password">{t.auth.password}</label>
           <input
             id="password"
             type="password"
@@ -160,7 +162,7 @@ function AuthForm() {
           )}
           {mode === "signup" && (
             <p id="password-hint" className="mt-1 text-xs text-muted">
-              At least 10 characters with upper, lower and a number.
+              {t.auth.passwordHint}
             </p>
           )}
         </div>
@@ -171,14 +173,14 @@ function AuthForm() {
 
         <button type="submit" className="btn-primary w-full py-3" disabled={submitting}>
           {submitting
-            ? "One moment…"
+            ? t.auth.oneMoment
             : mode === "signup"
-              ? "Create account"
-              : "Sign in"}
+              ? t.auth.createAccount
+              : t.auth.signIn}
         </button>
 
         <p className="text-center text-xs text-muted">
-          {mode === "signup" ? "Already a member?" : "New to Kifurushi?"}{" "}
+          {mode === "signup" ? t.auth.alreadyMember : t.auth.newTo}{" "}
           <button
             type="button"
             className="-my-2 inline-flex min-h-[44px] items-center rounded-lg px-1.5 py-2 font-semibold text-forest underline transition hover:text-forest-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
@@ -188,7 +190,7 @@ function AuthForm() {
               setAuthError(null);
             }}
           >
-            {mode === "signup" ? "Sign in" : "Create an account"}
+            {mode === "signup" ? t.auth.signIn : t.auth.createLink}
           </button>
         </p>
       </form>

@@ -3,6 +3,7 @@ import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import { LanguageProvider } from "@/lib/i18n";
 
 const sora = Sora({
   subsets: ["latin"],
@@ -36,10 +37,12 @@ export default function RootLayout({
         >
           Skip to content
         </a>
-        <div className="kente-strip" />
-        <Nav />
-        <main id="main" className="min-h-[70vh]">{children}</main>
-        <Footer />
+        <LanguageProvider>
+          <div className="kente-strip" />
+          <Nav />
+          <main id="main" className="min-h-[70vh]">{children}</main>
+          <Footer />
+        </LanguageProvider>
       </body>
     </html>
   );

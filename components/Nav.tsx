@@ -3,23 +3,50 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, Package, X } from "lucide-react";
+import { Globe, Menu, Package, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
+import { useLang, useT, LANG_LABELS, type Lang } from "@/lib/i18n";
 
-const links = [
-  { href: "/trips", label: "Find a traveller" },
-  { href: "/parcels", label: "Parcel requests" },
-  { href: "/post/trip", label: "Post a trip" },
-  { href: "/post/parcel", label: "Send a parcel" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/verify", label: "Get verified" },
-  { href: "/safety", label: "Trust & safety" },
-];
+function LanguageSwitcher({ compact }: { compact?: boolean }) {
+  const { lang, setLang } = useLang();
+  return (
+    <label
+      className={`inline-flex items-center gap-1.5 ${compact ? "w-full" : ""}`}
+    >
+      <Globe size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden />
+      <span className="sr-only">Language / Langue / Lugha</span>
+      <select
+        value={lang}
+        onChange={(e) => setLang(e.target.value as Lang)}
+        className={`cursor-pointer rounded-lg border border-transparent bg-transparent py-1.5 pr-1 text-sm font-medium text-muted transition hover:text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf ${
+          compact ? "flex-1" : ""
+        }`}
+      >
+        {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
+          <option key={l} value={l}>
+            {LANG_LABELS[l]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 export default function Nav() {
   const pathname = usePathname();
   const { session } = useSession();
   const [open, setOpen] = useState(false);
+  const t = useT();
+
+  const links = [
+    { href: "/trips", label: t.nav.findTraveller },
+    { href: "/parcels", label: t.nav.parcelRequests },
+    { href: "/post/trip", label: t.nav.postTrip },
+    { href: "/post/parcel", label: t.nav.sendParcel },
+    { href: "/pricing", label: t.nav.pricing },
+    { href: "/verify", label: t.nav.getVerified },
+    { href: "/safety", label: t.nav.trustSafety },
+  ];
 
   useEffect(() => {
     setOpen(false);
@@ -69,12 +96,13 @@ export default function Nav() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageSwitcher />
           {session ? (
             <Link href="/dashboard" className="btn-primary">
-              {session.name.split(" ")[0]}&apos;s dashboard
+              {t.nav.dashboardOf(session.name.split(" ")[0])}
             </Link>
           ) : (
-            <Link href="/auth" className="btn-primary">Sign in</Link>
+            <Link href="/auth" className="btn-primary">{t.nav.signIn}</Link>
           )}
         </div>
 
@@ -84,7 +112,7 @@ export default function Nav() {
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
         >
           {open ? (
             <X size={20} strokeWidth={2} aria-hidden />
@@ -118,11 +146,14 @@ export default function Nav() {
             </Link>
           ))}
           <div className="my-3 border-t border-line" />
+          <div className="px-3 py-1.5">
+            <LanguageSwitcher compact />
+          </div>
           <Link
             href={session ? "/dashboard" : "/auth"}
             className="btn-primary w-full"
           >
-            {session ? "Dashboard" : "Sign in"}
+            {session ? t.nav.dashboard : t.nav.signIn}
           </Link>
         </div>
       </nav>

@@ -1,0 +1,266 @@
+// English dictionary — the source of truth for the translation shape.
+// fr.ts and sw.ts must mirror this exactly (the Dict type enforces it).
+
+export const en = {
+  nav: {
+    findTraveller: "Find a traveller",
+    parcelRequests: "Parcel requests",
+    postTrip: "Post a trip",
+    sendParcel: "Send a parcel",
+    pricing: "Pricing",
+    getVerified: "Get verified",
+    trustSafety: "Trust & safety",
+    signIn: "Sign in",
+    dashboard: "Dashboard",
+    dashboardOf: (name: string) => `${name}'s dashboard`,
+    openMenu: "Open menu",
+    closeMenu: "Close menu",
+  },
+  footer: {
+    tagline:
+      "Africa's peer-to-peer parcel network. Connecting all 54 African countries with the diaspora — one suitcase at a time.",
+    platform: "Platform",
+    trust: "Trust",
+    coverage: "Coverage",
+    coverageText:
+      "54 African countries · 22 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific.",
+    pricingLink: "Pricing — one membership",
+    prohibitedItems: "Prohibited items",
+    howProtection: "How protection works",
+    platformSecurity: "Platform security",
+    idVerified: "ID-verified members",
+    codedHandovers: "Coded handovers",
+    copyright: (year: number) =>
+      `© ${year} Kifurushi. Built for the African diaspora.`,
+  },
+  home: {
+    badge: "ALL 54 AFRICAN COUNTRIES · 22 DIASPORA DESTINATIONS",
+    h1a: "Make money",
+    h1b: "while travelling home",
+    intro:
+      "Your spare kilos are worth $100+ every trip. Carry parcels for people sending things between Africa and abroad — you keep 100% of what you charge, Kifurushi takes no cut. And when you're the one sending, your parcel travels with a verified traveller who's already going home.",
+    ctaTravel: "I'm travelling — earn from my luggage",
+    ctaSend: "Send a parcel",
+    verified: "Verified",
+    departs: "departs Sun 2 Aug",
+    kgFree: "18 kg free",
+    requestTraveller: "Request this traveller",
+    statCountries: "African countries",
+    statDelivery: "typical delivery",
+    statDeliveryValue: "3–7 days",
+    statPrice: "or $29/yr — 0% commission",
+    statHandover: "verified handover",
+    statHandoverValue: "ID + code",
+    trustItems: [
+      "0% commission — travellers keep everything",
+      "Government-ID verification",
+      "One-time delivery codes",
+      "Two-way ratings",
+      "Prohibited-items screening",
+    ],
+    processLabel: "The process",
+    howTitle: "How Kifurushi works",
+    howSub:
+      "Built so that neither side has to trust a stranger — the platform holds the risk, not you.",
+    steps: [
+      {
+        title: "Post or find",
+        body: "Senders post what they need moved; travellers post spare suitcase space on upcoming flights.",
+      },
+      {
+        title: "Match & verify",
+        body: "We match routes and dates. Both sides see ID-verification status, ratings and delivery history before agreeing.",
+      },
+      {
+        title: "Agree & seal",
+        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with a photo log.",
+      },
+      {
+        title: "Deliver & confirm",
+        body: "The receiver confirms delivery with a one-time code, which completes the record and unlocks reviews for both sides.",
+      },
+    ],
+    routesLabel: "Routes",
+    corridorsTitle: "Popular corridors this week",
+    corridorFrom: (price: string) => `from ${price}/kg`,
+    corridorsNote: "Any route works — if a traveller flies it, Kifurushi covers it.",
+    browseAll: "Browse all trips",
+    securityLabel: "Trust & safety",
+    securityTitle: "Security is the product",
+    securityIntro:
+      "Informal luggage-sharing already happens in every African community abroad — WhatsApp groups, church notice boards, a cousin of a cousin. Kifurushi keeps the community spirit and removes the risk.",
+    securityPoints: [
+      {
+        title: "Your money stays yours",
+        body: "Carriage fees are paid directly between sender and traveller — Kifurushi takes 0% and never holds your money.",
+      },
+      {
+        title: "Verified identities",
+        body: "Travellers upload government ID and a selfie check before their first carry.",
+      },
+      {
+        title: "Sealed & inspected",
+        body: "Travellers inspect every item before sealing it together with the sender — no carrying unknowns.",
+      },
+      {
+        title: "One-time delivery codes",
+        body: "The receiver gets a 6-digit code; entering it completes the delivery record both sides rely on.",
+      },
+    ],
+    readSafety: "Read our trust & safety standards",
+    handoverLabel: "Protected handover",
+    handoverSteps: [
+      { title: "Fee agreed: $45", body: "Paid directly, traveller keeps 100%" },
+      { title: "Handover & seal", body: "Photos logged by both parties" },
+      { title: "In transit", body: "Journey updates for both sides" },
+      { title: "Code 4 8 2 9 1 7", body: "Receiver confirms — record complete" },
+    ],
+    ctaBandTitle: "Something waiting to go home?",
+    ctaBandBody:
+      "Post it in two minutes. Travellers on your route get notified immediately.",
+    ctaBandSend: "Send a parcel",
+    ctaBandEarn: "Earn as a traveller",
+  },
+  auth: {
+    joinTitle: "Join Kifurushi",
+    welcomeBack: "Welcome back",
+    subtitle: "One account for sending and travelling.",
+    fullName: "Full name",
+    email: "Email",
+    password: "Password",
+    passwordHint: "At least 10 characters with upper, lower and a number.",
+    createAccount: "Create account",
+    signIn: "Sign in",
+    oneMoment: "One moment…",
+    alreadyMember: "Already a member?",
+    newTo: "New to Kifurushi?",
+    createLink: "Create an account",
+    wrongCreds: "Wrong email or password. Try again, or create an account.",
+    checkEmailTitle: "Check your email",
+    checkEmailBody1: "We sent a confirmation link to",
+    checkEmailBody2: "Click it to activate your account, then sign in.",
+    backToSignIn: "Back to sign in",
+  },
+  pricing: {
+    heroTitle: "One membership. Every role.",
+    heroSub:
+      "Send this month, receive next month, carry when you fly home — one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
+    free: "Free",
+    freeTag: "Look around, receive, track.",
+    freeFeatures: [
+      "Browse every trip and parcel request",
+      "See traveller ratings and reviews",
+      "Receive a parcel — receiving is always free",
+      "Track a delivery sent to you, with your delivery code",
+    ],
+    memberFeatures: [
+      "Send parcels — post unlimited requests",
+      "Travel & earn — post unlimited trips, keep 100% of your carriage fee",
+      "Contact and match with anyone on the platform",
+      "ID verification & the ✓ Verified badge",
+      "Sealed-handover photo log & one-time delivery codes",
+      "Two-way reviews that build your reputation",
+      "Dispute support with the full delivery record",
+    ],
+    monthly: "Monthly",
+    yearly: "Yearly",
+    monthlyNote: "Billed monthly. Cancel anytime.",
+    yearlyNote: "Just $2.42 a month, billed once — save $31.",
+    bestValue: "Best value · Save 52%",
+    joinFor: (price: string) => `Join for ${price}`,
+    activating: "Activating…",
+    secureCheckout: "Secure checkout - cancel anytime",
+    yourPlanSince: (date: string) => `Your plan since ${date}`,
+    yourPlan: "Your plan",
+    onPlan: (plan: string) => `You're on the ${plan} plan.`,
+    planMonthly: "monthly",
+    planYearly: "yearly",
+    browseTrips: "Browse trips",
+    joinError: "Could not activate your membership. Please try again.",
+    reasonContact:
+      "Membership is needed to contact travellers and senders — one membership covers your whole year.",
+    reasonPost:
+      "Membership is needed to post trips and parcel requests — one membership covers your whole year.",
+    checkoutSuccess:
+      "Payment received — your membership activates within a few seconds.",
+    checkoutCancelled: "Checkout cancelled — you haven't been charged.",
+    dismiss: "Dismiss",
+    bandTitle: "Make money travelling - save on every parcel",
+    bandCell1a: "$5/month or $29/year is for the platform only",
+    bandCell1b: "— unlimited parcels, both directions.",
+    bandCell2a: "The delivery fee you",
+    bandCell2b: "negotiate directly with the traveller",
+    bandCell2c: "(typically ~$45 per 5 kg vs $60+ courier). Kifurushi takes no cut.",
+    bandCell3: "5 parcels a year = $150+ saved.",
+    whyCards: [
+      {
+        title: "Cheaper than one courier shipment",
+        body: "A 5 kg parcel London → Lagos costs $50–80 with a courier. One year of Kifurushi costs $29 (or $5/month) — and a traveller charges you around $45.",
+      },
+      {
+        title: "Roles switch, price doesn't",
+        body: "The same person sends in December, receives in March and carries in August. One membership covers all of it.",
+      },
+      {
+        title: "No commission, ever",
+        body: "Carriage fees are agreed and paid directly between you — cash, M-Pesa, bank transfer. Kifurushi never touches the money.",
+      },
+    ],
+  },
+  postTrip: {
+    title: "Post a trip",
+    sub: "Tell senders where you're flying and how much space you have.",
+    fromCountry: "From country",
+    fromCity: "From city",
+    toCountry: "To country",
+    toCity: "To city",
+    cityFromPlaceholder: "e.g. London",
+    cityToPlaceholder: "e.g. Lagos",
+    departureDate: "Departure date",
+    space: "Space (kg)",
+    pricePerKg: "Price per kg (USD)",
+    priceHint: (courier: number) =>
+      `Most travellers charge $7–12/kg. Couriers average ~$${courier}/kg.`,
+    earnBand: (earnings: number) => `You'd earn ~$${earnings} on this trip`,
+    saveBand: (courier: number, savings: number) =>
+      `Senders pay ~$${courier} for the same weight by courier — they save ~$${savings} with you`,
+    categoriesLabel: "Categories you'll accept",
+    categoriesError: "Pick at least one category you'll accept",
+    notes: "Notes (optional)",
+    notesPlaceholder: "Airline, pickup arrangements, anything senders should know...",
+    safetyNote:
+      "You'll inspect and co-seal every parcel before carrying it. Never accept a sealed package you haven't seen inside — see",
+    safetyLink: "traveller safety rules",
+    publish: "Publish trip",
+    publishing: "Publishing…",
+    submitError: "Could not post your trip — please try again.",
+  },
+  postParcel: {
+    title: "Send a parcel",
+    sub: "Describe what you're sending — travellers on your route get notified.",
+    neededBy: "Needed by",
+    weight: "Weight (kg)",
+    budget: "Budget (USD)",
+    budgetHint: (low: number, high: number, kg: number) =>
+      `Travellers typically ask $${low}–${high} for ${kg} kg.`,
+    courierBand: (courier: number, kg: number) =>
+      `A courier would charge ~$${courier} for ${kg} kg`,
+    saveNote: (budget: number, savings: number) =>
+      `At your $${budget} budget you'd save ~$${savings}`,
+    aboveNote:
+      "Your budget is above courier rates — most travellers will take this route for less",
+    category: "Category",
+    whatsInside: "What's inside?",
+    insidePlaceholder:
+      "Be specific — travellers will inspect the contents with you before sealing.",
+    prohibitedNote:
+      "No cash, batteries loose in luggage, liquids over 100ml, perishables, weapons, or anything illegal in either country — full list on the",
+    prohibitedLink: "prohibited items page",
+    prohibitedNote2: "Misdeclared contents forfeit platform protection.",
+    post: "Post parcel request",
+    posting: "Posting…",
+    submitError: "Could not post your parcel — please try again.",
+  },
+};
+
+export type Dict = typeof en;

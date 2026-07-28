@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { Lock, ShieldCheck } from "lucide-react";
+import { useT } from "@/lib/i18n";
 
 export default function Footer() {
+  const t = useT();
   return (
     <footer className="mt-16 bg-forest-deep text-white">
       <div className="kente-strip" />
@@ -11,34 +15,38 @@ export default function Footer() {
             Kifurushi<span className="text-gold">.</span>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-white/70">
-            Africa&apos;s peer-to-peer parcel network. Connecting all 54 African
-            countries with the diaspora — one suitcase at a time.
+            {t.footer.tagline}
           </p>
         </div>
         <div>
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Platform</div>
+          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            {t.footer.platform}
+          </div>
           <ul className="text-sm">
-            <li><Link href="/trips" className="block py-1.5 text-white/70 transition hover:text-white">Find a traveller</Link></li>
-            <li><Link href="/parcels" className="block py-1.5 text-white/70 transition hover:text-white">Parcel requests</Link></li>
-            <li><Link href="/post/trip" className="block py-1.5 text-white/70 transition hover:text-white">Post a trip</Link></li>
-            <li><Link href="/post/parcel" className="block py-1.5 text-white/70 transition hover:text-white">Send a parcel</Link></li>
-            <li><Link href="/pricing" className="block py-1.5 text-white/70 transition hover:text-white">Pricing — one membership</Link></li>
+            <li><Link href="/trips" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.findTraveller}</Link></li>
+            <li><Link href="/parcels" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.parcelRequests}</Link></li>
+            <li><Link href="/post/trip" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.postTrip}</Link></li>
+            <li><Link href="/post/parcel" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.sendParcel}</Link></li>
+            <li><Link href="/pricing" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.pricingLink}</Link></li>
           </ul>
         </div>
         <div>
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Trust</div>
+          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            {t.footer.trust}
+          </div>
           <ul className="text-sm">
-            <li><Link href="/safety" className="block py-1.5 text-white/70 transition hover:text-white">Trust &amp; safety</Link></li>
-            <li><Link href="/safety#prohibited" className="block py-1.5 text-white/70 transition hover:text-white">Prohibited items</Link></li>
-            <li><Link href="/safety#escrow" className="block py-1.5 text-white/70 transition hover:text-white">How protection works</Link></li>
-            <li><Link href="/safety#security" className="block py-1.5 text-white/70 transition hover:text-white">Platform security</Link></li>
+            <li><Link href="/safety" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.trustSafety}</Link></li>
+            <li><Link href="/safety#prohibited" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.prohibitedItems}</Link></li>
+            <li><Link href="/safety#escrow" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.howProtection}</Link></li>
+            <li><Link href="/safety#security" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.platformSecurity}</Link></li>
           </ul>
         </div>
         <div>
-          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Coverage</div>
+          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            {t.footer.coverage}
+          </div>
           <p className="text-sm leading-relaxed text-white/70">
-            54 African countries · 22 diaspora destinations across Europe, North
-            America, the Gulf and Asia-Pacific.
+            {t.footer.coverageText}
           </p>
         </div>
       </div>
@@ -47,16 +55,16 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1.5 text-xs font-medium text-white/70">
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck size={16} strokeWidth={2} className="text-gold" aria-hidden />
-              ID-verified members
+              {t.footer.idVerified}
             </span>
             <span aria-hidden>·</span>
             <span className="inline-flex items-center gap-1.5">
               <Lock size={16} strokeWidth={2} className="text-gold" aria-hidden />
-              Coded handovers
+              {t.footer.codedHandovers}
             </span>
           </div>
           <div className="text-xs text-white/50">
-            © {new Date().getFullYear()} Kifurushi. Built for the African diaspora.
+            {t.footer.copyright(new Date().getFullYear())}
           </div>
         </div>
       </div>
