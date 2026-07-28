@@ -12,6 +12,7 @@ const links = [
   { href: "/post/trip", label: "Post a trip" },
   { href: "/post/parcel", label: "Send a parcel" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/verify", label: "Get verified" },
   { href: "/safety", label: "Trust & safety" },
 ];
 
