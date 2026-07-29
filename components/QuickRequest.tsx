@@ -21,7 +21,8 @@ export default function QuickRequest({
   onClose: () => void;
 }) {
   const t = useT();
-  const [weight, setWeight] = useState("3");
+  const maxKg = Math.max(0.1, trip.remainingKg);
+  const [weight, setWeight] = useState(String(Math.min(3, maxKg)));
   const [budget, setBudget] = useState(String(Math.round(trip.pricePerKg * 3)));
   const [description, setDescription] = useState("");
   const [cats, setCats] = useState<ParcelCategory[]>(
@@ -59,6 +60,10 @@ export default function QuickRequest({
     }
     if (cats.length === 0) {
       setError(t.postParcel.categoriesError);
+      return;
+    }
+    if (!Number.isFinite(weightNum) || weightNum <= 0 || weightNum > maxKg) {
+      setError(`${maxKg} kg`);
       return;
     }
     setBusy(true);
@@ -125,13 +130,13 @@ export default function QuickRequest({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="q-weight" className="field-label">
-                {t.postParcel.weight}
+                {t.postParcel.weight} · {maxKg} kg free
               </label>
               <input
                 id="q-weight"
                 type="number"
                 min={0.1}
-                max={trip.spaceKg}
+                max={maxKg}
                 step={0.1}
                 inputMode="decimal"
                 className="field"

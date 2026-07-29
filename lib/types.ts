@@ -36,6 +36,8 @@ export interface Trip {
   toCity: string;
   departDate: string; // ISO date
   spaceKg: number;
+  bookedKg: number;
+  remainingKg: number;
   pricePerKg: number; // USD
   notes: string;
   categoriesAccepted: ParcelCategory[];

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Ban, Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addParcel } from "@/lib/db";
+import { addParcel, fetchParcelById, updateParcel } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
@@ -39,8 +39,9 @@ function focusFirstInvalid(errs: FieldErrors) {
   el.scrollIntoView({ block: "center" });
 }
 
-export default function PostParcelPage() {
+function PostParcelForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const { session, loading } = useSession();
   const t = useT();
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +52,7 @@ export default function PostParcelPage() {
   });
   const [cats, setCats] = useState<ParcelCategory[]>(["gifts"]);
   const [minDate, setMinDate] = useState("");
+  const editId = params.get("edit");
 
   useEffect(() => {
     if (loading) return;
@@ -69,6 +71,27 @@ export default function PostParcelPage() {
     const pad = (n: number) => String(n).padStart(2, "0");
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
+
+  // Editing an existing parcel: load it into the form.
+  useEffect(() => {
+    if (!editId) return;
+    fetchParcelById(editId)
+      .then((p) => {
+        if (!p) return;
+        setForm({
+          fromCountry: p.fromCountry,
+          fromCity: p.fromCity,
+          toCountry: p.toCountry,
+          toCity: p.toCity,
+          neededBy: p.neededBy,
+          weightKg: String(p.weightKg),
+          description: p.description,
+          budgetUsd: String(p.budgetUsd),
+        });
+        setCats(p.categories);
+      })
+      .catch(() => {});
+  }, [editId]);
 
   function toggleCat(c: ParcelCategory) {
     setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -92,7 +115,11 @@ export default function PostParcelPage() {
     if (!session || submitting) return;
     setSubmitting(true);
     try {
-      await addParcel({ ...parsed.data, categories: cats });
+      if (editId) {
+        await updateParcel(editId, { ...parsed.data, categories: cats });
+      } else {
+        await addParcel({ ...parsed.data, categories: cats });
+      }
       router.push("/parcels");
     } catch {
       setErrors({ _submit: t.postParcel.submitError });
@@ -133,7 +160,7 @@ export default function PostParcelPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        {t.postParcel.title}
+        {editId ? t.postParcel.editTitle : t.postParcel.title}
       </h1>
       <p className="mt-2 text-sm text-muted">
         {t.postParcel.sub}
@@ -339,10 +366,20 @@ export default function PostParcelPage() {
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting}>
-          {submitting ? t.postParcel.posting : t.postParcel.post}
+          {editId
+            ? submitting ? t.postParcel.saving : t.postParcel.save
+            : submitting ? t.postParcel.posting : t.postParcel.post}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>
     </div>
+  );
+}
+
+export default function PostParcelPage() {
+  return (
+    <Suspense>
+      <PostParcelForm />
+    </Suspense>
   );
 }

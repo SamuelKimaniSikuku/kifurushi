@@ -197,6 +197,7 @@ export const en = {
     quickCancel: "Cancel",
     quickError: "Could not send the request — please try again.",
     needTripFirst: "Post your trip on this route first — we've prefilled it.",
+    edit: "Edit",
   },
   pricing: {
     heroTitle: "One membership. Every role.",
@@ -292,6 +293,9 @@ export const en = {
     safetyLink: "traveller safety rules",
     publish: "Publish trip",
     publishing: "Publishing…",
+    editTitle: "Edit your trip",
+    save: "Save changes",
+    saving: "Saving…",
     submitError: "Could not post your trip — please try again.",
   },
   postParcel: {
@@ -322,6 +326,9 @@ export const en = {
     prohibitedNote2: "Misdeclared contents forfeit platform protection.",
     post: "Post parcel request",
     posting: "Posting…",
+    editTitle: "Edit your parcel",
+    save: "Save changes",
+    saving: "Saving…",
     submitError: "Could not post your parcel — please try again.",
   },
 };

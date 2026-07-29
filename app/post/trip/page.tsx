@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addTrip } from "@/lib/db";
+import { addTrip, fetchTripById, updateTrip } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
@@ -50,6 +50,7 @@ function PostTripForm() {
   });
   const [cats, setCats] = useState<ParcelCategory[]>(["documents", "clothing", "gifts"]);
   const [minDate, setMinDate] = useState("");
+  const editId = params.get("edit");
 
   useEffect(() => {
     if (loading) return;
@@ -68,6 +69,27 @@ function PostTripForm() {
     const pad = (n: number) => String(n).padStart(2, "0");
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
+
+  // Editing an existing trip: load it into the form.
+  useEffect(() => {
+    if (!editId) return;
+    fetchTripById(editId)
+      .then((trip) => {
+        if (!trip) return;
+        setForm({
+          fromCountry: trip.fromCountry,
+          fromCity: trip.fromCity,
+          toCountry: trip.toCountry,
+          toCity: trip.toCity,
+          departDate: trip.departDate,
+          spaceKg: String(trip.spaceKg),
+          pricePerKg: String(trip.pricePerKg),
+          notes: trip.notes,
+        });
+        setCats(trip.categoriesAccepted);
+      })
+      .catch(() => {});
+  }, [editId]);
 
   // Arriving from "Offer to carry this": the route is already known.
   useEffect(() => {
@@ -104,7 +126,11 @@ function PostTripForm() {
     if (!session || submitting) return;
     setSubmitting(true);
     try {
-      await addTrip({ ...parsed.data, categoriesAccepted: cats });
+      if (editId) {
+        await updateTrip(editId, { ...parsed.data, categoriesAccepted: cats });
+      } else {
+        await addTrip({ ...parsed.data, categoriesAccepted: cats });
+      }
       router.push("/trips");
     } catch {
       setErrors({ _submit: t.postTrip.submitError });
@@ -134,7 +160,7 @@ function PostTripForm() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        {t.postTrip.title}
+        {editId ? t.postTrip.editTitle : t.postTrip.title}
       </h1>
       <p className="mt-2 text-sm text-muted">
         {t.postTrip.sub}
@@ -333,7 +359,9 @@ function PostTripForm() {
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-primary mt-6 w-full py-3" disabled={submitting}>
-          {submitting ? t.postTrip.publishing : t.postTrip.publish}
+          {editId
+            ? submitting ? t.postTrip.saving : t.postTrip.save
+            : submitting ? t.postTrip.publishing : t.postTrip.publish}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

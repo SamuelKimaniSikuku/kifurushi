@@ -200,6 +200,7 @@ export const sw: Dict = {
     quickCancel: "Ghairi",
     quickError: "Imeshindikana kutuma ombi — tafadhali jaribu tena.",
     needTripFirst: "Tangaza safari yako ya njia hii kwanza — tumeijaza tayari.",
+    edit: "Hariri",
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",
@@ -297,6 +298,9 @@ export const sw: Dict = {
     safetyLink: "kanuni za usalama za msafiri",
     publish: "Tangaza safari",
     publishing: "Inatangazwa…",
+    editTitle: "Hariri safari yako",
+    save: "Hifadhi mabadiliko",
+    saving: "Inahifadhi…",
     submitError: "Imeshindikana kutangaza safari yako — tafadhali jaribu tena.",
   },
   postParcel: {
@@ -328,6 +332,9 @@ export const sw: Dict = {
       "Vitu visivyotajwa kwa ukweli vinapoteza ulinzi wa jukwaa.",
     post: "Tangaza ombi la kifurushi",
     posting: "Inatangazwa…",
+    editTitle: "Hariri kifurushi chako",
+    save: "Hifadhi mabadiliko",
+    saving: "Inahifadhi…",
     submitError: "Imeshindikana kutangaza kifurushi chako — tafadhali jaribu tena.",
   },
 };

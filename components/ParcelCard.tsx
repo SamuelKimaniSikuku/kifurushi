@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BellRing, Calendar, Check, Scale } from "lucide-react";
+import { ArrowRight, BellRing, Calendar, Check, Pencil, Scale } from "lucide-react";
 import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
@@ -97,9 +97,18 @@ export default function ParcelCard({
 
       {mine ? (
         <div className="mt-auto space-y-2 pt-1">
-          <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
-            {t.browse.yourParcel}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
+              {t.browse.yourParcel}
+            </span>
+            <Link
+              href={`/post/parcel?edit=${parcel.id}`}
+              className="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-forest transition hover:border-forest"
+            >
+              <Pencil size={11} strokeWidth={2.5} aria-hidden />
+              {t.browse.edit}
+            </Link>
+          </div>
           {pending > 0 && (
             <Link
               href="/dashboard"

@@ -200,6 +200,7 @@ export const fr: Dict = {
     quickCancel: "Annuler",
     quickError: "Impossible d'envoyer la demande — veuillez réessayer.",
     needTripFirst: "Publiez d'abord votre voyage sur cet itinéraire — il est prérempli.",
+    edit: "Modifier",
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",
@@ -298,6 +299,9 @@ export const fr: Dict = {
     safetyLink: "règles de sécurité du voyageur",
     publish: "Publier le voyage",
     publishing: "Publication…",
+    editTitle: "Modifier votre voyage",
+    save: "Enregistrer",
+    saving: "Enregistrement…",
     submitError: "Impossible de publier votre voyage — veuillez réessayer.",
   },
   postParcel: {
@@ -329,6 +333,9 @@ export const fr: Dict = {
       "Un contenu mal déclaré fait perdre la protection de la plateforme.",
     post: "Publier la demande",
     posting: "Publication…",
+    editTitle: "Modifier votre colis",
+    save: "Enregistrer",
+    saving: "Enregistrement…",
     submitError: "Impossible de publier votre colis — veuillez réessayer.",
   },
 };

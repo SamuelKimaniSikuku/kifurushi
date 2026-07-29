@@ -33,6 +33,8 @@ interface TripRow {
   to_city: string;
   depart_date: string;
   space_kg: number;
+  booked_kg: number;
+  remaining_kg: number;
   price_per_kg: number;
   notes: string | null;
   categories: string[] | null;
@@ -73,6 +75,8 @@ function mapTrip(row: TripRow): Trip {
     toCity: row.to_city,
     departDate: row.depart_date,
     spaceKg: Number(row.space_kg),
+    bookedKg: Number(row.booked_kg ?? 0),
+    remainingKg: Number(row.remaining_kg ?? row.space_kg),
     pricePerKg: Number(row.price_per_kg),
     notes: row.notes ?? "",
     categoriesAccepted: (row.categories ?? []) as ParcelCategory[],
@@ -112,6 +116,7 @@ export async function fetchTrips(): Promise<Trip[]> {
     .from("trips")
     .select(TRIP_SELECT)
     .eq("status", "open")
+    .gt("remaining_kg", 0) // full suitcases drop out of the listing
     .gte("depart_date", new Date().toISOString().slice(0, 10))
     .order("depart_date", { ascending: true });
   if (error) throw error;
@@ -192,6 +197,63 @@ export async function addParcel(p: NewParcel): Promise<void> {
     description: p.description,
     budget_usd: p.budgetUsd,
   });
+  if (error) throw error;
+}
+
+/** Load one of my listings for editing. */
+export async function fetchTripById(id: string): Promise<Trip | null> {
+  const { data, error } = await supabase
+    .from("trips")
+    .select(TRIP_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapTrip(data as unknown as TripRow) : null;
+}
+
+export async function fetchParcelById(id: string): Promise<ParcelRequest | null> {
+  const { data, error } = await supabase
+    .from("parcels")
+    .select(PARCEL_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapParcel(data as unknown as ParcelRow) : null;
+}
+
+export async function updateTrip(id: string, t: NewTrip): Promise<void> {
+  const { error } = await supabase
+    .from("trips")
+    .update({
+      from_country: t.fromCountry,
+      from_city: t.fromCity,
+      to_country: t.toCountry,
+      to_city: t.toCity,
+      depart_date: t.departDate,
+      space_kg: t.spaceKg,
+      price_per_kg: t.pricePerKg,
+      notes: t.notes || null,
+      categories: t.categoriesAccepted,
+    })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+export async function updateParcel(id: string, p: NewParcel): Promise<void> {
+  const { error } = await supabase
+    .from("parcels")
+    .update({
+      from_country: p.fromCountry,
+      from_city: p.fromCity,
+      to_country: p.toCountry,
+      to_city: p.toCity,
+      needed_by: p.neededBy,
+      weight_kg: p.weightKg,
+      categories: p.categories,
+      description: p.description,
+      budget_usd: p.budgetUsd,
+    })
+    .eq("id", id);
   if (error) throw error;
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BellRing, Calendar, Check, Plane, Star } from "lucide-react";
+import { BellRing, Calendar, Check, Pencil, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
@@ -29,7 +29,7 @@ export default function TripCard({
     month: "short",
   });
   const anchorPrice = Math.round(trip.pricePerKg * 5);
-  const capacityPct = Math.min(100, Math.max(0, Math.round((trip.spaceKg / 23) * 100)));
+  const capacityPct = Math.min(100, Math.max(0, Math.round((trip.remainingKg / Math.max(trip.spaceKg, 1)) * 100)));
   const shownCategories = trip.categoriesAccepted.slice(0, 3);
   const extraCategories = trip.categoriesAccepted.length - shownCategories.length;
 
@@ -84,7 +84,7 @@ export default function TripCard({
             ~ ${anchorPrice} for 5 kg
           </div>
           <div className="mt-1.5">
-            <div className="text-xs text-muted">{trip.spaceKg} kg free</div>
+            <div className="text-xs text-muted">{trip.remainingKg} kg free</div>
             <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-sand-deep">
               <div
                 className="h-full rounded-full bg-leaf"
@@ -130,9 +130,18 @@ export default function TripCard({
 
       {mine ? (
         <div className="mt-auto space-y-2 pt-1">
-          <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
-            {t.browse.yourTrip}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
+              {t.browse.yourTrip}
+            </span>
+            <Link
+              href={`/post/trip?edit=${trip.id}`}
+              className="inline-flex items-center gap-1 rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-forest transition hover:border-forest"
+            >
+              <Pencil size={11} strokeWidth={2.5} aria-hidden />
+              {t.browse.edit}
+            </Link>
+          </div>
           {pending > 0 && (
             <Link
               href="/dashboard"
