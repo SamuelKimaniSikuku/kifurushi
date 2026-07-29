@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, UserSearch,
+  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, Users,
+  UserSearch,
 } from "lucide-react";
 import {
   fetchVerification, submitVerification, VerificationState,
@@ -59,6 +60,45 @@ export default function VerifyPage() {
         <p className="mt-2 text-sm text-muted">
           Your identity check is being processed — the ✓ Verified badge appears
           on your profile as soon as it&apos;s approved, usually within minutes.
+        </p>
+        <button
+          className="btn-primary mt-6 min-h-[44px]"
+          onClick={() => router.push("/dashboard")}
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // Declined because this face is verified elsewhere. Retrying is pointless —
+  // it'll be declined again — so send them to the account they already have.
+  // The support address is not decoration: an automated rejection that affects
+  // someone's standing has to have a human path behind it.
+  if (
+    verification.status === "rejected" &&
+    verification.declineReason === "duplicate_account"
+  ) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-warn-bg text-warn">
+          <Users className="h-8 w-8" strokeWidth={2} aria-hidden />
+        </div>
+        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
+          This ID is already verified
+        </h1>
+        <p className="mt-2 text-sm text-muted">
+          Your ID is verified on another Kifurushi account. One person, one
+          account — it&apos;s how the ✓ Verified badge keeps meaning something.
+          Sign in to that account instead, and everything you&apos;ve built up
+          there comes with you.
+        </p>
+        <p className="mt-3 text-xs text-faint">
+          Lost access to it, or think this is a mistake? Email{" "}
+          <a className="underline hover:text-ink" href="mailto:hello@kifurushiapp.com">
+            hello@kifurushiapp.com
+          </a>{" "}
+          and a person will look at it.
         </p>
         <button
           className="btn-primary mt-6 min-h-[44px]"

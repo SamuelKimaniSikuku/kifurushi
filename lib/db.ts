@@ -740,27 +740,83 @@ export interface VerificationState {
   status: VerificationStatus;
   idType: string;
   submittedAt: string | null;
+  /** Only set when rejected. 'duplicate_account' has its own screen. */
+  declineReason: string | null;
+}
+
+/** One session waiting on a human, as the review queue shows it. */
+export interface ReviewItem {
+  id: string;
+  sessionId: string | null;
+  idType: string;
+  submittedAt: string;
+  name: string;
+  memberSince: string | null;
+  alreadyVerified: boolean;
+  /** Didit's own words for what it couldn't settle. */
+  warnings: string[];
 }
 
 export async function fetchVerification(): Promise<VerificationState> {
+  const empty: VerificationState = {
+    status: "unverified",
+    idType: "",
+    submittedAt: null,
+    declineReason: null,
+  };
+
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
-  if (!uid) return { status: "unverified", idType: "", submittedAt: null };
+  if (!uid) return empty;
 
   const { data, error } = await supabase
     .from("verifications")
-    .select("id_type, status, created_at")
+    .select("id_type, status, created_at, decline_reason")
     .eq("user_id", uid)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return { status: "unverified", idType: "", submittedAt: null };
+  if (!data) return empty;
   return {
     status: data.status as VerificationStatus,
     idType: data.id_type,
     submittedAt: data.created_at,
+    declineReason: data.decline_reason ?? null,
   };
+}
+
+/** True if the signed-in user may work the review queue. */
+export async function isAdmin(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_admin");
+  if (error) return false;
+  return data === true;
+}
+
+export async function fetchReviewQueue(): Promise<ReviewItem[]> {
+  const { data, error } = await supabase.functions.invoke("verification-review", {
+    body: { action: "list" },
+  });
+  if (error) throw error;
+  return ((data as { items?: ReviewItem[] })?.items ?? []).map((i) => ({
+    ...i,
+    warnings: i.warnings ?? [],
+  }));
+}
+
+/** Returns whether Didit accepted the mirrored decision, so the UI can say so. */
+export async function decideVerification(
+  id: string,
+  decision: "approve" | "decline",
+  note: string
+): Promise<{ mirroredToDidit: boolean; detail?: string }> {
+  const { data, error } = await supabase.functions.invoke("verification-review", {
+    body: { action: "decide", id, decision, note },
+  });
+  if (error) throw error;
+  const res = data as { mirroredToDidit?: boolean; detail?: string; error?: string };
+  if (res?.error) throw new Error(res.error);
+  return { mirroredToDidit: !!res?.mirroredToDidit, detail: res?.detail };
 }
 
 /** Returns the Didit hosted-flow URL to redirect the user to. */

@@ -9,6 +9,11 @@
 // automatic check is still seconds away. Other interim statuses stay pending.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  duplicateOfSession,
+  fetchDecision,
+  updateSessionStatus,
+} from "../_shared/didit.ts";
 
 const encoder = new TextEncoder();
 
@@ -122,6 +127,55 @@ Deno.serve(async (req) => {
     if (pErr) {
       console.error("profiles update failed", pErr);
       return new Response("DB error", { status: 500 });
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Auto-decline the one review case that isn't a judgement call.
+  //
+  // A face already approved on ANOTHER account is one person holding two
+  // accounts, and the answer is always the same: refuse the second one and
+  // point them at the first. Leaving that to a human just adds latency to a
+  // decision nobody has discretion over. Anything else Didit escalates —
+  // including a repeat face on the SAME user's own earlier session, which is
+  // harmless — still goes to the queue, because "the machine was unsure" is
+  // never grounds for us to auto-approve.
+  // ---------------------------------------------------------------------
+  if (newStatus === "in_review" && userId) {
+    const dupSession = duplicateOfSession(await fetchDecision(body.session_id));
+    if (dupSession) {
+      const { data: other } = await admin
+        .from("verifications")
+        .select("user_id")
+        .eq("provider_ref", dupSession)
+        .eq("status", "verified")
+        .maybeSingle();
+
+      if (other?.user_id && other.user_id !== userId) {
+        const { error: dErr } = await admin
+          .from("verifications")
+          .update({
+            status: "rejected",
+            decline_reason: "duplicate_account",
+            resolved_at: new Date().toISOString(),
+          })
+          .eq("provider", "didit")
+          .eq("provider_ref", body.session_id);
+        if (dErr) console.error("auto-decline update failed", dErr);
+
+        // Best effort: keep Didit's record in step. If the key lacks
+        // write:sessions this fails, and our own decision still stands.
+        await updateSessionStatus(
+          body.session_id,
+          "Declined",
+          "Auto-declined by Kifurushi: this face is already verified on another account."
+        );
+
+        return new Response(
+          JSON.stringify({ ok: true, auto: "duplicate_account" }),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
     }
   }
 

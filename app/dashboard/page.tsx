@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Hand, IdCard, Package, PackageSearch, Plane, Star } from "lucide-react";
+import {
+  Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star,
+} from "lucide-react";
 import {
   fetchSession, fetchMembership, signOut, Session, Membership,
 } from "@/lib/auth";
 import {
-  fetchMyMatches, fetchVerification, MatchDetail, VerificationState,
+  fetchMyMatches, fetchVerification, isAdmin, MatchDetail, VerificationState,
 } from "@/lib/db";
 import MatchCard from "@/components/MatchCard";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -42,6 +44,9 @@ export default function DashboardPage() {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matches, setMatches] = useState<MatchDetail[]>([]);
   const [verification, setVerification] = useState<VerificationState | null>(null);
+  // Reviewers get one extra card here rather than a nav item — the header is
+  // busy enough, and this is a link exactly one person in a thousand needs.
+  const [reviewer, setReviewer] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -54,15 +59,17 @@ export default function DashboardPage() {
         return;
       }
       setSession(s);
-      const [m, ms, v] = await Promise.all([
+      const [m, ms, v, admin] = await Promise.all([
         fetchMyMatches().catch(() => []),
         fetchMembership(),
         fetchVerification().catch(() => null),
+        isAdmin().catch(() => false),
       ]);
       if (!mounted) return;
       setMatches(m);
       setMembership(ms);
       setVerification(v);
+      setReviewer(admin);
       setReady(true);
     })();
     return () => {
@@ -161,6 +168,20 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {reviewer && (
+        <Link
+          href="/admin/verifications"
+          className="card card-lift mt-4 flex items-center gap-3 p-4"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sand-deep text-forest" aria-hidden>
+            <ShieldQuestion size={18} strokeWidth={2} />
+          </span>
+          <span className="text-sm font-semibold text-ink">
+            Verification review queue →
+          </span>
+        </Link>
+      )}
 
       <h2 className="mt-10 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
 
