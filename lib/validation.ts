@@ -51,6 +51,9 @@ export const parcelSchema = z
       "medicine",
       "gifts",
       "books",
+      "cosmetics",
+      "baby",
+      "shoes",
       "other",
     ]),
     description: z

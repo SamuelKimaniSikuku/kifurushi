@@ -177,6 +177,11 @@ export default function DashboardPage() {
               key={m.id}
               match={m}
               myUserId={session.userId}
+              // Live deliveries open; finished ones fold away to keep the
+              // dashboard short.
+              defaultOpen={
+                !["released", "declined", "cancelled"].includes(m.status)
+              }
               onChanged={() =>
                 fetchMyMatches().then(setMatches).catch(() => {})
               }

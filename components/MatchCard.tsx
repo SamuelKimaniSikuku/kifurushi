@@ -169,11 +169,14 @@ export default function MatchCard({
   match,
   myUserId,
   onChanged,
+  defaultOpen = true,
 }: {
   match: MatchDetail;
   myUserId: string;
   onChanged: () => void;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [note, setNote] = useState("");
@@ -312,20 +315,35 @@ export default function MatchCard({
 
   return (
     <div className="card p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
+      >
         <div className="font-semibold text-base">{title}</div>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-            done
-              ? "bg-success-bg text-success"
-              : ended
-                ? "bg-sand-deep text-muted"
-                : "bg-warn-bg text-warn"
-          }`}
-        >
-          {STATUS_LABELS[match.status]}
+        <span className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              done
+                ? "bg-success-bg text-success"
+                : ended
+                  ? "bg-sand-deep text-muted"
+                  : "bg-warn-bg text-warn"
+            }`}
+          >
+            {STATUS_LABELS[match.status]}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
+            strokeWidth={2}
+            aria-hidden
+          />
         </span>
-      </div>
+      </button>
+
+      {open && (
+      <>
 
       {/* Progress bar — happy path only */}
       {idx >= 0 && (
@@ -694,6 +712,8 @@ export default function MatchCard({
             </form>
           )}
         </div>
+      )}
+      </>
       )}
     </div>
   );

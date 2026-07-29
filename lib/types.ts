@@ -6,6 +6,9 @@ export type ParcelCategory =
   | "medicine"
   | "gifts"
   | "books"
+  | "cosmetics"
+  | "baby"
+  | "shoes"
   | "other";
 
 export type MatchStatus =
@@ -98,6 +101,9 @@ export const CATEGORY_LABELS: Record<ParcelCategory, string> = {
   medicine: "💊 Medicine (sealed)",
   gifts: "🎁 Gifts",
   books: "📚 Books",
+  cosmetics: "💄 Cosmetics & hair",
+  baby: "🍼 Baby items",
+  shoes: "👟 Shoes & bags",
   other: "📦 Other",
 };
 
