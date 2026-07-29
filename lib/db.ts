@@ -335,8 +335,8 @@ export function needsMyAction(m: MatchDetail, myUserId: string): boolean {
   const isTraveler = m.role === "traveler";
   switch (m.status) {
     case "requested":
-      // Only the trip's traveller can respond, and never to their own request.
-      return isTraveler && m.requesterId !== myUserId;
+      // Whoever did not make the request is the one who answers it.
+      return m.requesterId !== myUserId;
     case "accepted":
       return true; // either side confirms the agreed terms
     case "escrow_paid":

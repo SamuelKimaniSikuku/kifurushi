@@ -224,6 +224,8 @@ export default function MatchCard({
   const [codeEntryError, setCodeEntryError] = useState("");
 
   const isTraveler = match.role === "traveler";
+  // The side that did not initiate answers the request.
+  const canRespond = match.requesterId !== myUserId;
   const done = match.status === "released";
   const ended = TERMINAL_NEGATIVE.includes(match.status);
   const idx = STATUS_ORDER.indexOf(match.status);
@@ -443,7 +445,7 @@ export default function MatchCard({
       {!done && !ended && (
         <div className="mt-4 space-y-3">
           {match.status === "requested" &&
-            (isTraveler ? (
+            (canRespond ? (
               <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"

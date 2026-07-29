@@ -5,7 +5,7 @@
 //
 // Recipients:
 //   requested            -> the counterparty of whoever requested
-//   accepted / declined  -> the sender (only the trip's traveller can respond)
+//   accepted / declined  -> whoever made the request (the other side answered)
 //   picked_up / in_transit / delivered -> the sender (traveller acted)
 //   escrow_paid / cancelled / released -> both parties
 //   message              -> whoever did not send it
@@ -285,9 +285,8 @@ function shell(heading: string, body: string, lang: Lang): string {
 </div>`;
 }
 
-const SENDER_ONLY: Event[] = [
-  "accepted", "declined", "picked_up", "in_transit", "delivered",
-];
+const SENDER_ONLY: Event[] = ["picked_up", "in_transit", "delivered"];
+const TO_REQUESTER: Event[] = ["accepted", "declined"];
 const BOTH: Event[] = ["escrow_paid", "cancelled", "released"];
 
 Deno.serve(async (req) => {
@@ -353,6 +352,8 @@ Deno.serve(async (req) => {
   let recipients: string[];
   if (event === "requested") {
     recipients = [match.requester_id === travelerId ? senderId : travelerId];
+  } else if (TO_REQUESTER.includes(event)) {
+    recipients = [match.requester_id];
   } else if (event === "message") {
     recipients = [actor === travelerId ? senderId : travelerId];
   } else if (SENDER_ONLY.includes(event)) {
