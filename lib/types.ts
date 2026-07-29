@@ -53,7 +53,7 @@ export interface ParcelRequest {
   toCity: string;
   neededBy: string; // ISO date
   weightKg: number;
-  category: ParcelCategory;
+  categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
   createdAt: string;

@@ -8,7 +8,9 @@ import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { addParcel } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
-import { CATEGORY_LABELS } from "@/lib/types";
+import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
+
+const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 
 // What a courier typically charges per kg on Africa ↔ diaspora routes, and
 // the range travellers usually ask — powers the budget guidance below.
@@ -24,7 +26,7 @@ const FIELD_ORDER = [
   "neededBy",
   "weightKg",
   "budgetUsd",
-  "category",
+  "cats",
   "description",
 ];
 
@@ -45,8 +47,9 @@ export default function PostParcelPage() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
-    neededBy: "", weightKg: "3", category: "gifts", description: "", budgetUsd: "50",
+    neededBy: "", weightKg: "3", description: "", budgetUsd: "50",
   });
+  const [cats, setCats] = useState<ParcelCategory[]>(["gifts"]);
   const [minDate, setMinDate] = useState("");
 
   useEffect(() => {
@@ -67,6 +70,10 @@ export default function PostParcelPage() {
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
 
+  function toggleCat(c: ParcelCategory) {
+    setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parcelSchema.safeParse(form);
@@ -76,10 +83,16 @@ export default function PostParcelPage() {
       focusFirstInvalid(errs);
       return;
     }
+    if (cats.length === 0) {
+      const errs = { cats: t.postParcel.categoriesError };
+      setErrors(errs);
+      focusFirstInvalid(errs);
+      return;
+    }
     if (!session || submitting) return;
     setSubmitting(true);
     try {
-      await addParcel(parsed.data);
+      await addParcel({ ...parsed.data, categories: cats });
       router.push("/parcels");
     } catch {
       setErrors({ _submit: t.postParcel.submitError });
@@ -258,20 +271,37 @@ export default function PostParcelPage() {
         {/* Extras */}
         <div className="mt-6 space-y-5 border-t border-line pt-5">
           <div>
-            <label htmlFor="category" className="field-label">{t.postParcel.category}</label>
-            <select
-              id="category"
-              className={cls("category")}
-              value={form.category}
-              onChange={(e) => set("category")(e.target.value)}
-              {...err("category")}
+            <span id="cats-label" className="field-label">{t.postParcel.categoriesLabel}</span>
+            <div
+              id="cats"
+              tabIndex={-1}
+              role="group"
+              aria-labelledby="cats-label"
+              aria-describedby={errors.cats ? "cats-error" : undefined}
+              className="flex flex-wrap gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
             >
-              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-            {errors.category && (
-              <p id="category-error" className="field-error">{errors.category}</p>
+              {ALL_CATEGORIES.map((c) => {
+                const selected = cats.includes(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => toggleCat(c)}
+                    aria-pressed={selected}
+                    className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
+                      selected
+                        ? "border-forest bg-forest text-white"
+                        : "border-line-strong bg-white text-ink hover:border-forest"
+                    }`}
+                  >
+                    {selected && <span aria-hidden>✓</span>}
+                    {CATEGORY_LABELS[c]}
+                  </button>
+                );
+              })}
+            </div>
+            {errors.cats && (
+              <p id="cats-error" className="field-error">{errors.cats}</p>
             )}
           </div>
 

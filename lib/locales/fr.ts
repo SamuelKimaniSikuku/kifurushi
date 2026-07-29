@@ -261,6 +261,8 @@ export const fr: Dict = {
     aboveNote:
       "Votre budget dépasse les tarifs de messagerie — la plupart des voyageurs feront ce trajet pour moins",
     category: "Catégorie",
+    categoriesLabel: "Catégories",
+    categoriesError: "Choisissez au moins une catégorie",
     whatsInside: "Qu'y a-t-il dedans ?",
     insidePlaceholder:
       "Soyez précis — le voyageur inspectera le contenu avec vous avant le scellage.",

@@ -43,19 +43,6 @@ export const parcelSchema = z
     toCity: city,
     neededBy: futureDate,
     weightKg: z.coerce.number().min(0.1, "Minimum 0.1 kg").max(46, "Max 46 kg"),
-    category: z.enum([
-      "documents",
-      "clothing",
-      "electronics",
-      "food",
-      "medicine",
-      "gifts",
-      "books",
-      "cosmetics",
-      "baby",
-      "shoes",
-      "other",
-    ]),
     description: z
       .string()
       .trim()

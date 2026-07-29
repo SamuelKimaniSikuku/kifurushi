@@ -77,7 +77,16 @@ export default function ParcelCard({
         </span>
       </div>
 
-      <span className="chip w-fit">{CATEGORY_LABELS[parcel.category]}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {parcel.categories.slice(0, 3).map((cat) => (
+          <span key={cat} className="chip">
+            {CATEGORY_LABELS[cat]}
+          </span>
+        ))}
+        {parcel.categories.length > 3 && (
+          <span className="chip">+{parcel.categories.length - 3}</span>
+        )}
+      </div>
       <p className="line-clamp-2 text-sm text-muted">{parcel.description}</p>
 
       {onOffer && (

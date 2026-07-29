@@ -49,7 +49,7 @@ interface ParcelRow {
   to_city: string;
   needed_by: string;
   weight_kg: number;
-  category: string;
+  categories: string[] | null;
   description: string;
   budget_usd: number;
   created_at: string;
@@ -93,7 +93,7 @@ function mapParcel(row: ParcelRow): ParcelRequest {
     toCity: row.to_city,
     neededBy: row.needed_by,
     weightKg: Number(row.weight_kg),
-    category: row.category as ParcelCategory,
+    categories: (row.categories ?? []) as ParcelCategory[],
     description: row.description,
     budgetUsd: Number(row.budget_usd),
     createdAt: row.created_at,
@@ -171,7 +171,7 @@ export interface NewParcel {
   toCity: string;
   neededBy: string;
   weightKg: number;
-  category: ParcelCategory;
+  categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
 }
@@ -188,7 +188,7 @@ export async function addParcel(p: NewParcel): Promise<void> {
     to_city: p.toCity,
     needed_by: p.neededBy,
     weight_kg: p.weightKg,
-    category: p.category,
+    categories: p.categories,
     description: p.description,
     budget_usd: p.budgetUsd,
   });

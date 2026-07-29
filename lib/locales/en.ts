@@ -255,6 +255,8 @@ export const en = {
     aboveNote:
       "Your budget is above courier rates — most travellers will take this route for less",
     category: "Category",
+    categoriesLabel: "Categories",
+    categoriesError: "Pick at least one category",
     whatsInside: "What's inside?",
     insidePlaceholder:
       "Be specific — travellers will inspect the contents with you before sealing.",

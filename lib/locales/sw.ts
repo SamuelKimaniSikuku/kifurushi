@@ -260,6 +260,8 @@ export const sw: Dict = {
     aboveNote:
       "Bajeti yako iko juu ya bei za kampuni — wasafiri wengi watafanya safari hii kwa bei ndogo zaidi",
     category: "Aina",
+    categoriesLabel: "Aina (chagua zote zinazohusika)",
+    categoriesError: "Chagua angalau aina moja",
     whatsInside: "Kuna nini ndani?",
     insidePlaceholder:
       "Kuwa mahususi — msafiri atakagua vilivyomo pamoja nawe kabla ya kufunga.",
