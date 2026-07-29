@@ -192,6 +192,14 @@ export const sw: Dict = {
     pending: (n: number) =>
       n === 1 ? "Ombi 1 linasubiri" : `Maombi ${n} yanasubiri`,
     openDashboard: "Fungua dashibodi",
+    quickTitle: (name: string) => `Omba ${name}`,
+    quickRoute: "Anasafiri njia hii tayari — tunahitaji maelezo ya kifurushi chako tu.",
+    quickEstimate: (amount: number) => `Anatoza takriban $${amount} kwa hii`,
+    quickSend: "Tuma ombi",
+    quickSending: "Inatuma…",
+    quickCancel: "Ghairi",
+    quickError: "Imeshindikana kutuma ombi — tafadhali jaribu tena.",
+    needTripFirst: "Tangaza safari yako ya njia hii kwanza — tumeijaza tayari.",
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",

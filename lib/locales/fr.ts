@@ -192,6 +192,14 @@ export const fr: Dict = {
     pending: (n: number) =>
       n === 1 ? "1 demande en attente" : `${n} demandes en attente`,
     openDashboard: "Ouvrir le tableau de bord",
+    quickTitle: (name: string) => `Contacter ${name}`,
+    quickRoute: "Ce voyageur fait déjà ce trajet — il ne manque que votre colis.",
+    quickEstimate: (amount: number) => `Il demande environ ${amount} $ pour cela`,
+    quickSend: "Envoyer la demande",
+    quickSending: "Envoi…",
+    quickCancel: "Annuler",
+    quickError: "Impossible d'envoyer la demande — veuillez réessayer.",
+    needTripFirst: "Publiez d'abord votre voyage sur cet itinéraire — il est prérempli.",
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",

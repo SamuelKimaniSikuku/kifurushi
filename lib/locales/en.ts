@@ -189,6 +189,14 @@ export const en = {
     pending: (n: number) =>
       n === 1 ? "1 request waiting" : `${n} requests waiting`,
     openDashboard: "Open dashboard",
+    quickTitle: (name: string) => `Request ${name}`,
+    quickRoute: "They fly this route — we only need your parcel details.",
+    quickEstimate: (amount: number) => `They charge about $${amount} for this`,
+    quickSend: "Send request",
+    quickSending: "Sending…",
+    quickCancel: "Cancel",
+    quickError: "Could not send the request — please try again.",
+    needTripFirst: "Post your trip on this route first — we've prefilled it.",
   },
   pricing: {
     heroTitle: "One membership. Every role.",

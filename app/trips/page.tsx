@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeftRight } from "lucide-react";
 import TripCard from "@/components/TripCard";
+import QuickRequest from "@/components/QuickRequest";
 import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
@@ -18,11 +18,11 @@ import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 
 export default function TripsPage() {
-  const router = useRouter();
   const gate = useContactGate();
   const t = useT();
   const { session } = useSession();
   const [attention, setAttention] = useState<Attention | null>(null);
+  const [quickTrip, setQuickTrip] = useState<Trip | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -63,13 +63,19 @@ export default function TripsPage() {
   async function handleRequest(trip: Trip) {
     if (!(await gate())) return;
     try {
-      // A match links this trip to one of YOUR parcels — post one first.
-      const [myParcel] = await fetchMyOpenParcels();
-      if (!myParcel) {
-        router.push("/post/parcel?then=request");
+      // A match joins this trip to a parcel going the SAME way. Reuse one
+      // of mine on that route if it exists; otherwise collect just the
+      // parcel details, with the route inherited from the trip.
+      const mine = await fetchMyOpenParcels();
+      const sameRoute = mine.find(
+        (p) =>
+          p.fromCountry === trip.fromCountry && p.toCountry === trip.toCountry
+      );
+      if (!sameRoute) {
+        setQuickTrip(trip);
         return;
       }
-      await requestMatch(trip.id, myParcel.id);
+      await requestMatch(trip.id, sameRoute.id);
       setRequestedIds((prev) => new Set(prev).add(trip.id));
       setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
     } catch {
@@ -170,6 +176,19 @@ export default function TripsPage() {
             </div>
           )}
         </>
+      )}
+
+      {quickTrip && (
+        <QuickRequest
+          trip={quickTrip}
+          onClose={() => setQuickTrip(null)}
+          onDone={() => {
+            const name = quickTrip.travelerName;
+            setRequestedIds((prev) => new Set(prev).add(quickTrip.id));
+            setQuickTrip(null);
+            setToast(`Request sent to ${name}. Track it in your dashboard.`);
+          }}
+        />
       )}
 
       {toast && <Toast message={toast} onClose={() => setToast("")} />}

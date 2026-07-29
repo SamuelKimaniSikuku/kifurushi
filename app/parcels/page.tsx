@@ -63,13 +63,26 @@ export default function ParcelsPage() {
   async function handleOffer(parcel: ParcelRequest) {
     if (!(await gate())) return;
     try {
-      // An offer links this parcel to one of YOUR trips — post one first.
-      const [myTrip] = await fetchMyOpenTrips();
-      if (!myTrip) {
-        router.push("/post/trip?then=offer");
+      // An offer joins one of MY trips to this parcel — same route only.
+      const mine = await fetchMyOpenTrips();
+      const sameRoute = mine.find(
+        (tr) =>
+          tr.fromCountry === parcel.fromCountry &&
+          tr.toCountry === parcel.toCountry
+      );
+      if (!sameRoute) {
+        // A trip needs a flight date, so send them to the form with the
+        // route already filled in.
+        const q = new URLSearchParams({
+          fromCountry: parcel.fromCountry,
+          fromCity: parcel.fromCity,
+          toCountry: parcel.toCountry,
+          toCity: parcel.toCity,
+        });
+        router.push(`/post/trip?${q.toString()}`);
         return;
       }
-      await requestMatch(myTrip.id, parcel.id);
+      await requestMatch(sameRoute.id, parcel.id);
       setRequestedIds((prev) => new Set(prev).add(parcel.id));
       setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
     } catch {

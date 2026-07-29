@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
@@ -37,8 +37,9 @@ function focusFirstInvalid(errs: FieldErrors) {
   el.scrollIntoView({ block: "center" });
 }
 
-export default function PostTripPage() {
+function PostTripForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const { session, loading } = useSession();
   const t = useT();
   const [submitting, setSubmitting] = useState(false);
@@ -67,6 +68,19 @@ export default function PostTripPage() {
     const pad = (n: number) => String(n).padStart(2, "0");
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
+
+  // Arriving from "Offer to carry this": the route is already known.
+  useEffect(() => {
+    const fromCountry = params.get("fromCountry");
+    if (!fromCountry) return;
+    setForm((f) => ({
+      ...f,
+      fromCountry,
+      fromCity: params.get("fromCity") ?? f.fromCity,
+      toCountry: params.get("toCountry") ?? f.toCountry,
+      toCity: params.get("toCity") ?? f.toCity,
+    }));
+  }, [params]);
 
   function toggleCat(c: ParcelCategory) {
     setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -324,5 +338,13 @@ export default function PostTripPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+export default function PostTripPage() {
+  return (
+    <Suspense>
+      <PostTripForm />
+    </Suspense>
   );
 }

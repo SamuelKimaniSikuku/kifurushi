@@ -195,33 +195,52 @@ export async function addParcel(p: NewParcel): Promise<void> {
   if (error) throw error;
 }
 
-/** The caller's own open listings — needed before requesting/offering a match. */
-export async function fetchMyOpenParcels(): Promise<{ id: string }[]> {
+/**
+ * The caller's own open listings, with their route — a match must join a
+ * trip and a parcel travelling the SAME way. (Before this returned ids
+ * only, and callers grabbed the newest one, which could attach a
+ * Paris->Dakar parcel to a London->Lagos trip.)
+ */
+export interface MyListing {
+  id: string;
+  fromCountry: string;
+  toCountry: string;
+}
+
+function mapListing(rows: { id: string; from_country: string; to_country: string }[]) {
+  return rows.map((r) => ({
+    id: r.id,
+    fromCountry: r.from_country,
+    toCountry: r.to_country,
+  }));
+}
+
+export async function fetchMyOpenParcels(): Promise<MyListing[]> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) return [];
   const { data, error } = await supabase
     .from("parcels")
-    .select("id")
+    .select("id, from_country, to_country")
     .eq("sender_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return mapListing(data ?? []);
 }
 
-export async function fetchMyOpenTrips(): Promise<{ id: string }[]> {
+export async function fetchMyOpenTrips(): Promise<MyListing[]> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) return [];
   const { data, error } = await supabase
     .from("trips")
-    .select("id")
+    .select("id, from_country, to_country")
     .eq("traveler_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data ?? [];
+  return mapListing(data ?? []);
 }
 
 // ---------------------------------------------------------------------------
