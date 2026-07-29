@@ -3,6 +3,7 @@ import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import { LanguageProvider } from "@/lib/i18n";
 
 const sora = Sora({
@@ -42,6 +43,7 @@ export default function RootLayout({
           <Nav />
           <main id="main" className="min-h-[70vh]">{children}</main>
           <Footer />
+          <WhatsAppButton />
         </LanguageProvider>
       </body>
     </html>
