@@ -33,7 +33,56 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
-function emailShell(heading: string, body: string): string {
+type Lang = "en" | "fr" | "sw";
+
+const T: Record<Lang, {
+  senderSubject: string;
+  travelerSubject: string;
+  heading: string;
+  senderBody: (route: string, name: string) => string;
+  travelerBody: (route: string, name: string) => string;
+  button: string;
+  footer: string;
+}> = {
+  en: {
+    senderSubject: "Your parcel was delivered ✅",
+    travelerSubject: "Delivery confirmed — asante! ✅",
+    heading: "Delivery confirmed!",
+    senderBody: (route, name) =>
+      `Your parcel on <b>${route}</b> was handed over and the receiver confirmed it with the delivery code. The delivery record with ${name} is now complete — leave a review to help the next sender.`,
+    travelerBody: (route, name) =>
+      `The receiver confirmed your delivery on <b>${route}</b> with the code — the record with ${name} is complete and your delivery count just went up. Leave a review to build your reputation.`,
+    button: "Open your dashboard",
+    footer:
+      "Kifurushi connects senders and travellers — every delivery is a direct agreement between the two of you.",
+  },
+  fr: {
+    senderSubject: "Votre colis a été livré ✅",
+    travelerSubject: "Livraison confirmée — merci ! ✅",
+    heading: "Livraison confirmée !",
+    senderBody: (route, name) =>
+      `Votre colis sur <b>${route}</b> a été remis et le destinataire l'a confirmé avec le code de livraison. Le dossier avec ${name} est maintenant complet — laissez un avis pour aider le prochain expéditeur.`,
+    travelerBody: (route, name) =>
+      `Le destinataire a confirmé votre livraison sur <b>${route}</b> avec le code — le dossier avec ${name} est complet et votre compteur de livraisons vient d'augmenter. Laissez un avis pour bâtir votre réputation.`,
+    button: "Ouvrir votre tableau de bord",
+    footer:
+      "Kifurushi met en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre vous deux.",
+  },
+  sw: {
+    senderSubject: "Kifurushi chako kimefikishwa ✅",
+    travelerSubject: "Uwasilishaji umethibitishwa — asante! ✅",
+    heading: "Uwasilishaji umethibitishwa!",
+    senderBody: (route, name) =>
+      `Kifurushi chako cha <b>${route}</b> kimekabidhiwa na mpokeaji amethibitisha kwa msimbo. Rekodi na ${name} sasa imekamilika — acha tathmini kusaidia mtumaji ajaye.`,
+    travelerBody: (route, name) =>
+      `Mpokeaji amethibitisha uwasilishaji wako wa <b>${route}</b> kwa msimbo — rekodi na ${name} imekamilika na idadi yako ya usafirishaji imeongezeka. Acha tathmini kujenga sifa yako.`,
+    button: "Fungua dashibodi yako",
+    footer:
+      "Kifurushi inaunganisha watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yenu wawili.",
+  },
+};
+
+function emailShell(heading: string, body: string, lang: Lang): string {
   return `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
@@ -42,11 +91,10 @@ function emailShell(heading: string, body: string): string {
   <div style="font-size:14px;line-height:1.7;margin:20px 0">${body}</div>
   <a href="https://www.kifurushiapp.com/dashboard"
      style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px">
-    Open your dashboard
+    ${T[lang].button}
   </a>
   <p style="margin-top:24px;font-size:12px;color:#8a938f">
-    Kifurushi connects senders and travellers — every delivery is a direct
-    agreement between the two of you.
+    ${T[lang].footer}
   </p>
 </div>`;
 }
@@ -101,11 +149,15 @@ Deno.serve(async (req) => {
   async function nameAndEmail(uid: string) {
     const [{ data: user }, { data: prof }] = await Promise.all([
       admin.auth.admin.getUserById(uid),
-      admin.from("profiles").select("full_name").eq("id", uid).maybeSingle(),
+      admin.from("profiles").select("full_name, lang").eq("id", uid).maybeSingle(),
     ]);
+    const lang: Lang = ["en", "fr", "sw"].includes(prof?.lang ?? "")
+      ? (prof!.lang as Lang)
+      : "en";
     return {
       email: user?.user?.email ?? null,
       name: prof?.full_name ?? "your match partner",
+      lang,
     };
   }
 
@@ -116,31 +168,29 @@ Deno.serve(async (req) => {
 
   const jobs: Promise<void>[] = [];
   if (sender?.email) {
+    const L = T[sender.lang];
     jobs.push(
       sendEmail(
         sender.email,
-        "Your parcel was delivered ✅",
+        L.senderSubject,
         emailShell(
-          "Delivered and confirmed!",
-          `Your parcel on <b>${route}</b> was handed over and the receiver
-           confirmed it with the delivery code. The delivery record with
-           ${traveler?.name ?? "your traveller"} is now complete — leave a
-           review to help the next sender.`
+          L.heading,
+          L.senderBody(route, traveler?.name ?? "your traveller"),
+          sender.lang
         )
       )
     );
   }
   if (traveler?.email) {
+    const L = T[traveler.lang];
     jobs.push(
       sendEmail(
         traveler.email,
-        "Delivery confirmed — asante! ✅",
+        L.travelerSubject,
         emailShell(
-          "Delivery confirmed!",
-          `The receiver confirmed your delivery on <b>${route}</b> with the
-           code — the record with ${sender?.name ?? "your sender"} is
-           complete and your delivery count just went up. Leave a review to
-           build your reputation.`
+          L.heading,
+          L.travelerBody(route, sender?.name ?? "your sender"),
+          traveler.lang
         )
       )
     );

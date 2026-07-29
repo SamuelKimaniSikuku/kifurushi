@@ -9,6 +9,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useState,
 } from "react";
+import { supabase } from "./supabase";
 import { en, type Dict } from "./locales/en";
 
 export type { Dict } from "./locales/en";
@@ -59,6 +60,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setLangState(detectLang());
   }, []);
+
+  // Mirror the choice onto the member profile so server-sent emails
+  // (delivery + payment confirmations) arrive in the same language.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const uid = data.session?.user.id;
+      if (uid) {
+        supabase
+          .from("profiles")
+          .update({ lang })
+          .eq("id", uid)
+          .then(() => {});
+      }
+    });
+  }, [lang]);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);

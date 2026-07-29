@@ -77,17 +77,73 @@ function planFromPrice(price: {
   return null;
 }
 
-// Branded payment confirmation via Resend. Best-effort: a failed email must
-// never fail the webhook (Stripe would retry and double-process).
+// Branded payment confirmation via Resend, in the member's site language.
+// Best-effort: a failed email must never fail the webhook (Stripe would
+// retry and double-process).
+type Lang = "en" | "fr" | "sw";
+
+const MAIL: Record<Lang, {
+  subject: string;
+  heading: string;
+  intro: string;
+  planLabel: string;
+  renewsLabel: string;
+  monthly: string;
+  yearly: string;
+  body: string;
+  button: string;
+  footer: string;
+}> = {
+  en: {
+    subject: "Your Kifurushi membership is active 🎉",
+    heading: "Karibu — you're a member!",
+    intro: "Your payment went through and your Kifurushi membership is active.",
+    planLabel: "Plan",
+    renewsLabel: "Renews",
+    monthly: "Monthly — $5 / month",
+    yearly: "Yearly — $29 / year",
+    body: "You can now post trips and parcels, contact anyone on the platform, and keep 100% of what you earn as a traveller — Kifurushi takes no cut.",
+    button: "Go to your dashboard",
+    footer: "Billing is handled securely by Stripe. Questions? Just reply to this email or write to hello@kifurushiapp.com.",
+  },
+  fr: {
+    subject: "Votre abonnement Kifurushi est actif 🎉",
+    heading: "Karibu — vous êtes membre !",
+    intro: "Votre paiement a bien été reçu et votre abonnement Kifurushi est actif.",
+    planLabel: "Formule",
+    renewsLabel: "Renouvellement",
+    monthly: "Mensuelle — 5 $ / mois",
+    yearly: "Annuelle — 29 $ / an",
+    body: "Vous pouvez maintenant publier des voyages et des colis, contacter tout le monde sur la plateforme, et garder 100 % de ce que vous gagnez en voyageant — Kifurushi ne prend aucune commission.",
+    button: "Accéder à votre tableau de bord",
+    footer: "La facturation est gérée en toute sécurité par Stripe. Des questions ? Répondez à cet e-mail ou écrivez à hello@kifurushiapp.com.",
+  },
+  sw: {
+    subject: "Uanachama wako wa Kifurushi umewashwa 🎉",
+    heading: "Karibu — wewe ni mwanachama!",
+    intro: "Malipo yako yamefanikiwa na uanachama wako wa Kifurushi umewashwa.",
+    planLabel: "Mpango",
+    renewsLabel: "Unajirudia",
+    monthly: "Kila mwezi — $5 / mwezi",
+    yearly: "Kila mwaka — $29 / mwaka",
+    body: "Sasa unaweza kutangaza safari na vifurushi, kuwasiliana na yeyote kwenye jukwaa, na kubaki na 100% ya unachopata ukiwa msafiri — Kifurushi haichukui chochote.",
+    button: "Nenda kwenye dashibodi yako",
+    footer: "Malipo yanasimamiwa salama na Stripe. Maswali? Jibu barua pepe hii au andika kwa hello@kifurushiapp.com.",
+  },
+};
+
+const MAIL_LOCALE: Record<Lang, string> = { en: "en-GB", fr: "fr-FR", sw: "sw-KE" };
+
 async function sendConfirmationEmail(
   to: string,
   plan: "monthly" | "yearly",
-  periodEndIso: string
+  periodEndIso: string,
+  lang: Lang
 ) {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return;
-  const price = plan === "monthly" ? "$5 / month" : "$29 / year";
-  const renews = new Date(periodEndIso).toLocaleDateString("en-GB", {
+  const L = MAIL[lang];
+  const renews = new Date(periodEndIso).toLocaleDateString(MAIL_LOCALE[lang], {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -102,31 +158,25 @@ async function sendConfirmationEmail(
       body: JSON.stringify({
         from: "Kifurushi <hello@kifurushiapp.com>",
         to: [to],
-        subject: "Your Kifurushi membership is active 🎉",
+        subject: L.subject,
         html: `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
-    <h1 style="margin:0;font-size:22px">Karibu — you're a member!</h1>
+    <h1 style="margin:0;font-size:22px">${L.heading}</h1>
     <p style="margin:12px 0 0;opacity:.85;font-size:14px;line-height:1.6">
-      Your payment went through and your Kifurushi membership is active.
+      ${L.intro}
     </p>
   </div>
   <table style="width:100%;margin:20px 0;font-size:14px;border-collapse:collapse">
-    <tr><td style="padding:8px 0;color:#5c6662">Plan</td><td style="text-align:right;font-weight:600">${plan === "monthly" ? "Monthly" : "Yearly"} — ${price}</td></tr>
-    <tr><td style="padding:8px 0;color:#5c6662">Renews</td><td style="text-align:right;font-weight:600">${renews}</td></tr>
+    <tr><td style="padding:8px 0;color:#5c6662">${L.planLabel}</td><td style="text-align:right;font-weight:600">${plan === "monthly" ? L.monthly : L.yearly}</td></tr>
+    <tr><td style="padding:8px 0;color:#5c6662">${L.renewsLabel}</td><td style="text-align:right;font-weight:600">${renews}</td></tr>
   </table>
-  <p style="font-size:14px;line-height:1.6">
-    You can now post trips and parcels, contact anyone on the platform, and
-    keep 100% of what you earn as a traveller — Kifurushi takes no cut.
-  </p>
+  <p style="font-size:14px;line-height:1.6">${L.body}</p>
   <a href="https://www.kifurushiapp.com/dashboard"
      style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px">
-    Go to your dashboard
+    ${L.button}
   </a>
-  <p style="margin-top:24px;font-size:12px;color:#8a938f">
-    Billing is handled securely by Stripe. Questions? Just reply to this
-    email or write to hello@kifurushiapp.com.
-  </p>
+  <p style="margin-top:24px;font-size:12px;color:#8a938f">${L.footer}</p>
 </div>`,
       }),
     });
@@ -221,7 +271,17 @@ Deno.serve(async (req) => {
 
     const payerEmail =
       session.customer_details?.email ?? session.customer_email;
-    if (payerEmail) await sendConfirmationEmail(payerEmail, plan, end);
+    if (payerEmail) {
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("lang")
+        .eq("id", userId)
+        .maybeSingle();
+      const lang: Lang = ["en", "fr", "sw"].includes(prof?.lang ?? "")
+        ? (prof!.lang as Lang)
+        : "en";
+      await sendConfirmationEmail(payerEmail, plan, end, lang);
+    }
 
     return respond({ ok: true });
   }
