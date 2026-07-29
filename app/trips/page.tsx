@@ -9,21 +9,30 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { fetchTrips, fetchMyOpenParcels, requestMatch } from "@/lib/db";
+import {
+  fetchTrips, fetchMyOpenParcels, requestMatch, fetchAttention, type Attention,
+} from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
 import { useT } from "@/lib/i18n";
+import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 
 export default function TripsPage() {
   const router = useRouter();
   const gate = useContactGate();
   const t = useT();
+  const { session } = useSession();
+  const [attention, setAttention] = useState<Attention | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [toast, setToast] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (session) fetchAttention().then(setAttention).catch(() => {});
+  }, [session]);
 
   useEffect(() => {
     fetchTrips()
@@ -140,6 +149,8 @@ export default function TripsPage() {
                   trip={t}
                   onRequest={handleRequest}
                   requested={requestedIds.has(t.id)}
+                  mine={!!session && t.travelerId === session.userId}
+                  pending={attention?.byTrip[t.id] ?? 0}
                 />
               ))}
             </div>

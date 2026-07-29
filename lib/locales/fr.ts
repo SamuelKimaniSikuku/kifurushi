@@ -17,6 +17,7 @@ export const fr: Dict = {
     dashboardOf: (name: string) => `Tableau de bord de ${name}`,
     openMenu: "Ouvrir le menu",
     closeMenu: "Fermer le menu",
+    needsAttention: (n: number) => `${n} en attente de vous`,
   },
   footer: {
     tagline:
@@ -186,6 +187,11 @@ export const fr: Dict = {
     requestSent: "Demande envoyée",
     offerToCarry: "Proposer de le transporter",
     offerSent: "Offre envoyée",
+    yourTrip: "Votre voyage",
+    yourParcel: "Votre colis",
+    pending: (n: number) =>
+      n === 1 ? "1 demande en attente" : `${n} demandes en attente`,
+    openDashboard: "Ouvrir le tableau de bord",
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",

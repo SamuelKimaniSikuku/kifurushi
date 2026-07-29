@@ -233,6 +233,7 @@ export interface MatchDetail {
   id: string;
   tripId: string;
   parcelId: string;
+  requesterId: string;
   status: MatchStatus;
   updatedAt: string;
   /** The signed-in user's side of this match. */
@@ -251,7 +252,7 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
   const { data, error } = await supabase
     .from("matches")
     .select(
-      `id, trip_id, parcel_id, status, updated_at, code_hash,
+      `id, trip_id, parcel_id, requester_id, status, updated_at, code_hash,
        trip:trips!matches_trip_id_fkey(from_city, to_city, traveler_id,
          profile:profiles!trips_traveler_id_fkey(id, full_name)),
        parcel:parcels!matches_parcel_id_fkey(sender_id,
@@ -264,6 +265,7 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
     id: string;
     trip_id: string;
     parcel_id: string;
+    requester_id: string;
     status: string;
     updated_at: string;
     code_hash: string | null;
@@ -289,6 +291,7 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
       id: row.id,
       tripId: row.trip_id,
       parcelId: row.parcel_id,
+      requesterId: row.requester_id,
       status: row.status as MatchStatus,
       updatedAt: row.updated_at,
       role,
@@ -322,6 +325,59 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
   );
 
   return details;
+}
+
+/**
+ * Does this match need something from me right now? Mirrors the action
+ * buttons MatchCard renders, so the badge never over-promises.
+ */
+export function needsMyAction(m: MatchDetail, myUserId: string): boolean {
+  const isTraveler = m.role === "traveler";
+  switch (m.status) {
+    case "requested":
+      // Only the trip's traveller can respond, and never to their own request.
+      return isTraveler && m.requesterId !== myUserId;
+    case "accepted":
+      return true; // either side confirms the agreed terms
+    case "escrow_paid":
+    case "picked_up":
+    case "in_transit":
+      return isTraveler; // traveller moves the parcel along
+    case "delivered":
+      return true; // traveller enters the code, sender shares it
+    default:
+      return false;
+  }
+}
+
+export interface Attention {
+  /** Matches waiting on me — drives the dashboard badge. */
+  total: number;
+  /** Pending requests received, keyed by my own listing. */
+  byTrip: Record<string, number>;
+  byParcel: Record<string, number>;
+}
+
+export async function fetchAttention(): Promise<Attention> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  const empty: Attention = { total: 0, byTrip: {}, byParcel: {} };
+  if (!uid) return empty;
+
+  const matches = await fetchMyMatches().catch(() => [] as MatchDetail[]);
+  const out: Attention = { total: 0, byTrip: {}, byParcel: {} };
+  for (const m of matches) {
+    if (needsMyAction(m, uid)) out.total += 1;
+    // Someone else asked about one of my listings and hasn't been answered.
+    if (m.status === "requested" && m.requesterId !== uid) {
+      if (m.role === "traveler") {
+        out.byTrip[m.tripId] = (out.byTrip[m.tripId] ?? 0) + 1;
+      } else {
+        out.byParcel[m.parcelId] = (out.byParcel[m.parcelId] ?? 0) + 1;
+      }
+    }
+  }
+  return out;
 }
 
 /** Insert a match request. Returns "exists" when this pair is already matched. */

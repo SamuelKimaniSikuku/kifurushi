@@ -17,6 +17,7 @@ export const sw: Dict = {
     dashboardOf: (name: string) => `Dashibodi ya ${name}`,
     openMenu: "Fungua menyu",
     closeMenu: "Funga menyu",
+    needsAttention: (n: number) => `${n} yanakusubiri`,
   },
   footer: {
     tagline:
@@ -186,6 +187,11 @@ export const sw: Dict = {
     requestSent: "Ombi limetumwa",
     offerToCarry: "Jitolee kubeba",
     offerSent: "Ombi limetumwa",
+    yourTrip: "Safari yako",
+    yourParcel: "Kifurushi chako",
+    pending: (n: number) =>
+      n === 1 ? "Ombi 1 linasubiri" : `Maombi ${n} yanasubiri`,
+    openDashboard: "Fungua dashibodi",
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",

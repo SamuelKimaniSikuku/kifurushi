@@ -15,6 +15,7 @@ export const en = {
     dashboardOf: (name: string) => `${name}'s dashboard`,
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    needsAttention: (n: number) => `${n} waiting for you`,
   },
   footer: {
     tagline:
@@ -183,6 +184,11 @@ export const en = {
     requestSent: "Request sent",
     offerToCarry: "Offer to carry this",
     offerSent: "Offer sent",
+    yourTrip: "Your trip",
+    yourParcel: "Your parcel",
+    pending: (n: number) =>
+      n === 1 ? "1 request waiting" : `${n} requests waiting`,
+    openDashboard: "Open dashboard",
   },
   pricing: {
     heroTitle: "One membership. Every role.",

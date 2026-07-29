@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Globe, Menu, Package, Plane, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
+import { fetchAttention } from "@/lib/db";
 import { useLang, useT, LANG_LABELS, LANG_FLAGS, type Lang } from "@/lib/i18n";
 
 function LanguageSwitcher({ compact }: { compact?: boolean }) {
@@ -115,7 +116,30 @@ export default function Nav() {
   const pathname = usePathname();
   const { session } = useSession();
   const [open, setOpen] = useState(false);
+  const [waiting, setWaiting] = useState(0);
   const t = useT();
+
+  // Badge on the dashboard button: how many matches need this member's
+  // action right now. Refreshed on navigation and every minute.
+  useEffect(() => {
+    if (!session) {
+      setWaiting(0);
+      return;
+    }
+    let live = true;
+    const load = () =>
+      fetchAttention()
+        .then((a) => {
+          if (live) setWaiting(a.total);
+        })
+        .catch(() => {});
+    load();
+    const timer = setInterval(load, 60000);
+    return () => {
+      live = false;
+      clearInterval(timer);
+    };
+  }, [session, pathname]);
 
   // Two roles, each with "post mine" and "browse theirs".
   const travelling: RoleItem[] = [
@@ -207,8 +231,14 @@ export default function Nav() {
         <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <LanguageSwitcher />
           {session ? (
-            <Link href="/dashboard" className="btn-primary whitespace-nowrap">
+            <Link href="/dashboard" className="btn-primary relative whitespace-nowrap">
               {t.nav.dashboard}
+              {waiting > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-clay px-1 text-[11px] font-bold text-white ring-2 ring-white">
+                  {waiting > 9 ? "9+" : waiting}
+                  <span className="sr-only"> {t.nav.needsAttention(waiting)}</span>
+                </span>
+              )}
             </Link>
           ) : (
             <Link href="/auth" className="btn-primary whitespace-nowrap">
@@ -293,6 +323,12 @@ export default function Nav() {
             className="btn-primary w-full"
           >
             {session ? t.nav.dashboard : t.nav.signIn}
+            {session && waiting > 0 && (
+              <span className="ml-1.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-clay px-1 text-[11px] font-bold text-white">
+                {waiting > 9 ? "9+" : waiting}
+                <span className="sr-only"> {t.nav.needsAttention(waiting)}</span>
+              </span>
+            )}
           </Link>
         </div>
       </nav>

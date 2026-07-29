@@ -9,21 +9,30 @@ import CountrySelect from "@/components/CountrySelect";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
-import { fetchParcels, fetchMyOpenTrips, requestMatch } from "@/lib/db";
+import {
+  fetchParcels, fetchMyOpenTrips, requestMatch, fetchAttention, type Attention,
+} from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
 import { useT } from "@/lib/i18n";
+import { useSession } from "@/lib/auth";
 import { ParcelRequest } from "@/lib/types";
 
 export default function ParcelsPage() {
   const router = useRouter();
   const gate = useContactGate();
   const t = useT();
+  const { session } = useSession();
+  const [attention, setAttention] = useState<Attention | null>(null);
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [toast, setToast] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (session) fetchAttention().then(setAttention).catch(() => {});
+  }, [session]);
 
   useEffect(() => {
     fetchParcels()
@@ -140,6 +149,8 @@ export default function ParcelsPage() {
                   parcel={p}
                   onOffer={handleOffer}
                   requested={requestedIds.has(p.id)}
+                  mine={!!session && p.senderId === session.userId}
+                  pending={attention?.byParcel[p.id] ?? 0}
                 />
               ))}
             </div>

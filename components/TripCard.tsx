@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, Check, Plane, Star } from "lucide-react";
+import { BellRing, Calendar, Check, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
@@ -13,10 +13,14 @@ export default function TripCard({
   trip,
   onRequest,
   requested,
+  mine,
+  pending = 0,
 }: {
   trip: Trip;
   onRequest?: (trip: Trip) => void;
   requested?: boolean;
+  mine?: boolean;
+  pending?: number;
 }) {
   const t = useT();
   const date = new Date(trip.departDate).toLocaleDateString(undefined, {
@@ -124,7 +128,22 @@ export default function TripCard({
         {extraCategories > 0 && <span className="chip">+{extraCategories}</span>}
       </div>
 
-      {onRequest && (
+      {mine ? (
+        <div className="mt-auto space-y-2 pt-1">
+          <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
+            {t.browse.yourTrip}
+          </span>
+          {pending > 0 && (
+            <Link
+              href="/dashboard"
+              className="flex items-center justify-center gap-2 rounded-xl bg-clay px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-clay-deep"
+            >
+              <BellRing size={16} strokeWidth={2} aria-hidden />
+              {t.browse.pending(pending)}
+            </Link>
+          )}
+        </div>
+      ) : onRequest && (
         <div className="mt-auto pt-1">
           {requested ? (
             <button
