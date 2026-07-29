@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Globe, Menu, Package, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
-import { useLang, useT, LANG_LABELS, type Lang } from "@/lib/i18n";
+import { useLang, useT, LANG_LABELS, LANG_FLAGS, type Lang } from "@/lib/i18n";
 
 function LanguageSwitcher({ compact }: { compact?: boolean }) {
   const { lang, setLang } = useLang();
@@ -24,7 +24,7 @@ function LanguageSwitcher({ compact }: { compact?: boolean }) {
       >
         {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
           <option key={l} value={l}>
-            {compact ? LANG_LABELS[l] : l.toUpperCase()}
+            {LANG_FLAGS[l]} {compact ? LANG_LABELS[l] : l.toUpperCase()}
           </option>
         ))}
       </select>

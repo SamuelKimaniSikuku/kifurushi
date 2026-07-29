@@ -25,6 +25,12 @@ export const LANG_LABELS: Record<Lang, string> = {
   sw: "Kiswahili",
 };
 
+export const LANG_FLAGS: Record<Lang, string> = {
+  en: "🇬🇧",
+  fr: "🇫🇷",
+  sw: "🇰🇪",
+};
+
 const STORAGE_KEY = "kifurushi.lang";
 
 function detectLang(): Lang {
