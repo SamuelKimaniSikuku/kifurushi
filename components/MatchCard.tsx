@@ -17,40 +17,54 @@ import { transitUpdateSchema, reviewSchema, messageSchema } from "@/lib/validati
 import Stars from "@/components/ui/Stars";
 
 const CHAT_POLL_MS = 5000;
+const CHAT_IDLE_POLL_MS = 30000;
+
+// Per-match read marker: the timestamp of the newest message this browser has
+// seen with the panel open. Anything newer from the other party is unread.
+function markerKey(matchId: string) {
+  return `kifurushi.chatread.${matchId}`;
+}
+
+function readMarker(matchId: string): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(markerKey(matchId)) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeMarker(matchId: string, iso: string) {
+  try {
+    localStorage.setItem(markerKey(matchId), iso);
+  } catch {
+    // private mode — the badge just won't persist across reloads
+  }
+}
 
 function ChatPanel({
   matchId,
   myUserId,
   counterpartyName,
+  messages,
+  unread,
+  open,
+  setOpen,
+  onSent,
 }: {
   matchId: string;
   myUserId: string;
   counterpartyName: string;
+  messages: Message[];
+  unread: number;
+  open: boolean;
+  setOpen: (v: boolean) => void;
+  onSent: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Poll while the panel is open so the other side's messages appear.
-  useEffect(() => {
-    if (!open) return;
-    let live = true;
-    const load = () =>
-      fetchMessages(matchId)
-        .then((m) => {
-          if (live) setMessages(m);
-        })
-        .catch(() => {});
-    load();
-    const t = setInterval(load, CHAT_POLL_MS);
-    return () => {
-      live = false;
-      clearInterval(t);
-    };
-  }, [open, matchId]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -70,7 +84,7 @@ function ChatPanel({
     try {
       await sendMessage(matchId, parsed.data);
       setDraft("");
-      setMessages(await fetchMessages(matchId));
+      onSent();
     } catch {
       setError("Could not send — please try again.");
     } finally {
@@ -86,8 +100,22 @@ function ChatPanel({
         aria-expanded={open}
         className="flex w-full items-center gap-2 rounded text-xs font-semibold uppercase tracking-[0.18em] text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
       >
-        <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+        <span className="relative shrink-0">
+          <MessageSquare className="h-4 w-4" strokeWidth={2} aria-hidden />
+          {unread > 0 && (
+            <span
+              aria-hidden
+              className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-clay ring-2 ring-sand"
+            />
+          )}
+        </span>
         Messages
+        {unread > 0 && (
+          <span className="ml-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-clay px-1.5 py-0.5 text-[11px] font-bold normal-case tracking-normal text-white">
+            {unread > 9 ? "9+" : unread}
+            <span className="sr-only"> unread messages</span>
+          </span>
+        )}
         <ChevronDown
           className={`ml-auto h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
           strokeWidth={2}
@@ -177,6 +205,9 @@ export default function MatchCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [note, setNote] = useState("");
@@ -217,6 +248,39 @@ export default function MatchCard({
       fetchMatchReviews(match.id).then(setReviews).catch(() => {});
     }
   }, [match.id, match.status, inTransit, received, done]);
+
+  // Messages live at card level so the unread badge works even when the card
+  // (or the chat panel inside it) is collapsed. Fast poll only while reading.
+  const reloadMessages = useCallback(() => {
+    fetchMessages(match.id).then(setMessages).catch(() => {});
+  }, [match.id]);
+
+  const chatVisible = match.status !== "declined" && match.status !== "cancelled";
+
+  useEffect(() => {
+    if (!chatVisible) return;
+    reloadMessages();
+    const reading = open && chatOpen;
+    const t = setInterval(
+      reloadMessages,
+      reading ? CHAT_POLL_MS : CHAT_IDLE_POLL_MS
+    );
+    return () => clearInterval(t);
+  }, [chatVisible, open, chatOpen, reloadMessages]);
+
+  const unread = messages.filter(
+    (m) => m.senderId !== myUserId && m.createdAt > lastRead
+  ).length;
+
+  // Having the conversation on screen clears the badge.
+  useEffect(() => {
+    if (!open || !chatOpen || messages.length === 0) return;
+    const newest = messages[messages.length - 1].createdAt;
+    if (newest > lastRead) {
+      setLastRead(newest);
+      writeMarker(match.id, newest);
+    }
+  }, [open, chatOpen, messages, lastRead, match.id]);
 
   const act = useCallback(
     async (fn: () => Promise<unknown>, fallbackMessage: string) => {
@@ -323,6 +387,13 @@ export default function MatchCard({
       >
         <div className="font-semibold text-base">{title}</div>
         <span className="flex items-center gap-2">
+          {!open && unread > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-clay px-2.5 py-1 text-[11px] font-bold text-white">
+              <MessageSquare className="h-3 w-3" strokeWidth={2.5} aria-hidden />
+              {unread > 9 ? "9+" : unread}
+              <span className="sr-only"> unread messages</span>
+            </span>
+          )}
           <span
             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
               done
@@ -577,11 +648,16 @@ export default function MatchCard({
       )}
 
       {/* Match-scoped chat — everywhere except dead matches */}
-      {match.status !== "declined" && match.status !== "cancelled" && (
+      {chatVisible && (
         <ChatPanel
           matchId={match.id}
           myUserId={myUserId}
           counterpartyName={match.counterpartyName}
+          messages={messages}
+          unread={unread}
+          open={chatOpen}
+          setOpen={setChatOpen}
+          onSent={reloadMessages}
         />
       )}
 
