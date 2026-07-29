@@ -77,6 +77,64 @@ function planFromPrice(price: {
   return null;
 }
 
+// Branded payment confirmation via Resend. Best-effort: a failed email must
+// never fail the webhook (Stripe would retry and double-process).
+async function sendConfirmationEmail(
+  to: string,
+  plan: "monthly" | "yearly",
+  periodEndIso: string
+) {
+  const key = Deno.env.get("RESEND_API_KEY");
+  if (!key) return;
+  const price = plan === "monthly" ? "$5 / month" : "$29 / year";
+  const renews = new Date(periodEndIso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Kifurushi <hello@kifurushiapp.com>",
+        to: [to],
+        subject: "Your Kifurushi membership is active 🎉",
+        html: `
+<div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
+  <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
+    <h1 style="margin:0;font-size:22px">Karibu — you're a member!</h1>
+    <p style="margin:12px 0 0;opacity:.85;font-size:14px;line-height:1.6">
+      Your payment went through and your Kifurushi membership is active.
+    </p>
+  </div>
+  <table style="width:100%;margin:20px 0;font-size:14px;border-collapse:collapse">
+    <tr><td style="padding:8px 0;color:#5c6662">Plan</td><td style="text-align:right;font-weight:600">${plan === "monthly" ? "Monthly" : "Yearly"} — ${price}</td></tr>
+    <tr><td style="padding:8px 0;color:#5c6662">Renews</td><td style="text-align:right;font-weight:600">${renews}</td></tr>
+  </table>
+  <p style="font-size:14px;line-height:1.6">
+    You can now post trips and parcels, contact anyone on the platform, and
+    keep 100% of what you earn as a traveller — Kifurushi takes no cut.
+  </p>
+  <a href="https://www.kifurushiapp.com/dashboard"
+     style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px">
+    Go to your dashboard
+  </a>
+  <p style="margin-top:24px;font-size:12px;color:#8a938f">
+    Billing is handled securely by Stripe. Questions? Just reply to this
+    email or write to hello@kifurushiapp.com.
+  </p>
+</div>`,
+      }),
+    });
+  } catch (e) {
+    console.error("confirmation email failed", e);
+  }
+}
+
 // current_period_end lives on the subscription in older API versions and on
 // the subscription item in newer ones — accept either.
 function periodEnd(sub: any): string | null {
@@ -160,6 +218,11 @@ Deno.serve(async (req) => {
       console.error("membership upsert failed", error);
       return new Response("DB error", { status: 500 });
     }
+
+    const payerEmail =
+      session.customer_details?.email ?? session.customer_email;
+    if (payerEmail) await sendConfirmationEmail(payerEmail, plan, end);
+
     return respond({ ok: true });
   }
 
