@@ -279,9 +279,7 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
     } | null;
   }
 
-  return ((data ?? []) as unknown as MatchRow[]).map((row) => {
-    // RLS can hide the counterparty's listing once it closes; fall back
-    // gracefully rather than dropping the match from the dashboard.
+  const details = ((data ?? []) as unknown as MatchRow[]).map((row) => {
     const trip = row.trip ?? null;
     const parcel = row.parcel ?? null;
     const role: "traveler" | "sender" =
@@ -300,6 +298,30 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
       hasCode: !!row.code_hash,
     };
   });
+
+  // RLS hides a counterparty's listing once it closes (e.g. the parcel after
+  // release), which would break reviews. The security-definer RPC still knows
+  // who the other party is, and profiles are public — resolve the gaps.
+  await Promise.all(
+    details
+      .filter((d) => !d.counterpartyId)
+      .map(async (d) => {
+        const { data: cid } = await supabase.rpc("match_counterparty", {
+          p_match_id: d.id,
+          p_uid: uid,
+        });
+        if (!cid) return;
+        d.counterpartyId = cid as string;
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", cid)
+          .maybeSingle();
+        if (prof?.full_name) d.counterpartyName = prof.full_name;
+      })
+  );
+
+  return details;
 }
 
 /** Insert a match request. Returns "exists" when this pair is already matched. */
