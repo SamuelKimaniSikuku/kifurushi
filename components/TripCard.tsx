@@ -5,6 +5,7 @@ import { Calendar, Check, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
+import { useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -17,6 +18,7 @@ export default function TripCard({
   onRequest?: (trip: Trip) => void;
   requested?: boolean;
 }) {
+  const t = useT();
   const date = new Date(trip.departDate).toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",
@@ -131,11 +133,11 @@ export default function TripCard({
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success-bg px-5 py-2.5 text-sm font-semibold text-success"
             >
               <Check size={16} strokeWidth={2} aria-hidden />
-              Request sent
+              {t.browse.requestSent}
             </button>
           ) : (
             <button className="btn-accent w-full" onClick={() => onRequest(trip)}>
-              Request this traveller
+              {t.browse.requestTraveller}
             </button>
           )}
         </div>

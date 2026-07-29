@@ -149,6 +149,44 @@ export const sw: Dict = {
     termsAgree2: "na ninaelewa kuwa Kifurushi inaunganisha tu watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yetu wawili.",
     termsError: "Lazima ukubali Sheria na Masharti ili kufungua akaunti.",
   },
+  roles: {
+    sending: "Ninatuma",
+    travelling: "Ninasafiri",
+    findTraveller: "Tafuta msafiri",
+    findTravellerDesc: "Angalia wanaosafiri njia yako",
+    postParcel: "Tangaza kifurushi changu",
+    postParcelDesc: "Omba msafiri akibebe",
+    browseParcels: "Vifurushi vya kubeba",
+    browseParcelsDesc: "Pata kifurushi ubebe na upate pesa",
+    postTrip: "Tangaza safari yangu",
+    postTripDesc: "Toa nafasi ya ziada ya begi lako",
+  },
+  chooser: {
+    title: "Wewe ni yupi leo?",
+    sub: "Wanachama wengi ni wote wawili — tuma mwezi huu, beba unaporudi nyumbani.",
+    travelTitle: "Ninasafiri",
+    travelBody:
+      "Una safari inayokuja na kilo za ziada kwenye begi lako. Tangaza safari yako ili watumaji wakupate, au angalia vifurushi vinavyosubiri kwenye njia yako.",
+    travelPrimary: "Tangaza safari yangu",
+    travelSecondary: "Ona vifurushi vya kubeba",
+    sendTitle: "Ninatuma kitu",
+    sendBody:
+      "Unahitaji kitu kifikishwe kati ya Afrika na ughaibuni. Tangaza kifurushi chako ili wasafiri watoe maombi, au angalia wasafiri waliothibitishwa wanaoelekea huko.",
+    sendPrimary: "Tangaza kifurushi changu",
+    sendSecondary: "Tafuta msafiri",
+  },
+  browse: {
+    tripsTitle: "Wasafiri wa njia yako",
+    tripsSub:
+      "Watu waliothibitishwa wenye nafasi ya ziada ya mizigo. Omba mmoja abebe kifurushi chako — mnakubaliana bei moja kwa moja.",
+    parcelsTitle: "Vifurushi vinavyosubiri msafiri",
+    parcelsSub:
+      "Watu wanatafuta mtu wa njia yao. Jitolee kubeba na ubaki na 100% ya unachotoza.",
+    requestTraveller: "Omba msafiri huyu",
+    requestSent: "Ombi limetumwa",
+    offerToCarry: "Jitolee kubeba",
+    offerSent: "Ombi limetumwa",
+  },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",
     heroSub:
@@ -219,6 +257,8 @@ export const sw: Dict = {
   postTrip: {
     title: "Tangaza safari",
     sub: "Waambie watumaji unakoruka na nafasi uliyo nayo.",
+    roleBanner:
+      "Unatoa nafasi kwenye begi lako. Watumaji wa njia hii wataona safari yako na kukuomba — mnakubaliana bei moja kwa moja na unabaki na 100%.",
     fromCountry: "Nchi ya kuondoka",
     fromCity: "Jiji la kuondoka",
     toCountry: "Nchi ya kwenda",
@@ -248,6 +288,8 @@ export const sw: Dict = {
   postParcel: {
     title: "Tuma kifurushi",
     sub: "Eleza unachotuma — wasafiri wa njia yako wanapata taarifa.",
+    roleBanner:
+      "Unamwomba msafiri abebe hiki. Wasafiri wa njia yako watatoa maombi — mnakubaliana bei moja kwa moja, na Kifurushi haichukui chochote.",
     neededBy: "Kifike kabla ya",
     weight: "Uzito (kg)",
     budget: "Bajeti (USD)",

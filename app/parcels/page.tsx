@@ -11,11 +11,13 @@ import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
 import { fetchParcels, fetchMyOpenTrips, requestMatch } from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
+import { useT } from "@/lib/i18n";
 import { ParcelRequest } from "@/lib/types";
 
 export default function ParcelsPage() {
   const router = useRouter();
   const gate = useContactGate();
+  const t = useT();
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -69,11 +71,9 @@ export default function ParcelsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        Parcel requests
+        {t.browse.parcelsTitle}
       </h1>
-      <p className="mt-2 text-muted">
-        Travelling soon? Earn from your spare luggage space.
-      </p>
+      <p className="mt-2 max-w-2xl text-muted">{t.browse.parcelsSub}</p>
 
       <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_auto] sm:p-5">
         <div>

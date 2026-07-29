@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Globe, Menu, Package, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Globe, Menu, Package, Plane, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
 import { useLang, useT, LANG_LABELS, LANG_FLAGS, type Lang } from "@/lib/i18n";
 
@@ -32,17 +32,113 @@ function LanguageSwitcher({ compact }: { compact?: boolean }) {
   );
 }
 
+interface RoleItem {
+  href: string;
+  label: string;
+  desc: string;
+}
+
+/** Desktop dropdown grouping the two things one role can do. */
+function RoleMenu({
+  label,
+  Icon,
+  items,
+  pathname,
+}: {
+  label: string;
+  Icon: typeof Plane;
+  items: RoleItem[];
+  pathname: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const active = items.some((i) => i.href === pathname);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-1 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
+          active || open ? "text-forest" : "text-ink hover:text-forest"
+        }`}
+      >
+        <Icon size={16} strokeWidth={2} className="shrink-0 text-clay" aria-hidden />
+        {label}
+        <ChevronDown
+          size={14}
+          strokeWidth={2.5}
+          className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-2 w-[19rem] rounded-2xl border border-line bg-white p-2 shadow-xl">
+          {items.map((i) => (
+            <Link
+              key={i.href}
+              href={i.href}
+              onClick={() => setOpen(false)}
+              className={`block rounded-xl px-3 py-2.5 transition hover:bg-sand ${
+                pathname === i.href ? "bg-sand" : ""
+              }`}
+            >
+              <div className="text-sm font-semibold text-ink">{i.label}</div>
+              <div className="mt-0.5 text-xs leading-snug text-muted">{i.desc}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const { session } = useSession();
   const [open, setOpen] = useState(false);
   const t = useT();
 
-  const links = [
-    { href: "/trips", label: t.nav.findTraveller },
-    { href: "/parcels", label: t.nav.parcelRequests },
-    { href: "/post/trip", label: t.nav.postTrip },
-    { href: "/post/parcel", label: t.nav.sendParcel },
+  // Two roles, each with "post mine" and "browse theirs".
+  const travelling: RoleItem[] = [
+    { href: "/post/trip", label: t.roles.postTrip, desc: t.roles.postTripDesc },
+    {
+      href: "/parcels",
+      label: t.roles.browseParcels,
+      desc: t.roles.browseParcelsDesc,
+    },
+  ];
+  const sending: RoleItem[] = [
+    {
+      href: "/post/parcel",
+      label: t.roles.postParcel,
+      desc: t.roles.postParcelDesc,
+    },
+    {
+      href: "/trips",
+      label: t.roles.findTraveller,
+      desc: t.roles.findTravellerDesc,
+    },
+  ];
+  const plainLinks = [
     { href: "/pricing", label: t.nav.pricing },
     { href: "/verify", label: t.nav.getVerified },
     { href: "/safety", label: t.nav.trustSafety },
@@ -78,8 +174,21 @@ export default function Nav() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 xl:flex">
-          {links.map((l) => (
+        <nav className="hidden items-center gap-5 lg:flex">
+          <RoleMenu
+            label={t.roles.travelling}
+            Icon={Plane}
+            items={travelling}
+            pathname={pathname}
+          />
+          <RoleMenu
+            label={t.roles.sending}
+            Icon={Package}
+            items={sending}
+            pathname={pathname}
+          />
+          <span aria-hidden className="h-5 w-px bg-line" />
+          {plainLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -95,7 +204,7 @@ export default function Nav() {
           ))}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 xl:flex">
+        <div className="hidden shrink-0 items-center gap-2 lg:flex">
           <LanguageSwitcher />
           {session ? (
             <Link href="/dashboard" className="btn-primary whitespace-nowrap">
@@ -110,7 +219,7 @@ export default function Nav() {
 
         <button
           type="button"
-          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] xl:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -126,14 +235,42 @@ export default function Nav() {
 
       <nav
         id="mobile-nav"
-        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out xl:hidden ${
+        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out lg:hidden ${
           open
-            ? "visible max-h-[480px] border-line opacity-100"
+            ? "visible max-h-[640px] border-line opacity-100"
             : "invisible max-h-0 border-transparent opacity-0"
         }`}
       >
         <div className="px-4 py-3">
-          {links.map((l) => (
+          {[
+            { label: t.roles.travelling, Icon: Plane, items: travelling },
+            { label: t.roles.sending, Icon: Package, items: sending },
+          ].map((group) => (
+            <div key={group.label} className="mb-3">
+              <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-forest">
+                <group.Icon size={14} strokeWidth={2} className="text-clay" aria-hidden />
+                {group.label}
+              </div>
+              {group.items.map((i) => (
+                <Link
+                  key={i.href}
+                  href={i.href}
+                  aria-current={pathname === i.href ? "page" : undefined}
+                  className={`block rounded-lg px-3 py-2.5 transition ${
+                    pathname === i.href
+                      ? "bg-sand text-forest"
+                      : "text-ink hover:bg-sand"
+                  }`}
+                >
+                  <div className="text-sm font-semibold">{i.label}</div>
+                  <div className="mt-0.5 text-xs text-muted">{i.desc}</div>
+                </Link>
+              ))}
+            </div>
+          ))}
+
+          <div className="my-2 border-t border-line" />
+          {plainLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}

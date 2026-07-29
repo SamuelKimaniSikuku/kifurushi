@@ -166,6 +166,59 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Role chooser — which side of the marketplace are you on today? */}
+      <section className="mx-auto max-w-6xl px-4 pt-16 md:pt-20">
+        <div className="text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
+            {t.chooser.title}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-muted">
+            {t.chooser.sub}
+          </p>
+        </div>
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          <div className="card flex flex-col p-7">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-clay text-white" aria-hidden>
+              <Plane size={22} strokeWidth={2} />
+            </span>
+            <h3 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
+              {t.chooser.travelTitle}
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+              {t.chooser.travelBody}
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <Link href="/post/trip" className="btn-accent w-full sm:w-auto">
+                {t.chooser.travelPrimary}
+              </Link>
+              <Link href="/parcels" className="btn-ghost w-full sm:w-auto">
+                {t.chooser.travelSecondary}
+              </Link>
+            </div>
+          </div>
+
+          <div className="card flex flex-col p-7">
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-forest text-white" aria-hidden>
+              <Package size={22} strokeWidth={2} />
+            </span>
+            <h3 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
+              {t.chooser.sendTitle}
+            </h3>
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
+              {t.chooser.sendBody}
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <Link href="/post/parcel" className="btn-primary w-full sm:w-auto">
+                {t.chooser.sendPrimary}
+              </Link>
+              <Link href="/trips" className="btn-ghost w-full sm:w-auto">
+                {t.chooser.sendSecondary}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Trust bar */}
       <div className="border-b border-line bg-white">
         <div className="mx-auto max-w-6xl overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

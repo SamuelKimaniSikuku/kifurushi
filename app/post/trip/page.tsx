@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { addTrip } from "@/lib/db";
@@ -125,6 +125,11 @@ export default function PostTripPage() {
       <p className="mt-2 text-sm text-muted">
         {t.postTrip.sub}
       </p>
+
+      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-forest bg-forest px-5 py-4 text-sm leading-relaxed text-white">
+        <Plane className="mt-0.5 h-5 w-5 shrink-0 text-gold" strokeWidth={2} aria-hidden />
+        <p>{t.postTrip.roleBanner}</p>
+      </div>
 
       <form onSubmit={submit} className="card mt-6 p-6 sm:p-8" noValidate>
         {/* Location */}

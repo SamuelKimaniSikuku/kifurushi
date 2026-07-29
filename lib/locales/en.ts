@@ -146,6 +146,44 @@ export const en = {
     termsAgree2: "and understand that Kifurushi only connects senders and travellers — every delivery is a direct agreement between the two of us.",
     termsError: "You must accept the Terms & Conditions to create an account.",
   },
+  roles: {
+    sending: "I'm sending",
+    travelling: "I'm travelling",
+    findTraveller: "Find a traveller",
+    findTravellerDesc: "Browse people flying your route",
+    postParcel: "Post my parcel",
+    postParcelDesc: "Ask travellers to carry it",
+    browseParcels: "Parcels to carry",
+    browseParcelsDesc: "Find something to carry and earn",
+    postTrip: "Post my trip",
+    postTripDesc: "Offer your spare luggage space",
+  },
+  chooser: {
+    title: "Which one are you today?",
+    sub: "Most members are both — send this month, carry when you fly home.",
+    travelTitle: "I'm travelling",
+    travelBody:
+      "You have a flight coming up and spare kilos in your suitcase. Post your trip so senders can find you, or browse parcels already waiting on your route.",
+    travelPrimary: "Post my trip",
+    travelSecondary: "See parcels to carry",
+    sendTitle: "I'm sending something",
+    sendBody:
+      "You need something delivered between Africa and abroad. Post your parcel so travellers can offer, or browse verified travellers already going your way.",
+    sendPrimary: "Post my parcel",
+    sendSecondary: "Find a traveller",
+  },
+  browse: {
+    tripsTitle: "Travellers going your way",
+    tripsSub:
+      "Verified people with spare luggage space. Request one to carry your parcel — you agree the fee directly.",
+    parcelsTitle: "Parcels needing a traveller",
+    parcelsSub:
+      "People looking for someone on their route. Offer to carry and keep 100% of what you charge.",
+    requestTraveller: "Request this traveller",
+    requestSent: "Request sent",
+    offerToCarry: "Offer to carry this",
+    offerSent: "Offer sent",
+  },
   pricing: {
     heroTitle: "One membership. Every role.",
     heroSub:
@@ -215,6 +253,8 @@ export const en = {
   postTrip: {
     title: "Post a trip",
     sub: "Tell senders where you're flying and how much space you have.",
+    roleBanner:
+      "You're offering space in your luggage. Senders on this route will see your trip and request you — you agree the fee directly and keep 100% of it.",
     fromCountry: "From country",
     fromCity: "From city",
     toCountry: "To country",
@@ -243,6 +283,8 @@ export const en = {
   postParcel: {
     title: "Send a parcel",
     sub: "Describe what you're sending — travellers on your route get notified.",
+    roleBanner:
+      "You're asking a traveller to carry this. Travellers flying your route will offer — you agree the fee directly with them, and Kifurushi takes no cut.",
     neededBy: "Needed by",
     weight: "Weight (kg)",
     budget: "Budget (USD)",

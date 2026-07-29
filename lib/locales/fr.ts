@@ -149,6 +149,44 @@ export const fr: Dict = {
     termsAgree2: "et je comprends que Kifurushi ne fait que mettre en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre nous deux.",
     termsError: "Vous devez accepter les Conditions générales pour créer un compte.",
   },
+  roles: {
+    sending: "J'envoie",
+    travelling: "Je voyage",
+    findTraveller: "Trouver un voyageur",
+    findTravellerDesc: "Parcourir les voyageurs sur votre itinéraire",
+    postParcel: "Publier mon colis",
+    postParcelDesc: "Demander à un voyageur de le transporter",
+    browseParcels: "Colis à transporter",
+    browseParcelsDesc: "Trouver un colis et gagner de l'argent",
+    postTrip: "Publier mon voyage",
+    postTripDesc: "Proposer vos kilos libres",
+  },
+  chooser: {
+    title: "Vous êtes lequel aujourd'hui ?",
+    sub: "La plupart des membres sont les deux — envoyer ce mois-ci, transporter en rentrant.",
+    travelTitle: "Je voyage",
+    travelBody:
+      "Vous avez un vol prévu et des kilos libres dans votre valise. Publiez votre voyage pour que les expéditeurs vous trouvent, ou parcourez les colis qui attendent déjà sur votre itinéraire.",
+    travelPrimary: "Publier mon voyage",
+    travelSecondary: "Voir les colis à transporter",
+    sendTitle: "J'envoie quelque chose",
+    sendBody:
+      "Vous devez faire livrer quelque chose entre l'Afrique et l'étranger. Publiez votre colis pour recevoir des offres, ou parcourez les voyageurs vérifiés qui partent déjà dans votre direction.",
+    sendPrimary: "Publier mon colis",
+    sendSecondary: "Trouver un voyageur",
+  },
+  browse: {
+    tripsTitle: "Voyageurs sur votre itinéraire",
+    tripsSub:
+      "Des personnes vérifiées avec de la place dans leurs bagages. Demandez-en une pour transporter votre colis — vous convenez du prix directement.",
+    parcelsTitle: "Colis en attente d'un voyageur",
+    parcelsSub:
+      "Des personnes cherchent quelqu'un sur leur itinéraire. Proposez de le transporter et gardez 100 % de ce que vous facturez.",
+    requestTraveller: "Contacter ce voyageur",
+    requestSent: "Demande envoyée",
+    offerToCarry: "Proposer de le transporter",
+    offerSent: "Offre envoyée",
+  },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",
     heroSub:
@@ -219,6 +257,8 @@ export const fr: Dict = {
   postTrip: {
     title: "Publier un voyage",
     sub: "Dites aux expéditeurs où vous volez et combien d'espace vous avez.",
+    roleBanner:
+      "Vous proposez de la place dans vos bagages. Les expéditeurs sur cet itinéraire verront votre voyage et vous contacteront — vous convenez du prix directement et gardez 100 %.",
     fromCountry: "Pays de départ",
     fromCity: "Ville de départ",
     toCountry: "Pays d'arrivée",
@@ -249,6 +289,8 @@ export const fr: Dict = {
   postParcel: {
     title: "Envoyer un colis",
     sub: "Décrivez votre envoi — les voyageurs sur votre itinéraire sont prévenus.",
+    roleBanner:
+      "Vous demandez à un voyageur de transporter ce colis. Les voyageurs sur votre itinéraire vous feront des offres — vous convenez du prix directement avec eux, et Kifurushi ne prend aucune commission.",
     neededBy: "À livrer avant le",
     weight: "Poids (kg)",
     budget: "Budget (USD)",

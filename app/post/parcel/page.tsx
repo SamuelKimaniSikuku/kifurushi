@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Ban } from "lucide-react";
+import { ArrowRight, Ban, Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { addParcel } from "@/lib/db";
@@ -138,6 +138,11 @@ export default function PostParcelPage() {
       <p className="mt-2 text-sm text-muted">
         {t.postParcel.sub}
       </p>
+
+      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-forest bg-forest px-5 py-4 text-sm leading-relaxed text-white">
+        <Package className="mt-0.5 h-5 w-5 shrink-0 text-gold" strokeWidth={2} aria-hidden />
+        <p>{t.postParcel.roleBanner}</p>
+      </div>
 
       <form onSubmit={submit} className="card mt-6 p-6 sm:p-8" noValidate>
         {/* Location */}

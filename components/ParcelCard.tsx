@@ -5,6 +5,7 @@ import { ArrowRight, Calendar, Check, Scale } from "lucide-react";
 import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
+import { useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -17,6 +18,7 @@ export default function ParcelCard({
   onOffer?: (parcel: ParcelRequest) => void;
   requested?: boolean;
 }) {
+  const t = useT();
   const date = new Date(parcel.neededBy).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
@@ -98,11 +100,11 @@ export default function ParcelCard({
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success-bg px-5 py-2.5 text-sm font-semibold text-success"
             >
               <Check size={16} strokeWidth={2} aria-hidden />
-              Offer sent
+              {t.browse.offerSent}
             </button>
           ) : (
             <button className="btn-primary w-full" onClick={() => onOffer(parcel)}>
-              Offer to carry this
+              {t.browse.offerToCarry}
             </button>
           )}
         </div>
