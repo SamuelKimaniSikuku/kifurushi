@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import { Package, X } from "lucide-react";
-import { addParcel, requestMatch } from "@/lib/db";
+import { addParcel, fetchMyOpenParcels, requestMatch } from "@/lib/db";
 import { CATEGORY_LABELS, ParcelCategory, Trip } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 
@@ -76,7 +76,7 @@ export default function QuickRequest({
         categories: cats,
         description: description.trim(),
       });
-      const [mine] = await (await import("@/lib/db")).fetchMyOpenParcels();
+      const [mine] = await fetchMyOpenParcels();
       if (!mine) throw new Error("parcel not found after insert");
       await requestMatch(trip.id, mine.id);
       onDone();
