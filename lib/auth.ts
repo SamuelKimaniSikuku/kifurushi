@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
+import { reportIncident } from "./db";
 
 export interface Session {
   userId: string;
@@ -116,13 +117,22 @@ export const BILLING_MODE: "beta" | "stripe" =
 
 /** Stripe Checkout: returns the hosted payment URL to redirect to. */
 export async function startCheckout(plan: BillingPlan): Promise<string> {
-  const { data, error } = await supabase.functions.invoke("stripe-checkout", {
-    body: { plan },
-  });
-  if (error) throw error;
-  const url = (data as { url?: string })?.url;
-  if (!url) throw new Error("No checkout URL returned");
-  return url;
+  try {
+    const { data, error } = await supabase.functions.invoke("stripe-checkout", {
+      body: { plan },
+    });
+    if (error) throw error;
+    const url = (data as { url?: string })?.url;
+    if (!url) throw new Error("No checkout URL returned");
+    return url;
+  } catch (e) {
+    // Someone wanted to pay us and couldn't. Worth hearing about.
+    await reportIncident("checkout_start_failed", "A member could not start checkout", {
+      plan,
+      message: (e as { message?: string })?.message,
+    });
+    throw e;
+  }
 }
 
 /** Beta self-enrolment: writes a real membership row, no payment yet. */

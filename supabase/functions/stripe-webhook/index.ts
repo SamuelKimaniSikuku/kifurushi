@@ -8,6 +8,7 @@
 // customer.subscription.deleted     -> status 'canceled'
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logIncident } from "../_shared/incidents.ts";
 
 const encoder = new TextEncoder();
 
@@ -211,7 +212,16 @@ Deno.serve(async (req) => {
     req.headers.get("stripe-signature"),
     Deno.env.get("STRIPE_WEBHOOK_SECRET")!
   );
-  if (!ok) return new Response("Invalid signature", { status: 401 });
+  if (!ok) {
+    // Either Stripe rotated the signing secret or someone is probing us.
+    // Both are worth knowing about the same day.
+    await logIncident(
+      "stripe_signature_invalid",
+      "A Stripe webhook failed signature verification",
+      "severe"
+    );
+    return new Response("Invalid signature", { status: 401 });
+  }
 
   let event: any;
   try {
@@ -245,7 +255,15 @@ Deno.serve(async (req) => {
       }
     }
     if (!userId || !subId) {
+      // Money left someone's card and we can't tell whose account to credit.
+      // Nothing recovers this except a person looking at it.
       console.error("unattributable checkout session", session.id);
+      await logIncident(
+        "stripe_unattributable",
+        "Someone paid but we cannot tell which account to credit",
+        "severe",
+        { session: session.id, email: session.customer_details?.email ?? null }
+      );
       return respond({ ok: true, ignored: "no user/sub" });
     }
 
@@ -254,6 +272,12 @@ Deno.serve(async (req) => {
     const end = periodEnd(sub);
     if (!plan || !end) {
       console.error("unmappable subscription", subId);
+      await logIncident(
+        "stripe_unmappable_plan",
+        "Paid subscription does not map to a Kifurushi plan",
+        "severe",
+        { subscription: subId, plan, end }
+      );
       return respond({ ok: true, ignored: "unmappable" });
     }
     const { error } = await admin.from("memberships").upsert({
@@ -266,6 +290,13 @@ Deno.serve(async (req) => {
     });
     if (error) {
       console.error("membership upsert failed", error);
+      await logIncident(
+        "membership_write_failed",
+        "Payment succeeded but the membership could not be written",
+        "severe",
+        { subscription: subId, error: error.message },
+        userId
+      );
       return new Response("DB error", { status: 500 });
     }
 
@@ -310,6 +341,12 @@ Deno.serve(async (req) => {
       : await query.eq("provider", "stripe").eq("provider_ref", sub.id);
     if (error) {
       console.error("membership update failed", error);
+      await logIncident(
+        "membership_sync_failed",
+        "Subscription changed at Stripe but the membership did not update",
+        "severe",
+        { error: error.message }
+      );
       return new Response("DB error", { status: 500 });
     }
     return respond({ ok: true });

@@ -151,7 +151,13 @@ export async function addTrip(t: NewTrip): Promise<void> {
     notes: t.notes || null,
     categories: t.categoriesAccepted,
   });
-  if (error) throw error;
+  if (error) {
+    await reportIncident("listing_post_failed", "A member could not post a trip", {
+      code: error.code,
+      message: error.message,
+    });
+    throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -197,7 +203,13 @@ export async function addParcel(p: NewParcel): Promise<void> {
     description: p.description,
     budget_usd: p.budgetUsd,
   });
-  if (error) throw error;
+  if (error) {
+    await reportIncident("listing_post_failed", "A member could not post a parcel", {
+      code: error.code,
+      message: error.message,
+    });
+    throw error;
+  }
 }
 
 /** Load one of my listings for editing. */
@@ -476,6 +488,55 @@ export async function fetchAttention(): Promise<Attention> {
 }
 
 /** Insert a match request. Returns "exists" when this pair is already matched. */
+// ---------------------------------------------------------------------------
+// INCIDENTS
+// When a member's action fails, the toast tells them and this tells us. Best
+// effort by design: a failure to report a failure must never become a second
+// error in the member's face.
+// ---------------------------------------------------------------------------
+
+export async function reportIncident(
+  kind: string,
+  summary: string,
+  detail?: unknown
+): Promise<void> {
+  try {
+    const { data: auth } = await supabase.auth.getSession();
+    const uid = auth.session?.user.id;
+    if (!uid) return; // the insert policy requires a signed-in owner
+    await supabase.from("incidents").insert({
+      kind,
+      severity: "normal",
+      source: "client",
+      summary: summary.slice(0, 300),
+      detail: detail ? JSON.parse(JSON.stringify(detail)) : null,
+      user_id: uid,
+    });
+  } catch {
+    // Deliberately silent.
+  }
+}
+
+/** Runs an action, reports it if it throws, and rethrows for the caller's UI. */
+async function watched<T>(
+  kind: string,
+  summary: string,
+  fn: () => Promise<T>,
+  detail?: Record<string, unknown>
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    const err = e as { message?: string; code?: string };
+    await reportIncident(kind, summary, {
+      ...detail,
+      code: err?.code,
+      message: err?.message,
+    });
+    throw e;
+  }
+}
+
 export async function requestMatch(
   tripId: string,
   parcelId: string
@@ -483,24 +544,38 @@ export async function requestMatch(
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error("Not signed in");
-  const { error } = await supabase.from("matches").insert({
-    trip_id: tripId,
-    parcel_id: parcelId,
-    requester_id: uid,
-  });
-  if (error) {
-    if (error.code === "23505") return "exists"; // unique (trip_id, parcel_id)
-    throw error;
-  }
-  return "created";
+  return watched(
+    "match_request_failed",
+    "A member could not send a match request",
+    async () => {
+      const { error } = await supabase.from("matches").insert({
+        trip_id: tripId,
+        parcel_id: parcelId,
+        requester_id: uid,
+      });
+      if (error) {
+        if (error.code === "23505") return "exists"; // unique (trip_id, parcel_id)
+        throw error;
+      }
+      return "created";
+    },
+    { tripId, parcelId }
+  );
 }
 
 export async function respondMatch(matchId: string, accept: boolean): Promise<void> {
-  const { error } = await supabase.rpc("respond_match", {
-    p_match_id: matchId,
-    p_accept: accept,
-  });
-  if (error) throw error;
+  return watched(
+    "match_respond_failed",
+    `A member could not ${accept ? "accept" : "decline"} a request`,
+    async () => {
+      const { error } = await supabase.rpc("respond_match", {
+        p_match_id: matchId,
+        p_accept: accept,
+      });
+      if (error) throw error;
+    },
+    { matchId, accept }
+  );
 }
 
 export async function advanceMatch(matchId: string): Promise<void> {

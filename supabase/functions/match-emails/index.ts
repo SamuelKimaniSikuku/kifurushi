@@ -11,6 +11,7 @@
 //   message              -> whoever did not send it
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logIncident } from "../_shared/incidents.ts";
 
 type Lang = "en" | "fr" | "sw";
 type Role = "traveler" | "sender";
@@ -250,9 +251,12 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 async function sendEmail(to: string, subject: string, html: string) {
   const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) return;
+  if (!key) {
+    await logIncident("email_not_configured", "RESEND_API_KEY is missing", "severe");
+    return;
+  }
   try {
-    await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${key}`,
@@ -265,8 +269,27 @@ async function sendEmail(to: string, subject: string, html: string) {
         html,
       }),
     });
+    // This used to be fire-and-forget: a rejected or suppressed address
+    // looked exactly like a delivered one, so a member could sit waiting for
+    // a notification that Resend had refused to send.
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error("match email rejected", res.status, detail);
+      await logIncident(
+        "email_send_failed",
+        `Resend rejected a match notification (${res.status})`,
+        "severe",
+        { subject, status: res.status, detail: detail.slice(0, 500) }
+      );
+    }
   } catch (e) {
     console.error("match email failed", e);
+    await logIncident(
+      "email_send_failed",
+      "A match notification could not be sent",
+      "severe",
+      { subject, error: String(e) }
+    );
   }
 }
 

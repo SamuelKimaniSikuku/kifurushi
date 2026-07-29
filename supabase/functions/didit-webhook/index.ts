@@ -9,6 +9,7 @@
 // automatic check is still seconds away. Other interim statuses stay pending.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { logIncident } from "../_shared/incidents.ts";
 import {
   duplicateOfSession,
   fetchDecision,
@@ -66,6 +67,11 @@ Deno.serve(async (req) => {
   }
   const expected = await hmacHex(Deno.env.get("DIDIT_WEBHOOK_SECRET")!, raw);
   if (!timingSafeEqual(expected, signature)) {
+    await logIncident(
+      "kyc_signature_invalid",
+      "A Didit webhook failed signature verification",
+      "severe"
+    );
     return new Response("Invalid signature", { status: 401 });
   }
 
@@ -113,6 +119,12 @@ Deno.serve(async (req) => {
     .select("user_id");
   if (error) {
     console.error("verifications update failed", error);
+    await logIncident(
+      "kyc_write_failed",
+      "Didit decided a verification but we could not record it",
+      "severe",
+      { session: body.session_id, status: body.status, error: error.message }
+    );
     return new Response("DB error", { status: 500 });
   }
 
@@ -126,6 +138,13 @@ Deno.serve(async (req) => {
       .eq("id", userId);
     if (pErr) {
       console.error("profiles update failed", pErr);
+      await logIncident(
+        "kyc_badge_failed",
+        "Verification approved but the badge was not applied",
+        "severe",
+        { session: body.session_id, error: pErr.message },
+        userId
+      );
       return new Response("DB error", { status: 500 });
     }
   }
