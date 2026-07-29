@@ -198,6 +198,9 @@ export const en = {
     quickError: "Could not send the request — please try again.",
     needTripFirst: "Post your trip on this route first — we've prefilled it.",
     edit: "Edit",
+    tooHeavy: (free: number) => `Only ${free} kg left on this trip.`,
+    noFittingTrip:
+      "None of your trips fit this parcel — it must fly your route and leave before the parcel is needed. Post one and we'll prefill the route.",
   },
   pricing: {
     heroTitle: "One membership. Every role.",

@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, X } from "lucide-react";
 
 const AUTO_DISMISS_MS = 4000;
 
 export default function Toast({
   message,
   onClose,
+  tone = "success",
 }: {
   message: string;
   onClose: () => void;
+  tone?: "success" | "error";
 }) {
   const [shown, setShown] = useState(false);
 
@@ -39,7 +41,11 @@ export default function Toast({
         shown ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
       }`}
     >
-      <CheckCircle2 size={20} strokeWidth={2} className="mt-0.5 shrink-0 text-success" aria-hidden />
+      {tone === "error" ? (
+        <AlertCircle size={20} strokeWidth={2} className="mt-0.5 shrink-0 text-danger" aria-hidden />
+      ) : (
+        <CheckCircle2 size={20} strokeWidth={2} className="mt-0.5 shrink-0 text-success" aria-hidden />
+      )}
       <p className="flex-1 text-sm font-medium text-ink">{message}</p>
       <button
         type="button"

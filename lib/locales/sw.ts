@@ -201,6 +201,9 @@ export const sw: Dict = {
     quickError: "Imeshindikana kutuma ombi — tafadhali jaribu tena.",
     needTripFirst: "Tangaza safari yako ya njia hii kwanza — tumeijaza tayari.",
     edit: "Hariri",
+    tooHeavy: (free: number) => `Kuna kilo ${free} tu zilizobaki kwenye safari hii.`,
+    noFittingTrip:
+      "Hakuna safari yako inayofaa — lazima ifuate njia hii na iondoke kabla ya tarehe ya kifurushi. Tangaza moja, njia imejazwa tayari.",
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",

@@ -64,13 +64,20 @@ export default function ParcelsPage() {
     if (!(await gate())) return;
     try {
       // An offer joins one of MY trips to this parcel — same route only.
+      // Offer one of my trips only if it fits: same corridor, departing
+      // before the parcel is needed, with room for its weight.
       const mine = await fetchMyOpenTrips();
+      const today = new Date().toISOString().slice(0, 10);
       const sameRoute = mine.find(
         (tr) =>
           tr.fromCountry === parcel.fromCountry &&
-          tr.toCountry === parcel.toCountry
+          tr.toCountry === parcel.toCountry &&
+          tr.date >= today &&
+          tr.date <= parcel.neededBy &&
+          tr.kg >= parcel.weightKg
       );
       if (!sameRoute) {
+        setToast(t.browse.noFittingTrip);
         // A trip needs a flight date, so send them to the form with the
         // route already filled in.
         const q = new URLSearchParams({

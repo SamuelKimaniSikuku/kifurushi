@@ -201,6 +201,9 @@ export const fr: Dict = {
     quickError: "Impossible d'envoyer la demande — veuillez réessayer.",
     needTripFirst: "Publiez d'abord votre voyage sur cet itinéraire — il est prérempli.",
     edit: "Modifier",
+    tooHeavy: (free: number) => `Il ne reste que ${free} kg sur ce voyage.`,
+    noFittingTrip:
+      "Aucun de vos voyages ne convient — il doit suivre cet itinéraire et partir avant la date limite du colis. Publiez-en un, l'itinéraire est prérempli.",
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",

@@ -66,16 +66,23 @@ export default function TripsPage() {
       // A match joins this trip to a parcel going the SAME way. Reuse one
       // of mine on that route if it exists; otherwise collect just the
       // parcel details, with the route inherited from the trip.
+      // Reuse one of my parcels only if it genuinely fits this flight:
+      // same corridor, still needed after the plane leaves, and light
+      // enough for the space left. Otherwise collect a fresh one, which
+      // inherits the trip's route and date and therefore always fits.
       const mine = await fetchMyOpenParcels();
-      const sameRoute = mine.find(
+      const fits = mine.find(
         (p) =>
-          p.fromCountry === trip.fromCountry && p.toCountry === trip.toCountry
+          p.fromCountry === trip.fromCountry &&
+          p.toCountry === trip.toCountry &&
+          p.date >= trip.departDate &&
+          p.kg <= trip.remainingKg
       );
-      if (!sameRoute) {
+      if (!fits) {
         setQuickTrip(trip);
         return;
       }
-      await requestMatch(trip.id, sameRoute.id);
+      await requestMatch(trip.id, fits.id);
       setRequestedIds((prev) => new Set(prev).add(trip.id));
       setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
     } catch {

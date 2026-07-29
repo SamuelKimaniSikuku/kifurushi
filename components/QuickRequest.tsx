@@ -63,7 +63,7 @@ export default function QuickRequest({
       return;
     }
     if (!Number.isFinite(weightNum) || weightNum <= 0 || weightNum > maxKg) {
-      setError(`${maxKg} kg`);
+      setError(t.browse.tooHeavy(maxKg));
       return;
     }
     setBusy(true);

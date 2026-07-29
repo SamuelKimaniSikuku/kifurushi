@@ -267,13 +267,27 @@ export interface MyListing {
   id: string;
   fromCountry: string;
   toCountry: string;
+  /** parcels: needed_by · trips: depart_date */
+  date: string;
+  /** parcels: weight_kg · trips: remaining_kg */
+  kg: number;
 }
 
-function mapListing(rows: { id: string; from_country: string; to_country: string }[]) {
+function mapListing(
+  rows: {
+    id: string;
+    from_country: string;
+    to_country: string;
+    date: string;
+    kg: number;
+  }[]
+) {
   return rows.map((r) => ({
     id: r.id,
     fromCountry: r.from_country,
     toCountry: r.to_country,
+    date: r.date,
+    kg: Number(r.kg),
   }));
 }
 
@@ -283,7 +297,7 @@ export async function fetchMyOpenParcels(): Promise<MyListing[]> {
   if (!uid) return [];
   const { data, error } = await supabase
     .from("parcels")
-    .select("id, from_country, to_country")
+    .select("id, from_country, to_country, date:needed_by, kg:weight_kg")
     .eq("sender_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });
@@ -297,7 +311,7 @@ export async function fetchMyOpenTrips(): Promise<MyListing[]> {
   if (!uid) return [];
   const { data, error } = await supabase
     .from("trips")
-    .select("id, from_country, to_country")
+    .select("id, from_country, to_country, date:depart_date, kg:remaining_kg")
     .eq("traveler_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });
