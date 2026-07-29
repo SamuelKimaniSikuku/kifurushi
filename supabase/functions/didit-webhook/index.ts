@@ -4,8 +4,9 @@
 // secret, and X-Timestamp must be within 5 minutes.
 //
 // On status.updated: Approved -> verifications.status='verified' and
-// profiles.id_verified=true; Declined -> 'rejected'. Interim statuses
-// (In Progress, In Review, ...) leave the row pending.
+// profiles.id_verified=true; Declined -> 'rejected'; In Review -> 'in_review'
+// so the page can say a person is looking at it instead of implying the
+// automatic check is still seconds away. Other interim statuses stay pending.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -32,12 +33,15 @@ function timingSafeEqual(a: string, b: string): boolean {
 
 // Terminal failure states also map to 'rejected' so the user can start over
 // (the verify page shows the form again) instead of being stuck on pending.
-const STATUS_MAP: Record<string, "verified" | "rejected"> = {
+const STATUS_MAP: Record<string, "verified" | "rejected" | "in_review"> = {
   Approved: "verified",
   Declined: "rejected",
   Expired: "rejected",
   "Kyc Expired": "rejected",
   Abandoned: "rejected",
+  // Not terminal: a reviewer still has to decide, so we keep resolved_at null
+  // and a later Approved/Declined for the same session overwrites this.
+  "In Review": "in_review",
 };
 
 Deno.serve(async (req) => {
@@ -95,7 +99,10 @@ Deno.serve(async (req) => {
 
   const { data: updated, error } = await admin
     .from("verifications")
-    .update({ status: newStatus, resolved_at: new Date().toISOString() })
+    .update({
+      status: newStatus,
+      resolved_at: newStatus === "in_review" ? null : new Date().toISOString(),
+    })
     .eq("provider", "didit")
     .eq("provider_ref", body.session_id)
     .select("user_id");

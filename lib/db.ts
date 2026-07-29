@@ -726,7 +726,15 @@ export async function fetchPersonProfile(slug: string): Promise<PersonProfile | 
 // storage — the whole capture happens on Didit's side.
 // ---------------------------------------------------------------------------
 
-export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
+// 'in_review' = Didit's automatic checks raised something a person has to
+// settle. Neither a pass nor a fail, and it can outlast the "minutes" the
+// automatic path takes — so the page treats it as its own state.
+export type VerificationStatus =
+  | "unverified"
+  | "pending"
+  | "in_review"
+  | "verified"
+  | "rejected";
 
 export interface VerificationState {
   status: VerificationStatus;

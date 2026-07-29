@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck,
+  BookUser, Car, Check, CreditCard, Loader2, Lock, ShieldCheck, UserSearch,
 } from "lucide-react";
 import {
   fetchVerification, submitVerification, VerificationState,
@@ -59,6 +59,41 @@ export default function VerifyPage() {
         <p className="mt-2 text-sm text-muted">
           Your identity check is being processed — the ✓ Verified badge appears
           on your profile as soon as it&apos;s approved, usually within minutes.
+        </p>
+        <button
+          className="btn-primary mt-6 min-h-[44px]"
+          onClick={() => router.push("/dashboard")}
+        >
+          Back to dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // A reviewer at Didit has to decide. Don't promise minutes here — the
+  // automatic path is what takes minutes; this one waits on a person.
+  if (verification.status === "in_review") {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-warn-bg text-warn">
+          <UserSearch className="h-8 w-8" strokeWidth={2} aria-hidden />
+        </div>
+        <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
+          Being checked by a person
+        </h1>
+        <p className="mt-2 text-sm text-muted">
+          Something on your ID needs a human eye — often an unusual document
+          number, or a face our partner has seen on another account. A reviewer
+          at Didit is looking at it now, which takes longer than the automatic
+          check. You don&apos;t need to do anything: come back to this page and
+          the result will be here.
+        </p>
+        <p className="mt-3 text-xs text-faint">
+          Taking too long? Email{" "}
+          <a className="underline hover:text-ink" href="mailto:hello@kifurushiapp.com">
+            hello@kifurushiapp.com
+          </a>{" "}
+          and we&apos;ll chase it.
         </p>
         <button
           className="btn-primary mt-6 min-h-[44px]"

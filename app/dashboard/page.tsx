@@ -130,16 +130,25 @@ export default function DashboardPage() {
               Your badge shows on everything you post
             </div>
           </div>
-        ) : verification?.status === "pending" ? (
-          <div className="card p-5">
+        ) : verification?.status === "pending" ||
+          verification?.status === "in_review" ? (
+          // Still waiting either way, but a session parked with a human is a
+          // different promise from one the machine is still crunching.
+          <Link href="/verify" className="card card-lift p-5">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-sand-deep text-forest" aria-hidden>
               <IdCard size={20} strokeWidth={2} />
             </span>
-            <div className="mt-3 text-base font-semibold">Verification pending</div>
-            <div className="mt-0.5 text-xs text-muted">
-              We&apos;re reviewing your ID — usually within a day
+            <div className="mt-3 text-base font-semibold">
+              {verification.status === "in_review"
+                ? "Verification under review"
+                : "Verification pending"}
             </div>
-          </div>
+            <div className="mt-0.5 text-xs text-muted">
+              {verification.status === "in_review"
+                ? "A person is checking your ID — see details"
+                : "Your ID check is running — usually minutes"}
+            </div>
+          </Link>
         ) : (
           <Link href="/verify" className="card card-lift p-5">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-sand-deep text-forest" aria-hidden>
