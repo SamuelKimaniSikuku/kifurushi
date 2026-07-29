@@ -5,13 +5,13 @@ import type { Dict } from "./en";
 
 export const sw: Dict = {
   nav: {
-    findTraveller: "Tafuta msafiri",
-    parcelRequests: "Vifurushi vinavyotafutwa",
+    findTraveller: "Wasafiri",
+    parcelRequests: "Vifurushi",
     postTrip: "Tangaza safari",
     sendParcel: "Tuma kifurushi",
     pricing: "Bei",
-    getVerified: "Thibitisha utambulisho",
-    trustSafety: "Uaminifu na usalama",
+    getVerified: "Uthibitisho",
+    trustSafety: "Usalama",
     signIn: "Ingia",
     dashboard: "Dashibodi",
     dashboardOf: (name: string) => `Dashibodi ya ${name}`,

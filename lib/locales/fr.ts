@@ -5,13 +5,13 @@ import type { Dict } from "./en";
 
 export const fr: Dict = {
   nav: {
-    findTraveller: "Trouver un voyageur",
-    parcelRequests: "Colis à envoyer",
+    findTraveller: "Voyageurs",
+    parcelRequests: "Colis demandés",
     postTrip: "Publier un voyage",
     sendParcel: "Envoyer un colis",
     pricing: "Tarifs",
-    getVerified: "Se faire vérifier",
-    trustSafety: "Confiance & sécurité",
+    getVerified: "Vérification",
+    trustSafety: "Sécurité",
     signIn: "Se connecter",
     dashboard: "Tableau de bord",
     dashboardOf: (name: string) => `Tableau de bord de ${name}`,

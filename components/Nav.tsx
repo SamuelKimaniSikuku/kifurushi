@@ -24,7 +24,7 @@ function LanguageSwitcher({ compact }: { compact?: boolean }) {
       >
         {(Object.keys(LANG_LABELS) as Lang[]).map((l) => (
           <option key={l} value={l}>
-            {LANG_LABELS[l]}
+            {compact ? LANG_LABELS[l] : l.toUpperCase()}
           </option>
         ))}
       </select>
@@ -62,7 +62,7 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-xl font-display text-xl font-bold tracking-tight text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
@@ -78,13 +78,13 @@ export default function Nav() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-5 xl:flex">
           {links.map((l) => (
             <Link
               key={l.href}
               href={l.href}
               aria-current={pathname === l.href ? "page" : undefined}
-              className={`rounded-md text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
+              className={`whitespace-nowrap rounded-md text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
                 pathname === l.href
                   ? "text-forest underline decoration-clay decoration-2 underline-offset-8"
                   : "text-muted hover:text-forest"
@@ -95,20 +95,22 @@ export default function Nav() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden shrink-0 items-center gap-2 xl:flex">
           <LanguageSwitcher />
           {session ? (
-            <Link href="/dashboard" className="btn-primary">
-              {t.nav.dashboardOf(session.name.split(" ")[0])}
+            <Link href="/dashboard" className="btn-primary whitespace-nowrap">
+              {t.nav.dashboard}
             </Link>
           ) : (
-            <Link href="/auth" className="btn-primary">{t.nav.signIn}</Link>
+            <Link href="/auth" className="btn-primary whitespace-nowrap">
+              {t.nav.signIn}
+            </Link>
           )}
         </div>
 
         <button
           type="button"
-          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] md:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] xl:hidden"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -124,7 +126,7 @@ export default function Nav() {
 
       <nav
         id="mobile-nav"
-        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out md:hidden ${
+        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out xl:hidden ${
           open
             ? "visible max-h-[480px] border-line opacity-100"
             : "invisible max-h-0 border-transparent opacity-0"
