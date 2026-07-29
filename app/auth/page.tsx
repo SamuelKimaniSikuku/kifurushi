@@ -6,6 +6,7 @@ import { MailCheck } from "lucide-react";
 import { signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
+import Link from "next/link";
 
 function AuthForm() {
   const router = useRouter();
@@ -18,11 +19,18 @@ function AuthForm() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsError, setTermsError] = useState(false);
   const t = useT();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setAuthError(null);
+    if (mode === "signup" && !termsAccepted) {
+      setTermsError(true);
+      return;
+    }
+    setTermsError(false);
     const parsed = signUpSchema.safeParse(
       mode === "signin" ? { ...form, name: form.name || "Member" } : form
     );
@@ -37,7 +45,12 @@ function AuthForm() {
         const { data, error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: form.password,
-          options: { data: { full_name: parsed.data.name } },
+          options: {
+            data: {
+              full_name: parsed.data.name,
+              terms_accepted_at: new Date().toISOString(),
+            },
+          },
         });
         if (error) {
           setAuthError(error.message);
@@ -166,6 +179,44 @@ function AuthForm() {
             </p>
           )}
         </div>
+
+        {mode === "signup" && (
+          <div>
+            <label
+              htmlFor="terms"
+              className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl py-1 text-xs text-muted focus-within:ring-2 focus-within:ring-leaf"
+            >
+              <input
+                id="terms"
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 shrink-0 accent-forest"
+                checked={termsAccepted}
+                aria-invalid={termsError || undefined}
+                aria-describedby={termsError ? "terms-error" : undefined}
+                onChange={(e) => {
+                  setTermsAccepted(e.target.checked);
+                  if (e.target.checked) setTermsError(false);
+                }}
+              />
+              <span>
+                {t.auth.termsAgree1}{" "}
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="font-semibold text-forest underline"
+                >
+                  {t.auth.termsLink}
+                </Link>{" "}
+                {t.auth.termsAgree2}
+              </span>
+            </label>
+            {termsError && (
+              <p id="terms-error" role="alert" className="field-error">
+                {t.auth.termsError}
+              </p>
+            )}
+          </div>
+        )}
 
         {authError && (
           <p role="alert" className="field-error">{authError}</p>

@@ -30,6 +30,7 @@ export const fr: Dict = {
     prohibitedItems: "Objets interdits",
     howProtection: "Comment fonctionne la protection",
     platformSecurity: "Sécurité de la plateforme",
+    terms: "Conditions générales",
     idVerified: "Membres vérifiés par pièce d'identité",
     codedHandovers: "Remises par code",
     copyright: (year: number) =>
@@ -143,6 +144,10 @@ export const fr: Dict = {
     checkEmailBody1: "Nous avons envoyé un lien de confirmation à",
     checkEmailBody2: "Cliquez dessus pour activer votre compte, puis connectez-vous.",
     backToSignIn: "Retour à la connexion",
+    termsAgree1: "J'accepte les",
+    termsLink: "Conditions générales",
+    termsAgree2: "et je comprends que Kifurushi ne fait que mettre en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre nous deux.",
+    termsError: "Vous devez accepter les Conditions générales pour créer un compte.",
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",

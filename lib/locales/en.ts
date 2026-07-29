@@ -28,6 +28,7 @@ export const en = {
     prohibitedItems: "Prohibited items",
     howProtection: "How protection works",
     platformSecurity: "Platform security",
+    terms: "Terms & Conditions",
     idVerified: "ID-verified members",
     codedHandovers: "Coded handovers",
     copyright: (year: number) =>
@@ -140,6 +141,10 @@ export const en = {
     checkEmailBody1: "We sent a confirmation link to",
     checkEmailBody2: "Click it to activate your account, then sign in.",
     backToSignIn: "Back to sign in",
+    termsAgree1: "I agree to the",
+    termsLink: "Terms & Conditions",
+    termsAgree2: "and understand that Kifurushi only connects senders and travellers — every delivery is a direct agreement between the two of us.",
+    termsError: "You must accept the Terms & Conditions to create an account.",
   },
   pricing: {
     heroTitle: "One membership. Every role.",

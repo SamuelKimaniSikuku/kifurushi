@@ -30,6 +30,7 @@ export const sw: Dict = {
     prohibitedItems: "Vitu vilivyokatazwa",
     howProtection: "Jinsi ulinzi unavyofanya kazi",
     platformSecurity: "Usalama wa jukwaa",
+    terms: "Sheria na Masharti",
     idVerified: "Wanachama waliothibitishwa kwa kitambulisho",
     codedHandovers: "Makabidhiano kwa msimbo",
     copyright: (year: number) =>
@@ -143,6 +144,10 @@ export const sw: Dict = {
     checkEmailBody1: "Tumetuma kiungo cha uthibitisho kwa",
     checkEmailBody2: "Kibonyeze ili kuwasha akaunti yako, kisha uingie.",
     backToSignIn: "Rudi kuingia",
+    termsAgree1: "Nakubali",
+    termsLink: "Sheria na Masharti",
+    termsAgree2: "na ninaelewa kuwa Kifurushi inaunganisha tu watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yetu wawili.",
+    termsError: "Lazima ukubali Sheria na Masharti ili kufungua akaunti.",
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",
