@@ -173,6 +173,31 @@ export const en = {
     sendPrimary: "Post my parcel",
     sendSecondary: "Find a traveller",
   },
+  corridor: {
+    tripFitsAll: (n: number) =>
+      n === 1
+        ? "1 parcel is waiting on this route and your date works for it."
+        : `${n} parcels are waiting on this route and your date works for all of them.`,
+    parcelFitsAll: (n: number) =>
+      n === 1
+        ? "1 traveller can get there by your date."
+        : `${n} travellers can get there by your date.`,
+    tripMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "The only parcel waiting on this route needs to arrive before you leave, so you couldn't carry it."
+          : `All ${missed} parcels waiting on this route need to arrive before you leave, so you couldn't carry any of them.`
+        : `You'd miss ${missed} of the parcels waiting on this route — they need to arrive before you leave.`,
+    parcelMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "The only traveller on this route leaves after your deadline, so they couldn't take it."
+          : `All ${missed} travellers on this route leave after your deadline.`
+        : `${missed} more travellers leave just after your deadline.`,
+    tripSuggest: (date: string) => `Leave on or before ${date} to carry them.`,
+    parcelSuggest: (date: string) => `Allow until ${date} and they could take it.`,
+    useDate: "Use that date",
+  },
   browse: {
     tripsTitle: "Travellers going your way",
     tripsSub:

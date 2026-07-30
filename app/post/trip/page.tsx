@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addTrip, fetchTripById, updateTrip } from "@/lib/db";
+import CorridorHint from "@/components/CorridorHint";
+import {
+  addTrip, CorridorFit, fetchTripById, fitForTrip, updateTrip,
+} from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
@@ -137,6 +140,27 @@ function PostTripForm() {
       setSubmitting(false);
     }
   }
+
+  // Which parcels already waiting on this route does the chosen date serve?
+  // Debounced because it fires on every keystroke in the date field.
+  const [fit, setFit] = useState<CorridorFit | null>(null);
+  useEffect(() => {
+    const { fromCountry, toCountry, departDate } = form;
+    if (!fromCountry || !toCountry || !departDate) {
+      setFit(null);
+      return;
+    }
+    let live = true;
+    const timer = setTimeout(() => {
+      fitForTrip(fromCountry, toCountry, departDate)
+        .then((f) => live && setFit(f))
+        .catch(() => live && setFit(null));
+    }, 350);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [form.fromCountry, form.toCountry, form.departDate, form]);
 
   // Live earnings maths for the comparison band. Courier baseline matches
   // the marketing copy (5 kg London→Lagos runs $50–80 by courier).
@@ -279,6 +303,13 @@ function PostTripForm() {
             </p>
           </div>
         </div>
+
+        {/* Does the chosen departure actually serve the parcels waiting here? */}
+        <CorridorHint
+          fit={fit}
+          mode="trip"
+          onUseSuggested={(d) => set("departDate")(d)}
+        />
 
         {/* Live earnings vs courier comparison */}
         {earnings > 0 && (

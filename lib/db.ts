@@ -175,6 +175,89 @@ export async function fetchParcels(): Promise<ParcelRequest[]> {
   return ((data ?? []) as unknown as ParcelRow[]).map(mapParcel);
 }
 
+// ---------------------------------------------------------------------------
+// CORRIDOR FIT
+// The database refuses a match whose flight lands after the parcel's deadline,
+// which is correct but late: by then someone has already posted a trip that
+// can't carry the thing they were hoping to carry. These two look at the
+// corridor while the form is still open, so the date can be fixed before it
+// costs anyone a match.
+// ---------------------------------------------------------------------------
+
+export interface CorridorFit {
+  /** Open counterpart listings on this route, ignoring dates. */
+  total: number;
+  /** How many your current date can serve. */
+  fits: number;
+  /** How many your date misses, purely because of the date. */
+  missed: number;
+  /**
+   * The date that would catch the most missed ones — the last departure a
+   * waiting parcel can accept, or the deadline a waiting traveller needs.
+   */
+  suggestedDate: string | null;
+}
+
+/** For the trip form: which waiting parcels does this departure date serve? */
+export async function fitForTrip(
+  fromCountry: string,
+  toCountry: string,
+  departDate: string
+): Promise<CorridorFit> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("parcels")
+    .select("needed_by")
+    .eq("status", "open")
+    .eq("from_country", fromCountry)
+    .eq("to_country", toCountry)
+    .gte("needed_by", today);
+  if (error) throw error;
+
+  const dates = (data ?? []).map((r) => r.needed_by as string);
+  const fits = dates.filter((d) => d >= departDate);
+  const missed = dates.filter((d) => d < departDate);
+  return {
+    total: dates.length,
+    fits: fits.length,
+    missed: missed.length,
+    // Leaving on or before the latest missed deadline picks up at least one
+    // more; earlier still picks up more.
+    suggestedDate: missed.length ? missed.sort().slice(-1)[0] : null,
+  };
+}
+
+/** For the parcel form: which travellers can still get there by this deadline? */
+export async function fitForParcel(
+  fromCountry: string,
+  toCountry: string,
+  neededBy: string,
+  weightKg: number
+): Promise<CorridorFit> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("trips")
+    .select("depart_date")
+    .eq("status", "open")
+    .eq("from_country", fromCountry)
+    .eq("to_country", toCountry)
+    .gte("depart_date", today)
+    .gte("remaining_kg", weightKg > 0 ? weightKg : 0.1);
+  if (error) throw error;
+
+  const dates = (data ?? []).map((r) => r.depart_date as string);
+  const fits = dates.filter((d) => d <= neededBy);
+  const missed = dates.filter((d) => d > neededBy);
+  return {
+    total: dates.length,
+    fits: fits.length,
+    missed: missed.length,
+    // The earliest traveller you're currently excluding: move the deadline to
+    // their date and they become available to you.
+    suggestedDate: missed.length ? missed.sort()[0] : null,
+  };
+}
+
 export interface NewParcel {
   fromCountry: string;
   fromCity: string;

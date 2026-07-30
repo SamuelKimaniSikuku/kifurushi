@@ -176,6 +176,31 @@ export const fr: Dict = {
     sendPrimary: "Publier mon colis",
     sendSecondary: "Trouver un voyageur",
   },
+  corridor: {
+    tripFitsAll: (n: number) =>
+      n === 1
+        ? "1 colis attend sur cet itinéraire et votre date lui convient."
+        : `${n} colis attendent sur cet itinéraire et votre date leur convient à tous.`,
+    parcelFitsAll: (n: number) =>
+      n === 1
+        ? "1 voyageur peut arriver avant votre date."
+        : `${n} voyageurs peuvent arriver avant votre date.`,
+    tripMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "Le seul colis qui attend sur cet itinéraire doit arriver avant votre départ : vous ne pourriez pas le prendre."
+          : `Les ${missed} colis qui attendent sur cet itinéraire doivent arriver avant votre départ : vous ne pourriez en prendre aucun.`
+        : `Vous manqueriez ${missed} des colis qui attendent : ils doivent arriver avant votre départ.`,
+    parcelMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "Le seul voyageur sur cet itinéraire part après votre date limite : il ne pourrait pas le prendre."
+          : `Les ${missed} voyageurs sur cet itinéraire partent après votre date limite.`
+        : `${missed} autres voyageurs partent juste après votre date limite.`,
+    tripSuggest: (date: string) => `Partez au plus tard le ${date} pour les prendre.`,
+    parcelSuggest: (date: string) => `Allez jusqu'au ${date} et il pourrait le prendre.`,
+    useDate: "Utiliser cette date",
+  },
   browse: {
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:

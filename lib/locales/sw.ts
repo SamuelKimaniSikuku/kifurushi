@@ -176,6 +176,31 @@ export const sw: Dict = {
     sendPrimary: "Tangaza kifurushi changu",
     sendSecondary: "Tafuta msafiri",
   },
+  corridor: {
+    tripFitsAll: (n: number) =>
+      n === 1
+        ? "Kifurushi 1 kinasubiri kwenye njia hii na tarehe yako inafaa."
+        : `Vifurushi ${n} vinasubiri kwenye njia hii na tarehe yako inafaa vyote.`,
+    parcelFitsAll: (n: number) =>
+      n === 1
+        ? "Msafiri 1 anaweza kufika kabla ya tarehe yako."
+        : `Wasafiri ${n} wanaweza kufika kabla ya tarehe yako.`,
+    tripMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "Kifurushi pekee kinachosubiri kwenye njia hii kinahitajika kufika kabla ya kuondoka kwako, kwa hivyo hungeweza kukichukua."
+          : `Vifurushi vyote ${missed} vinavyosubiri kwenye njia hii vinahitajika kufika kabla ya kuondoka kwako.`
+        : `Ungekosa vifurushi ${missed} vinavyosubiri — vinahitajika kufika kabla ya kuondoka kwako.`,
+    parcelMissed: (missed: number, fits: number) =>
+      fits === 0
+        ? missed === 1
+          ? "Msafiri pekee kwenye njia hii anaondoka baada ya tarehe yako ya mwisho."
+          : `Wasafiri wote ${missed} kwenye njia hii wanaondoka baada ya tarehe yako ya mwisho.`
+        : `Wasafiri ${missed} zaidi wanaondoka baada ya tarehe yako ya mwisho.`,
+    tripSuggest: (date: string) => `Ondoka kabla au siku ya ${date} ili kuvichukua.`,
+    parcelSuggest: (date: string) => `Ruhusu hadi ${date} na anaweza kukichukua.`,
+    useDate: "Tumia tarehe hiyo",
+  },
   browse: {
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:

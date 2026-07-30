@@ -5,7 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Ban, Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { addParcel, fetchParcelById, updateParcel } from "@/lib/db";
+import CorridorHint from "@/components/CorridorHint";
+import {
+  addParcel, CorridorFit, fetchParcelById, fitForParcel, updateParcel,
+} from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
@@ -129,6 +132,27 @@ function PostParcelForm() {
 
   // Budget guidance: what travellers usually ask for this weight, and what a
   // courier would charge, so the sender can judge their budget in context.
+  // Can anyone actually get there by the chosen deadline?
+  const [fit, setFit] = useState<CorridorFit | null>(null);
+  useEffect(() => {
+    const { fromCountry, toCountry, neededBy, weightKg } = form;
+    const kg = parseFloat(weightKg);
+    if (!fromCountry || !toCountry || !neededBy || !Number.isFinite(kg)) {
+      setFit(null);
+      return;
+    }
+    let live = true;
+    const timer = setTimeout(() => {
+      fitForParcel(fromCountry, toCountry, neededBy, kg)
+        .then((f) => live && setFit(f))
+        .catch(() => live && setFit(null));
+    }, 350);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [form.fromCountry, form.toCountry, form.neededBy, form.weightKg, form]);
+
   const weightNum = parseFloat(form.weightKg);
   const budgetNum = parseFloat(form.budgetUsd);
   const rateGuide =
@@ -281,6 +305,13 @@ function PostParcelForm() {
             )}
           </div>
         </div>
+
+        {/* Can any traveller on this route reach it by the chosen deadline? */}
+        <CorridorHint
+          fit={fit}
+          mode="parcel"
+          onUseSuggested={(d) => set("neededBy")(d)}
+        />
 
         {/* Live budget vs courier comparison */}
         {comparison && (
