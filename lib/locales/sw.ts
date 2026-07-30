@@ -32,6 +32,7 @@ export const sw: Dict = {
     howProtection: "Jinsi ulinzi unavyofanya kazi",
     platformSecurity: "Usalama wa jukwaa",
     terms: "Sheria na Masharti",
+    privacy: "Sera ya Faragha",
     idVerified: "Wanachama waliothibitishwa kwa kitambulisho",
     codedHandovers: "Makabidhiano kwa msimbo",
     copyright: (year: number) =>
@@ -77,7 +78,7 @@ export const sw: Dict = {
       },
       {
         title: "Kubaliana na funga",
-        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na picha kuhifadhiwa.",
+        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na picha zinatumwa kwenye gumzo la match.",
       },
       {
         title: "Fikisha na thibitisha",
@@ -116,7 +117,7 @@ export const sw: Dict = {
     handoverLabel: "Makabidhiano yaliyolindwa",
     handoverSteps: [
       { title: "Ada imekubaliwa: $45", body: "Inalipwa moja kwa moja, msafiri anabaki na 100%" },
-      { title: "Makabidhiano na kufunga", body: "Picha zinahifadhiwa na pande zote mbili" },
+      { title: "Makabidhiano na kufunga", body: "Picha zinatumwa kwenye gumzo la match" },
       { title: "Safarini", body: "Taarifa za safari kwa pande zote mbili" },
       { title: "Msimbo 4 8 2 9 1 7", body: "Mpokeaji anathibitisha — rekodi imekamilika" },
     ],
@@ -147,7 +148,7 @@ export const sw: Dict = {
     backToSignIn: "Rudi kuingia",
     termsAgree1: "Nakubali",
     termsLink: "Sheria na Masharti",
-    termsAgree2: "na ninaelewa kuwa Kifurushi inaunganisha tu watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yetu wawili.",
+    termsAgree2: "na Sera ya Faragha, na ninaelewa kuwa Kifurushi inaunganisha tu watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yetu wawili.",
     termsError: "Lazima ukubali Sheria na Masharti ili kufungua akaunti.",
   },
   roles: {
@@ -247,7 +248,7 @@ export const sw: Dict = {
       "Safiri na upate — safari bila kikomo, baki na 100% ya ada yako",
       "Wasiliana na yeyote kwenye jukwaa",
       "Uthibitisho wa kitambulisho na beji ya ✓ Amethibitishwa",
-      "Kumbukumbu za picha za kufunga na misimbo ya mara moja",
+      "Ukaguzi na kufunga pamoja na misimbo ya mara moja",
       "Tathmini za pande mbili zinazojenga sifa yako",
       "Msaada wa migogoro na rekodi kamili ya usafirishaji",
     ],

@@ -32,6 +32,7 @@ export const fr: Dict = {
     howProtection: "Comment fonctionne la protection",
     platformSecurity: "Sécurité de la plateforme",
     terms: "Conditions générales",
+    privacy: "Politique de confidentialité",
     idVerified: "Membres vérifiés par pièce d'identité",
     codedHandovers: "Remises par code",
     copyright: (year: number) =>
@@ -77,7 +78,7 @@ export const fr: Dict = {
       },
       {
         title: "Accord & scellage",
-        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, photos à l'appui.",
+        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, avec des photos échangées dans la messagerie du match.",
       },
       {
         title: "Livraison & confirmation",
@@ -116,7 +117,7 @@ export const fr: Dict = {
     handoverLabel: "Remise protégée",
     handoverSteps: [
       { title: "Prix convenu : 45 $", body: "Payé directement, le voyageur garde 100 %" },
-      { title: "Remise & scellage", body: "Photos enregistrées par les deux parties" },
+      { title: "Remise & scellage", body: "Photos partagées dans la messagerie" },
       { title: "En transit", body: "Suivi du trajet pour les deux côtés" },
       { title: "Code 4 8 2 9 1 7", body: "Le destinataire confirme — dossier complet" },
     ],
@@ -147,7 +148,7 @@ export const fr: Dict = {
     backToSignIn: "Retour à la connexion",
     termsAgree1: "J'accepte les",
     termsLink: "Conditions générales",
-    termsAgree2: "et je comprends que Kifurushi ne fait que mettre en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre nous deux.",
+    termsAgree2: "et la Politique de confidentialité, et je comprends que Kifurushi ne fait que mettre en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre nous deux.",
     termsError: "Vous devez accepter les Conditions générales pour créer un compte.",
   },
   roles: {
@@ -247,7 +248,7 @@ export const fr: Dict = {
       "Voyager & gagner — voyages illimités, gardez 100 % du prix du transport",
       "Contacter et se connecter avec tout le monde sur la plateforme",
       "Vérification d'identité & badge ✓ Vérifié",
-      "Journal photo du scellage & codes de livraison à usage unique",
+      "Remise inspectée et scellée & codes de livraison à usage unique",
       "Avis dans les deux sens qui bâtissent votre réputation",
       "Assistance en cas de litige avec le dossier de livraison complet",
     ],

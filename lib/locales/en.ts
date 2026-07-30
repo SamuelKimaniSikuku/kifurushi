@@ -30,6 +30,7 @@ export const en = {
     howProtection: "How protection works",
     platformSecurity: "Platform security",
     terms: "Terms & Conditions",
+    privacy: "Privacy Policy",
     idVerified: "ID-verified members",
     codedHandovers: "Coded handovers",
     copyright: (year: number) =>
@@ -75,7 +76,7 @@ export const en = {
       },
       {
         title: "Agree & seal",
-        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with a photo log.",
+        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with photos exchanged in the match chat.",
       },
       {
         title: "Deliver & confirm",
@@ -113,7 +114,7 @@ export const en = {
     handoverLabel: "Protected handover",
     handoverSteps: [
       { title: "Fee agreed: $45", body: "Paid directly, traveller keeps 100%" },
-      { title: "Handover & seal", body: "Photos logged by both parties" },
+      { title: "Handover & seal", body: "Photos shared in the match chat" },
       { title: "In transit", body: "Journey updates for both sides" },
       { title: "Code 4 8 2 9 1 7", body: "Receiver confirms — record complete" },
     ],
@@ -144,7 +145,7 @@ export const en = {
     backToSignIn: "Back to sign in",
     termsAgree1: "I agree to the",
     termsLink: "Terms & Conditions",
-    termsAgree2: "and understand that Kifurushi only connects senders and travellers — every delivery is a direct agreement between the two of us.",
+    termsAgree2: "and the Privacy Policy, and understand that Kifurushi only connects senders and travellers — every delivery is a direct agreement between the two of us.",
     termsError: "You must accept the Terms & Conditions to create an account.",
   },
   roles: {
@@ -244,7 +245,7 @@ export const en = {
       "Travel & earn — post unlimited trips, keep 100% of your carriage fee",
       "Contact and match with anyone on the platform",
       "ID verification & the ✓ Verified badge",
-      "Sealed-handover photo log & one-time delivery codes",
+      "Inspect-and-seal handover & one-time delivery codes",
       "Two-way reviews that build your reputation",
       "Dispute support with the full delivery record",
     ],

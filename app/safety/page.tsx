@@ -59,9 +59,9 @@ export default function SafetyPage() {
         </p>
         <ol className="mt-5 space-y-3 text-sm text-muted">
           <li className="card p-4 leading-relaxed"><b className="text-ink">Terms agreed on-platform.</b> Fee, weight, contents and dates are confirmed in the match before handover — so there is a written record both sides accepted.</li>
-          <li className="card p-4 leading-relaxed"><b className="text-ink">Co-sealed with photos.</b> The parcel is inspected open, then sealed together and photographed in the app. The timestamped log is part of the delivery record.</li>
+          <li className="card p-4 leading-relaxed"><b className="text-ink">Co-sealed, with photos in the chat.</b> The parcel is inspected open, then sealed together. Photograph it on your own phones and send the pictures in the match chat — messages there are timestamped and cannot be edited or deleted, so both sides have a record they can point to.</li>
           <li className="card p-4 leading-relaxed"><b className="text-ink">Coded delivery.</b> The receiver gets a one-time 6-digit code. Entering it at handover is the proof of delivery that completes the record and unlocks reviews.</li>
-          <li className="card p-4 leading-relaxed"><b className="text-ink">Disputes.</b> If something goes wrong, our team reviews the agreed terms, photo log and journey updates. Accounts at fault are banned, and the full record is available to the parties for any claim they pursue.</li>
+          <li className="card p-4 leading-relaxed"><b className="text-ink">Disputes.</b> If something goes wrong, email hello@kifurushiapp.com and we review the agreed terms, the match chat and the journey updates. Accounts at fault are banned, and the full record is available to the parties for any claim they pursue.</li>
         </ol>
       </section>
 
@@ -85,8 +85,9 @@ export default function SafetyPage() {
         <p className="mt-4 text-sm leading-relaxed text-muted">
           The single most important rule: <b className="text-ink">the traveller inspects every item,
           open, in person, with the sender</b> — then both seal the parcel
-          together and photograph it in the app. The photo log is timestamped
-          and becomes part of the delivery record. A traveller who accepts a
+          together. Photograph it on your own phones and send the pictures in the
+          match chat, where they are timestamped and cannot be edited. A
+          traveller who accepts a
           pre-sealed package carries it as their own at the border — which is
           why the platform treats it as a bannable offence for both sides.
         </p>

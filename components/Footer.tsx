@@ -40,6 +40,7 @@ export default function Footer() {
             <li><Link href="/safety#escrow" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.howProtection}</Link></li>
             <li><Link href="/safety#security" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.platformSecurity}</Link></li>
             <li><Link href="/terms" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.terms}</Link></li>
+            <li><Link href="/privacy" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.privacy}</Link></li>
           </ul>
         </div>
         <div>
