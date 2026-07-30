@@ -48,6 +48,9 @@ export const en = {
     departs: "departs Sun 2 Aug",
     kgFree: "18 kg free",
     requestTraveller: "Request this traveller",
+    topEarner: (amount: number, name: string, n: number) =>
+      `Most earned by one traveller so far: $${amount} by ${name}, across ${n} deliveries.`,
+    topEarnerLink: "See their profile",
     statCountries: "African countries",
     statDelivery: "typical delivery",
     statDeliveryValue: "3–7 days",
@@ -199,6 +202,17 @@ export const en = {
     parcelSuggest: (date: string) => `Allow until ${date} and they could take it.`,
     useDate: "Use that date",
   },
+    money: {
+      title: "Your money so far",
+      carried: (n: number, amount: number) =>
+        `Carried ${n} parcel${n === 1 ? "" : "s"} · earned about $${amount}`,
+      sent: (n: number, amount: number) =>
+        `Sent ${n} parcel${n === 1 ? "" : "s"} · paid about $${amount}`,
+      saved: (amount: number) => `About $${amount} less than couriers would have charged`,
+      above: (amount: number) => `About $${amount} more than the courier rate for that weight`,
+      caveat:
+        "Estimates based on the budgets posted on your completed deliveries. Kifurushi never handles the money, so we can only report what was agreed on the listing — not what changed hands.",
+    },
   browse: {
     tripsTitle: "Travellers going your way",
     tripsSub:

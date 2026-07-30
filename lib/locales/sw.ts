@@ -50,6 +50,9 @@ export const sw: Dict = {
     departs: "anaondoka Jpi 2 Ago",
     kgFree: "kilo 18 wazi",
     requestTraveller: "Omba msafiri huyu",
+    topEarner: (amount: number, name: string, n: number) =>
+      `Kiasi kikubwa alichopata msafiri mmoja hadi sasa: $${amount} na ${name}, kwa usafirishaji ${n}.`,
+    topEarnerLink: "Ona wasifu wake",
     statCountries: "nchi za Afrika",
     statDelivery: "muda wa kawaida",
     statDeliveryValue: "siku 3–7",
@@ -202,6 +205,17 @@ export const sw: Dict = {
     parcelSuggest: (date: string) => `Ruhusu hadi ${date} na anaweza kukichukua.`,
     useDate: "Tumia tarehe hiyo",
   },
+    money: {
+      title: "Pesa yako hadi sasa",
+      carried: (n: number, amount: number) =>
+        `Umebeba vifurushi ${n} · umepata takriban $${amount}`,
+      sent: (n: number, amount: number) =>
+        `Umetuma vifurushi ${n} · umelipa takriban $${amount}`,
+      saved: (amount: number) => `Takriban $${amount} chini ya wangefanya makampuni ya usafirishaji`,
+      above: (amount: number) => `Takriban $${amount} zaidi ya bei ya kampuni kwa uzito huo`,
+      caveat:
+        "Makadirio kutoka bajeti zilizowekwa kwenye usafirishaji uliokamilika. Kifurushi haishiki pesa, kwa hivyo tunaweza kuripoti kilichokubaliwa kwenye tangazo tu, si kilichobadilishwa mikononi.",
+    },
   browse: {
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:

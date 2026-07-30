@@ -176,6 +176,57 @@ export async function fetchParcels(): Promise<ParcelRequest[]> {
 }
 
 // ---------------------------------------------------------------------------
+// MONEY
+// Kifurushi never touches the fee — it's agreed and paid directly between the
+// two people — so the database only knows the budget posted on the parcel.
+// Every figure here is therefore an estimate and is labelled as one.
+// ---------------------------------------------------------------------------
+
+export interface MoneyTotals {
+  carriedCount: number;
+  earned: number;
+  sentCount: number;
+  spent: number;
+  /** What the same parcels would have cost by courier at $14/kg. */
+  courierEquivalent: number;
+}
+
+export async function fetchMoneyTotals(): Promise<MoneyTotals | null> {
+  const { data, error } = await supabase.rpc("my_money_totals");
+  if (error) return null;
+  const r = (data as Record<string, number>[] | null)?.[0];
+  if (!r) return null;
+  return {
+    carriedCount: Number(r.carried_count ?? 0),
+    earned: Number(r.earned_estimate ?? 0),
+    sentCount: Number(r.sent_count ?? 0),
+    spent: Number(r.spent_estimate ?? 0),
+    courierEquivalent: Number(r.courier_estimate ?? 0),
+  };
+}
+
+export interface TopEarner {
+  name: string;
+  slug: string;
+  earned: number;
+  deliveries: number;
+}
+
+/** Null until the marketplace is active enough for the number to mean something. */
+export async function fetchTopEarner(): Promise<TopEarner | null> {
+  const { data, error } = await supabase.rpc("top_earner");
+  if (error) return null;
+  const r = (data as Record<string, unknown>[] | null)?.[0];
+  if (!r) return null;
+  return {
+    name: String(r.full_name),
+    slug: personSlug(String(r.full_name)),
+    earned: Number(r.earned),
+    deliveries: Number(r.deliveries),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // CORRIDOR FIT
 // The database refuses a match whose flight lands after the parcel's deadline,
 // which is correct but late: by then someone has already posted a trip that

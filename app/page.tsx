@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
+import TopEarner from "@/components/TopEarner";
 import {
   ArrowRight,
   BadgeCheck,
@@ -163,6 +164,9 @@ export default function Home() {
               </div>
             ))}
           </div>
+
+          {/* Real earnings, shown only once the numbers are real */}
+          <TopEarner />
         </div>
       </section>
 

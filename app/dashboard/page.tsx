@@ -4,16 +4,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star,
+  Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star, Wallet,
 } from "lucide-react";
 import {
   fetchSession, fetchMembership, signOut, Session, Membership,
 } from "@/lib/auth";
 import {
-  fetchMyMatches, fetchVerification, isAdmin, MatchDetail, VerificationState,
+  fetchMoneyTotals, fetchMyMatches, fetchVerification, isAdmin, MatchDetail,
+  MoneyTotals, VerificationState,
 } from "@/lib/db";
 import MatchCard from "@/components/MatchCard";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { useT } from "@/lib/i18n";
 
 function DashboardSkeleton() {
   return (
@@ -40,6 +42,7 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const t = useT();
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matches, setMatches] = useState<MatchDetail[]>([]);
@@ -47,6 +50,7 @@ export default function DashboardPage() {
   // Reviewers get one extra card here rather than a nav item — the header is
   // busy enough, and this is a link exactly one person in a thousand needs.
   const [reviewer, setReviewer] = useState(false);
+  const [money, setMoney] = useState<MoneyTotals | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -59,17 +63,19 @@ export default function DashboardPage() {
         return;
       }
       setSession(s);
-      const [m, ms, v, admin] = await Promise.all([
+      const [m, ms, v, admin, totals] = await Promise.all([
         fetchMyMatches().catch(() => []),
         fetchMembership(),
         fetchVerification().catch(() => null),
         isAdmin().catch(() => false),
+        fetchMoneyTotals().catch(() => null),
       ]);
       if (!mounted) return;
       setMatches(m);
       setMembership(ms);
       setVerification(v);
       setReviewer(admin);
+      setMoney(totals);
       setReady(true);
     })();
     return () => {
@@ -168,6 +174,54 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {money && (money.carriedCount > 0 || money.sentCount > 0) && (
+        <div className="card mt-4 p-5">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sand-deep text-forest" aria-hidden>
+              <Wallet size={16} strokeWidth={2} />
+            </span>
+            <h2 className="text-base font-semibold text-ink">{t.money.title}</h2>
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {money.carriedCount > 0 && (
+              <div className="rounded-xl bg-sand p-4">
+                <p className="text-lg font-bold text-forest">
+                  ~${Math.round(money.earned)}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {t.money.carried(money.carriedCount, Math.round(money.earned))}
+                </p>
+              </div>
+            )}
+            {money.sentCount > 0 && (
+              <div className="rounded-xl bg-sand p-4">
+                <p className="text-lg font-bold text-forest">
+                  ~${Math.round(money.spent)}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {t.money.sent(money.sentCount, Math.round(money.spent))}
+                </p>
+                {/* Honest either way: sometimes a traveller costs more than a
+                    courier, and pretending otherwise would be a lie the user
+                    can check. */}
+                <p className={`mt-1.5 text-xs font-semibold ${
+                  money.courierEquivalent >= money.spent ? "text-success" : "text-muted"
+                }`}>
+                  {money.courierEquivalent >= money.spent
+                    ? t.money.saved(Math.round(money.courierEquivalent - money.spent))
+                    : t.money.above(Math.round(money.spent - money.courierEquivalent))}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <p className="mt-3 text-[11px] leading-relaxed text-faint">
+            {t.money.caveat}
+          </p>
+        </div>
+      )}
 
       {reviewer && (
         <Link

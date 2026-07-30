@@ -50,6 +50,9 @@ export const fr: Dict = {
     departs: "départ dim. 2 août",
     kgFree: "18 kg libres",
     requestTraveller: "Contacter ce voyageur",
+    topEarner: (amount: number, name: string, n: number) =>
+      `Le plus gagné par un voyageur à ce jour : ${amount} $ par ${name}, sur ${n} livraisons.`,
+    topEarnerLink: "Voir son profil",
     statCountries: "pays africains",
     statDelivery: "délai habituel",
     statDeliveryValue: "3–7 jours",
@@ -202,6 +205,17 @@ export const fr: Dict = {
     parcelSuggest: (date: string) => `Allez jusqu'au ${date} et il pourrait le prendre.`,
     useDate: "Utiliser cette date",
   },
+    money: {
+      title: "Votre argent jusqu'ici",
+      carried: (n: number, amount: number) =>
+        `${n} colis transporté${n === 1 ? "" : "s"} · environ ${amount} $ gagnés`,
+      sent: (n: number, amount: number) =>
+        `${n} colis envoyé${n === 1 ? "" : "s"} · environ ${amount} $ payés`,
+      saved: (amount: number) => `Environ ${amount} $ de moins que les transporteurs`,
+      above: (amount: number) => `Environ ${amount} $ de plus que le tarif transporteur pour ce poids`,
+      caveat:
+        "Estimations basées sur les budgets publiés sur vos livraisons terminées. Kifurushi ne touche jamais à l'argent : nous ne pouvons rapporter que ce qui a été convenu sur l'annonce, pas ce qui a réellement changé de mains.",
+    },
   browse: {
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
