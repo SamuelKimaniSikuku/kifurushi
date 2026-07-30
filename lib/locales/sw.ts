@@ -33,6 +33,7 @@ export const sw: Dict = {
     platformSecurity: "Usalama wa jukwaa",
     terms: "Sheria na Masharti",
     privacy: "Sera ya Faragha",
+    faqLink: "Maswali yanayoulizwa",
     idVerified: "Wanachama waliothibitishwa kwa kitambulisho",
     codedHandovers: "Makabidhiano kwa msimbo",
     copyright: (year: number) =>
@@ -216,6 +217,127 @@ export const sw: Dict = {
       caveat:
         "Makadirio kutoka bajeti zilizowekwa kwenye usafirishaji uliokamilika. Kifurushi haishiki pesa, kwa hivyo tunaweza kuripoti kilichokubaliwa kwenye tangazo tu, si kilichobadilishwa mikononi.",
     },
+  faq: {
+    title: "Maswali yanayoulizwa mara nyingi",
+    sub: "Yote yaliyo hapa chini yanaeleza kile Kifurushi hufanya kweli. Kama swali lako halipo, andika hello@kifurushiapp.com.",
+    stillStuck: "Hukupata jibu lako?",
+    stillStuckCta: "Tuandikie",
+    groups: [
+      {
+        title: "Jinsi inavyofanya kazi",
+        items: [
+          {
+            q: "Kifurushi ni nini hasa?",
+            a: "Tunaunganisha wanaotaka kutuma kifurushi na wasafiri ambao tayari wana nafasi kwenye mizigo yao kwenye njia hiyo. Hiyo ndiyo huduma yote. Sisi si kampuni ya usafirishaji: hatugusi kifurushi chako, hatubebi chochote, na hatuko kwenye makubaliano mnayoyafanya.",
+          },
+          {
+            q: "Ni nani hasa anayebeba kifurushi changu?",
+            a: "Mwanachama mwingine, kwenye njia mliyoichagua nyote wawili, ambaye utambulisho wake umehakikiwa. Unaona hali yake ya uhakiki, alama zake na historia yake kabla ya kukubali chochote — na unaweza kumkataa yeyote bila sababu.",
+          },
+          {
+            q: "Watumaji na wasafiri wanaunganishwaje?",
+            a: "Unaweka unachohitaji; upande mwingine unakuona na kukuomba, au wewe unawaomba. Match inawezekana tu ikiwa nchi zote mbili zinalingana, safari inaondoka kabla au siku ya tarehe kifurushi kinapohitajika, na kifurushi kinatoshea nafasi iliyobaki. Mfumo unakataa kingine chochote.",
+          },
+          {
+            q: "Inachukua muda gani kupata mtu?",
+            a: "Inategemea kabisa ni nani anasafiri njia yako. Njia zenye shughuli nyingi kama Paris–Nairobi au London–Lagos ni za haraka zaidi. Kama hakuna aliyekubali siku tatu kabla ya tarehe yako, tunakutumia barua pepe, tunakuambia wasafiri wangapi wanaondoka baada ya tarehe yako, na unaweza kuibadilisha.",
+          },
+        ],
+      },
+      {
+        title: "Pesa",
+        items: [
+          {
+            q: "Kutuma kunagharimu kiasi gani?",
+            a: "Wewe na msafiri mnakubaliana bei moja kwa moja — kwa kawaida $7–12 kwa kilo, dhidi ya takriban $14 kwa kilo kwa makampuni ya usafirishaji. Unaweka bajeti yako unapotangaza; wasafiri wanaamua kama inafaa nafasi yao.",
+          },
+          {
+            q: "Ninamlipaje msafiri?",
+            a: "Moja kwa moja, kwa njia mnayoaminiana: pesa taslimu wakati wa kukabidhi, M-Pesa, benki. Kifurushi haishiki, haihifadhi wala haihamishi pesa hizo, na haichukui kamisheni yoyote.",
+          },
+          {
+            q: "Kwa nini Kifurushi haishughulikii malipo?",
+            a: "Kushika pesa za watu wengine kunatufanya taasisi ya malipo, jambo linalohitaji leseni tusiyokuwa nayo na gharama ambazo ungezilipa wewe. Kuacha pesa kati yenu wawili ndiko kunakotuwezesha kutoza ada moja tu na kuchukua 0% ya usafirishaji wako.",
+          },
+          {
+            q: "Basi ninalipia nini kwenye uanachama?",
+            a: "Kuingia sokoni: kuweka matangazo, kuomba match, na gumzo na kumbukumbu za usafirishaji zinazoambatana. $5 kwa mwezi au $29 kwa mwaka, kwa majukumu yote matatu. Kuangalia, kupokea kifurushi na kufuatilia ni bure.",
+          },
+          {
+            q: "Naweza kusitisha?",
+            a: "Ndiyo, wakati wowote, kutoka ukurasa wa bei. Uanachama wako unaendelea hadi mwisho wa kipindi ulicholipia kisha unasimama. Hatutoi marejesho ya sehemu.",
+          },
+        ],
+      },
+      {
+        title: "Uaminifu na usalama",
+        items: [
+          {
+            q: "Nitajuaje msafiri ni wa kweli?",
+            a: "Wanachama waliohakikiwa wamepitisha ukaguzi wa kitambulisho cha serikali pamoja na selfie ya uhai kupitia mshirika wetu Didit. Alama ya ✓ inamaanisha ukaguzi huo umepita. Alama za nyota zinatoka tu kwa usafirishaji uliokamilika na haziwezi kubadilishwa wala kufutwa.",
+          },
+          {
+            q: "Ni nini kinachozuia mtu kuiba kifurushi changu?",
+            a: "Kwa ukweli: hakuna kinachofanya wizi usiwezekane. Tunachofanya ni kuufanya uwe wa gharama na wenye kufuatilika — utambulisho halisi nyuma ya kila akaunti iliyohakikiwa, kumbukumbu isiyobadilika ya mliyokubaliana, na kufungiwa milele kwenye njia zote kwa makosa yaliyothibitishwa. Tuma ukizingatia hilo, na soma kanuni za usalama kabla ya kukabidhi mara ya kwanza.",
+          },
+          {
+            q: "Kifurushi changu kina bima?",
+            a: "Hapana. Hakuna bima wala fidia, kutoka kwetu au kwa msafiri. Kama thamani ya unachotuma ingekuumiza kuipoteza, tumia kampuni ya usafirishaji yenye bima — huo ndio ushauri wa kweli.",
+          },
+          {
+            q: "Kanuni ya kukagua na kufunga ni ipi?",
+            a: "Msafiri lazima aone kila kitu, wazi, ana kwa ana, kabla ya kufungwa — kisha mnafunga pamoja na kupiga picha kwa simu zenu wenyewe, mkizituma kwenye gumzo la match ambako zina muhuri wa muda na haziwezi kuhaririwa. Msafiri anayekubali kifurushi kilichofungwa tayari anakibeba kama chake mpakani. Pande zote mbili zinaweza kufungiwa kwa kupuuza hili.",
+          },
+          {
+            q: "Usafirishaji unathibitishwaje?",
+            a: "Mpokeaji anapata msimbo wa tarakimu sita wa mara moja. Kuuweka wakati wa kukabidhi ndiyo uthibitisho: unakamilisha kumbukumbu na kufungua maoni kwa pande zote. Misimbo huhifadhiwa ikiwa imefichwa — hakuna mtu, sisi tukiwemo, anayeweza kusoma wako.",
+          },
+          {
+            q: "Kitu kimeenda vibaya. Nini kinafuata?",
+            a: "Andika hello@kifurushiapp.com. Tunapitia mliyokubaliana, gumzo la match na taarifa za safari, na tunaweza kusimamisha au kufungia akaunti zenye makosa. Hatuamui migogoro ya watu binafsi wala hatulipi fidia — lakini kumbukumbu kamili ni yako kuitumia kwenye madai yoyote unayofuatilia.",
+          },
+        ],
+      },
+      {
+        title: "Uhakiki na nyaraka",
+        items: [
+          {
+            q: "Mnahifadhi picha ya pasipoti yangu?",
+            a: "Hapana. Picha ya kitambulisho chako na selfie zinatoka kwenye kifaa chako moja kwa moja hadi Didit. Sisi tunapokea matokeo tu — imekubaliwa, imekataliwa au inapitiwa — na aina ya hati. Tusingeweza kutoa picha yako hata tungetaka.",
+          },
+          {
+            q: "Kwa nini uhakiki wangu ulikataliwa?",
+            a: "Mara nyingi kwa sababu uso huohuo tayari umehakikiwa kwenye akaunti nyingine. Mtu mmoja, akaunti moja — ndiyo inayoipa alama maana. Kama umepoteza akaunti yako ya awali, tuandikie badala ya kufungua mpya.",
+          },
+          {
+            q: "Uhakiki wangu unapitiwa na mtu. Itachukua muda gani?",
+            a: "Zaidi ya ukaguzi wa kiotomatiki, kwa sababu unasubiri binadamu. Hakuna unachohitajika kufanya; matokeo yanaonekana kwenye ukurasa huohuo. Ikichelewa, tuandikie na tutafuatilia.",
+          },
+        ],
+      },
+      {
+        title: "Mambo ya kawaida",
+        items: [
+          {
+            q: "Ni nini kisichoweza kutumwa?",
+            a: "Chochote kisicho halali katika nchi yoyote kati ya hizo mbili, pamoja na pesa taslimu, dawa zisizofungwa, silaha, betri nje ya kanuni za ndege, vitu vinavyoharibika, na chochote usingekifungua mbele ya mgeni. Orodha kamili ipo kwenye ukurasa wa usalama. Msafiri ndiye anayewajibika kisheria kwa kilicho kwenye mizigo yake mpakani.",
+          },
+          {
+            q: "Je, ni halali?",
+            a: "Kubeba kitu kwa niaba ya mtu mwingine ni halali sehemu nyingi, ilimradi kimetangazwa ipasavyo na si bidhaa iliyokatazwa — ndiyo maana kanuni ya kukagua ipo. Kanuni za forodha na za ndege ni jukumu la msafiri, na wala sisi wala mtumaji hatuwezi kuzibeba kwa niaba yake.",
+          },
+          {
+            q: "Mnahudumia nchi zipi?",
+            a: "Nchi zote 54 za Afrika na maeneo 22 ya diaspora barani Ulaya, Amerika Kaskazini, Ghuba na Asia-Pasifiki. Kama njia ina manufaa inategemea wanachama wanaoisafiri kweli.",
+          },
+          {
+            q: "Kifurushi kinazungumza lugha gani?",
+            a: "Kiingereza, Kifaransa na Kiswahili. Barua pepe zetu zinafuata lugha uliyochagua kwenye tovuti.",
+          },
+        ],
+      },
+    ],
+  },
   browse: {
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:

@@ -31,6 +31,7 @@ export const en = {
     platformSecurity: "Platform security",
     terms: "Terms & Conditions",
     privacy: "Privacy Policy",
+    faqLink: "Questions people ask",
     idVerified: "ID-verified members",
     codedHandovers: "Coded handovers",
     copyright: (year: number) =>
@@ -213,6 +214,127 @@ export const en = {
       caveat:
         "Estimates based on the budgets posted on your completed deliveries. Kifurushi never handles the money, so we can only report what was agreed on the listing — not what changed hands.",
     },
+  faq: {
+    title: "Questions people ask",
+    sub: "Everything below describes what Kifurushi actually does. If something isn't here, email hello@kifurushiapp.com.",
+    stillStuck: "Didn't find your answer?",
+    stillStuckCta: "Email us",
+    groups: [
+      {
+        title: "How it works",
+        items: [
+          {
+            q: "What is Kifurushi, exactly?",
+            a: "We introduce people who want to send a parcel to travellers who already have spare luggage space on that route. That is the whole service. We are not a courier: we never touch your parcel, never transport anything, and are not party to the delivery you agree.",
+          },
+          {
+            q: "Who actually carries my parcel?",
+            a: "Another member, flying a route you both chose, whose identity has been checked. You see their verification status, rating and delivery history before you agree to anything — and you can decline anyone for any reason.",
+          },
+          {
+            q: "How are senders and travellers matched?",
+            a: "You post what you need; the other side finds it and requests you, or you request them. A match is only possible when both countries agree, the flight leaves on or before the date the parcel is needed, and the parcel fits the space the traveller still has free. The database refuses anything else.",
+          },
+          {
+            q: "How long does it take to find someone?",
+            a: "It depends entirely on who is flying your route. Busy corridors like Paris–Nairobi or London–Lagos move fastest. If nothing has been booked three days before your deadline we email you, tell you how many travellers leave just after your date, and let you change it.",
+          },
+        ],
+      },
+      {
+        title: "Money",
+        items: [
+          {
+            q: "How much does it cost to send something?",
+            a: "You and the traveller agree the fee directly — typically $7–12 per kilo, against roughly $14 per kilo by courier. You set your budget when you post; travellers decide whether it's worth their space.",
+          },
+          {
+            q: "How do I pay the traveller?",
+            a: "Directly, in whatever way you both trust: cash at handover, M-Pesa, bank transfer. Kifurushi never holds, escrows or transfers that money, and takes no commission from it.",
+          },
+          {
+            q: "Why doesn't Kifurushi handle the payment?",
+            a: "Holding other people's money makes us a payment institution, which means licensing we don't have and costs you would pay for. Keeping the money between you two is what lets us charge one flat membership and take 0% of your delivery.",
+          },
+          {
+            q: "So what am I paying the membership for?",
+            a: "Access to the marketplace: posting listings, requesting matches, and the chat and delivery record around them. $5 a month or $29 a year, covering all three roles. Browsing, receiving a parcel and tracking one are free.",
+          },
+          {
+            q: "Can I cancel?",
+            a: "Yes, any time, from the pricing page. Your membership runs to the end of the period you already paid for and then stops. We don't do partial refunds.",
+          },
+        ],
+      },
+      {
+        title: "Trust and safety",
+        items: [
+          {
+            q: "How do I know the traveller is real?",
+            a: "Verified members have passed a government-ID check plus a liveness selfie through our identity partner, Didit. The ✓ badge on a profile means that check passed. Ratings come only from completed deliveries and can never be edited or deleted.",
+          },
+          {
+            q: "What stops someone stealing my parcel?",
+            a: "Honestly: nothing makes theft impossible. What we do is make it costly and traceable — real identity behind every verified account, an immutable record of what was agreed, and a permanent ban across all corridors for confirmed misconduct. Send accordingly, and read the safety rules before your first handover.",
+          },
+          {
+            q: "Is my parcel insured?",
+            a: "No. There is no insurance and no compensation scheme, from us or from the traveller. If the value of what you're sending would hurt to lose, use an insured courier instead — that is the honest advice.",
+          },
+          {
+            q: "What is the inspect-and-seal rule?",
+            a: "The traveller must see every item, open, in person, before it is sealed — then you seal it together and photograph it on your own phones, sending the pictures in the match chat where they are timestamped and can't be edited. A traveller who accepts a pre-sealed package carries it as their own at the border. Both sides can be banned for skipping this.",
+          },
+          {
+            q: "How does the delivery get confirmed?",
+            a: "The receiver gets a one-time six-digit code. Entering it at handover is the proof of delivery: it completes the record and unlocks reviews for both sides. Codes are stored hashed, so nobody — including us — can read yours.",
+          },
+          {
+            q: "Something went wrong. What happens?",
+            a: "Email hello@kifurushiapp.com. We review the agreed terms, the match chat and the journey updates, and we can suspend or ban accounts at fault. We do not adjudicate private disputes and we do not compensate either party — but the full record is yours to use in any claim you pursue.",
+          },
+        ],
+      },
+      {
+        title: "Verification and documents",
+        items: [
+          {
+            q: "Do you store my passport photo?",
+            a: "No. Your ID photo and selfie go from your device straight to Didit. We receive only the result — approved, declined or under review — and the document type. We could not produce your ID image if we wanted to.",
+          },
+          {
+            q: "Why was my verification declined?",
+            a: "Most often because the same face is already verified on another account. One person, one account — it's what keeps the badge meaningful. If you've lost access to your original account, email us rather than making a new one.",
+          },
+          {
+            q: "My check says a person is reviewing it. How long?",
+            a: "Longer than the automatic check, because it waits on a human. Nothing is required from you; the result appears on the same page. If it drags, email us and we'll chase it.",
+          },
+        ],
+      },
+      {
+        title: "Practical",
+        items: [
+          {
+            q: "What can't be sent?",
+            a: "Anything illegal in either country, plus cash, unsealed medicines, weapons, batteries outside airline rules, perishables and anything you would not open in front of a stranger. The full list is on the safety page. Travellers are legally responsible for what's in their luggage at the border.",
+          },
+          {
+            q: "Is this legal?",
+            a: "Carrying something for someone else is legal in most places, provided it is declared correctly and is not a prohibited good — which is exactly why the inspect-and-seal rule exists. Customs and airline rules are the traveller's responsibility, and neither we nor the sender can take that on for them.",
+          },
+          {
+            q: "Which countries do you cover?",
+            a: "All 54 African countries and 22 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific. Whether a route is useful depends on members actually flying it.",
+          },
+          {
+            q: "What languages does Kifurushi speak?",
+            a: "English, French and Swahili. Our emails to you follow the language you chose on the site.",
+          },
+        ],
+      },
+    ],
+  },
   browse: {
     tripsTitle: "Travellers going your way",
     tripsSub:

@@ -33,6 +33,7 @@ export const fr: Dict = {
     platformSecurity: "Sécurité de la plateforme",
     terms: "Conditions générales",
     privacy: "Politique de confidentialité",
+    faqLink: "Questions fréquentes",
     idVerified: "Membres vérifiés par pièce d'identité",
     codedHandovers: "Remises par code",
     copyright: (year: number) =>
@@ -216,6 +217,127 @@ export const fr: Dict = {
       caveat:
         "Estimations basées sur les budgets publiés sur vos livraisons terminées. Kifurushi ne touche jamais à l'argent : nous ne pouvons rapporter que ce qui a été convenu sur l'annonce, pas ce qui a réellement changé de mains.",
     },
+  faq: {
+    title: "Les questions qu'on nous pose",
+    sub: "Tout ce qui suit décrit ce que Kifurushi fait réellement. Si votre question n'y est pas, écrivez à hello@kifurushiapp.com.",
+    stillStuck: "Vous n'avez pas trouvé votre réponse ?",
+    stillStuckCta: "Écrivez-nous",
+    groups: [
+      {
+        title: "Comment ça marche",
+        items: [
+          {
+            q: "Kifurushi, c'est quoi exactement ?",
+            a: "Nous mettons en relation ceux qui veulent envoyer un colis et les voyageurs qui ont déjà de la place dans leurs bagages sur cet itinéraire. C'est tout le service. Nous ne sommes pas un transporteur : nous ne touchons jamais votre colis, nous ne transportons rien, et nous ne sommes pas partie à la livraison que vous convenez.",
+          },
+          {
+            q: "Qui transporte réellement mon colis ?",
+            a: "Un autre membre, sur un itinéraire que vous avez choisi tous les deux, dont l'identité a été vérifiée. Vous voyez son statut de vérification, sa note et son historique avant de vous engager — et vous pouvez refuser qui vous voulez, sans justification.",
+          },
+          {
+            q: "Comment se fait la mise en relation ?",
+            a: "Vous publiez votre besoin ; l'autre partie vous trouve et vous sollicite, ou l'inverse. Un match n'est possible que si les deux pays correspondent, si le vol part au plus tard à la date où le colis est attendu, et si le colis tient dans la place encore libre. La base de données refuse tout le reste.",
+          },
+          {
+            q: "Combien de temps pour trouver quelqu'un ?",
+            a: "Cela dépend entièrement de qui vole sur votre itinéraire. Les corridors actifs comme Paris–Nairobi ou Londres–Lagos vont le plus vite. Si rien n'est réservé trois jours avant votre échéance, nous vous écrivons, nous vous disons combien de voyageurs partent juste après votre date, et vous pouvez la modifier.",
+          },
+        ],
+      },
+      {
+        title: "L'argent",
+        items: [
+          {
+            q: "Combien coûte un envoi ?",
+            a: "Vous convenez le prix directement avec le voyageur — en général 7 à 12 $ le kilo, contre environ 14 $ le kilo par transporteur. Vous fixez votre budget en publiant ; les voyageurs décident si cela vaut leur place.",
+          },
+          {
+            q: "Comment je paie le voyageur ?",
+            a: "Directement, comme vous vous faites confiance tous les deux : espèces à la remise, M-Pesa, virement. Kifurushi ne détient, ne séquestre et ne transfère jamais cet argent, et n'en prend aucune commission.",
+          },
+          {
+            q: "Pourquoi Kifurushi ne gère pas le paiement ?",
+            a: "Détenir l'argent d'autrui ferait de nous un établissement de paiement, avec un agrément que nous n'avons pas et des coûts que vous paieriez. Laisser l'argent entre vous deux est ce qui nous permet de facturer un abonnement unique et de prendre 0 % sur votre livraison.",
+          },
+          {
+            q: "Alors, je paie l'abonnement pour quoi ?",
+            a: "L'accès au marché : publier des annonces, solliciter des mises en relation, et la messagerie et le suivi qui vont avec. 5 $ par mois ou 29 $ par an, pour les trois rôles. Consulter, recevoir un colis et suivre une livraison restent gratuits.",
+          },
+          {
+            q: "Puis-je annuler ?",
+            a: "Oui, à tout moment, depuis la page Tarifs. Votre abonnement va au bout de la période déjà payée puis s'arrête. Nous ne faisons pas de remboursement partiel.",
+          },
+        ],
+      },
+      {
+        title: "Confiance et sécurité",
+        items: [
+          {
+            q: "Comment savoir si le voyageur est réel ?",
+            a: "Un membre vérifié a passé un contrôle de pièce d'identité officielle et un selfie de vivacité via notre partenaire Didit. Le badge ✓ signifie que ce contrôle est passé. Les notes ne viennent que de livraisons terminées et ne peuvent jamais être modifiées ni supprimées.",
+          },
+          {
+            q: "Qu'est-ce qui empêche le vol de mon colis ?",
+            a: "Honnêtement : rien ne rend le vol impossible. Ce que nous faisons, c'est le rendre coûteux et traçable — une identité réelle derrière chaque compte vérifié, un enregistrement inaltérable de ce qui a été convenu, et un bannissement définitif sur tous les corridors en cas de faute avérée. Envoyez en conséquence, et lisez les règles de sécurité avant votre première remise.",
+          },
+          {
+            q: "Mon colis est-il assuré ?",
+            a: "Non. Il n'y a ni assurance ni indemnisation, ni de notre part ni de celle du voyageur. Si la valeur de ce que vous envoyez vous ferait mal à perdre, utilisez un transporteur assuré — c'est le conseil honnête.",
+          },
+          {
+            q: "C'est quoi la règle d'inspection et de scellage ?",
+            a: "Le voyageur doit voir chaque article, ouvert, en personne, avant le scellage — puis vous scellez ensemble et photographiez avec vos propres téléphones, en envoyant les photos dans la messagerie du match, où elles sont horodatées et non modifiables. Un voyageur qui accepte un paquet déjà scellé le transporte comme le sien à la frontière. Les deux parties risquent le bannissement si cette règle est ignorée.",
+          },
+          {
+            q: "Comment la livraison est-elle confirmée ?",
+            a: "Le destinataire reçoit un code à six chiffres à usage unique. Le saisir à la remise vaut preuve de livraison : cela clôt le dossier et débloque les avis des deux côtés. Les codes sont stockés hachés — personne, nous compris, ne peut lire le vôtre.",
+          },
+          {
+            q: "Il y a eu un problème. Que se passe-t-il ?",
+            a: "Écrivez à hello@kifurushiapp.com. Nous examinons les termes convenus, la messagerie du match et les mises à jour du trajet, et nous pouvons suspendre ou bannir les comptes fautifs. Nous ne tranchons pas les litiges privés et nous n'indemnisons personne — mais le dossier complet est à vous pour toute réclamation que vous engagez.",
+          },
+        ],
+      },
+      {
+        title: "Vérification et documents",
+        items: [
+          {
+            q: "Conservez-vous la photo de mon passeport ?",
+            a: "Non. Votre photo d'identité et votre selfie vont de votre appareil directement chez Didit. Nous ne recevons que le résultat — approuvé, refusé ou en cours d'examen — et le type de document. Nous serions incapables de produire votre image, même si nous le voulions.",
+          },
+          {
+            q: "Pourquoi ma vérification a-t-elle été refusée ?",
+            a: "Le plus souvent parce que le même visage est déjà vérifié sur un autre compte. Une personne, un compte — c'est ce qui donne son sens au badge. Si vous avez perdu l'accès à votre compte d'origine, écrivez-nous plutôt que d'en créer un nouveau.",
+          },
+          {
+            q: "Ma vérification est examinée par une personne. Combien de temps ?",
+            a: "Plus longtemps que le contrôle automatique, puisqu'elle attend un humain. Rien ne vous est demandé ; le résultat apparaît sur la même page. Si cela traîne, écrivez-nous et nous relançons.",
+          },
+        ],
+      },
+      {
+        title: "Pratique",
+        items: [
+          {
+            q: "Qu'est-ce qui ne peut pas être envoyé ?",
+            a: "Tout ce qui est illégal dans l'un des deux pays, ainsi que l'argent liquide, les médicaments non scellés, les armes, les batteries hors règles aériennes, les denrées périssables et tout ce que vous n'ouvririez pas devant un inconnu. La liste complète est sur la page sécurité. Le voyageur est juridiquement responsable du contenu de ses bagages à la frontière.",
+          },
+          {
+            q: "Est-ce légal ?",
+            a: "Transporter quelque chose pour autrui est légal presque partout, à condition que ce soit correctement déclaré et que ce ne soit pas un bien interdit — c'est précisément pourquoi la règle d'inspection existe. Les règles douanières et aériennes relèvent du voyageur, et ni nous ni l'expéditeur ne pouvons les assumer à sa place.",
+          },
+          {
+            q: "Quels pays couvrez-vous ?",
+            a: "Les 54 pays africains et 22 destinations de la diaspora en Europe, en Amérique du Nord, dans le Golfe et en Asie-Pacifique. Qu'un itinéraire soit utile dépend des membres qui le volent réellement.",
+          },
+          {
+            q: "Quelles langues parle Kifurushi ?",
+            a: "L'anglais, le français et le swahili. Nos e-mails suivent la langue que vous avez choisie sur le site.",
+          },
+        ],
+      },
+    ],
+  },
   browse: {
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
