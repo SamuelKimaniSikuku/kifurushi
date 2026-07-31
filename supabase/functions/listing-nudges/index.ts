@@ -26,6 +26,8 @@ const T: Record<
     tripSoonBody: (kg: number, waiting: number) => string;
     trialSoon: (date: string) => string;
     trialSoonBody: (date: string) => string;
+    trialOver: string;
+    trialOverBody: string;
     choosePlan: string;
     footerTrial: string;
     editParcel: string;
@@ -59,6 +61,9 @@ const T: Record<
     trialSoonBody: (date) =>
       `Your free first month ends on <b>${date}</b>. After that you can still browse, receive parcels and track deliveries — but posting a trip or a parcel, and requesting a match, need a membership.` +
       ` It's $5 a month or $29 a year, it covers sending and travelling both, and Kifurushi still takes no commission on anything you agree.`,
+    trialOver: "Your free month on Kifurushi has ended",
+    trialOverBody:
+      "Your first month is up. You can still browse travellers and parcels, receive things people send you, and follow a delivery — those stay free. What needs a membership is posting your own trip or parcel and requesting a match.<br><br>$5 a month or $29 a year covers both sending and travelling, and we still take no commission on what you agree with the other person. Your listings are waiting where you left them.",
     choosePlan: "Choose a plan",
     footerTrial: "You get this because your free month on Kifurushi is ending.",
     editParcel: "Update my parcel",
@@ -89,6 +94,9 @@ const T: Record<
     trialSoonBody: (date) =>
       `Votre premier mois gratuit se termine le <b>${date}</b>. Ensuite, vous pourrez toujours consulter les annonces, recevoir des colis et suivre les livraisons — mais publier un voyage ou un colis, et demander une mise en relation, nécessitent un abonnement.` +
       ` 5 $ par mois ou 29 $ par an, pour l'envoi comme pour le voyage, et Kifurushi ne prend toujours aucune commission sur ce que vous convenez.`,
+    trialOver: "Votre mois gratuit sur Kifurushi est terminé",
+    trialOverBody:
+      "Votre premier mois est écoulé. Vous pouvez toujours consulter les voyageurs et les colis, recevoir ce qu'on vous envoie et suivre une livraison — cela reste gratuit. Ce qui nécessite un abonnement, c'est publier votre propre voyage ou colis et demander une mise en relation.<br><br>5 $ par mois ou 29 $ par an couvrent l'envoi et le voyage, et nous ne prenons toujours aucune commission sur ce que vous convenez. Vos annonces vous attendent là où vous les avez laissées.",
     choosePlan: "Choisir une formule",
     footerTrial: "Vous recevez ceci car votre mois gratuit sur Kifurushi se termine.",
     editParcel: "Modifier mon colis",
@@ -117,6 +125,9 @@ const T: Record<
     trialSoonBody: (date) =>
       `Mwezi wako wa kwanza wa bure unaisha tarehe <b>${date}</b>. Baada ya hapo bado utaweza kuangalia matangazo, kupokea vifurushi na kufuatilia usafirishaji — lakini kuweka safari au kifurushi, na kuomba match, kunahitaji uanachama.` +
       ` Ni $5 kwa mwezi au $29 kwa mwaka, kwa kutuma na kusafiri vyote, na Kifurushi bado haichukui kamisheni yoyote kwa mnayokubaliana.`,
+    trialOver: "Mwezi wako wa bure kwenye Kifurushi umeisha",
+    trialOverBody:
+      "Mwezi wako wa kwanza umekwisha. Bado unaweza kuangalia wasafiri na vifurushi, kupokea vitu watu wanavyokutumia, na kufuatilia usafirishaji — hivyo vinabaki bure. Kinachohitaji uanachama ni kuweka safari au kifurushi chako mwenyewe na kuomba match.<br><br>$5 kwa mwezi au $29 kwa mwaka inagharamia kutuma na kusafiri, na bado hatuchukui kamisheni kwa mnayokubaliana. Matangazo yako yanakusubiri pale ulipoyaacha.",
     choosePlan: "Chagua mpango",
     footerTrial: "Unapata hii kwa sababu mwezi wako wa bure kwenye Kifurushi unaisha.",
     editParcel: "Badilisha kifurushi changu",
@@ -372,6 +383,34 @@ Deno.serve(async (req) => {
       await admin
         .from("memberships")
         .update({ trial_notified_at: new Date().toISOString() })
+        .eq("user_id", m.user_id);
+      sent++;
+    }
+  }
+
+  // ------------------------------------------------- free month has lapsed
+  // Only for members still on a trial: anyone who has since paid has a
+  // provider of 'stripe' and never sees this.
+  const { data: trialsOver } = await admin
+    .from("memberships")
+    .select("user_id")
+    .eq("provider", "trial")
+    .is("trial_ended_notified_at", null)
+    .lt("current_period_end", new Date().toISOString());
+
+  for (const m of trialsOver ?? []) {
+    const { email, lang } = await recipient(m.user_id);
+    if (!email) continue;
+    const L = T[lang];
+    const ok = await sendEmail(
+      email,
+      L.trialOver,
+      shell(L.trialOver, L.trialOverBody, L.choosePlan, `${SITE}/pricing`, lang, L.footerTrial)
+    );
+    if (ok) {
+      await admin
+        .from("memberships")
+        .update({ trial_ended_notified_at: new Date().toISOString() })
         .eq("user_id", m.user_id);
       sent++;
     }

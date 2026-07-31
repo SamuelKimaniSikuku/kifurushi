@@ -43,6 +43,7 @@ export const en = {
     h1b: "while travelling home",
     intro:
       "Your spare kilos are worth $100+ every trip. Carry parcels for people sending things between Africa and abroad — you keep 100% of what you charge, Kifurushi takes no cut. And when you're the one sending, your parcel travels with a verified traveller who's already going home.",
+    freeMonthHero: "First month free — no card needed to start",
     ctaTravel: "I'm travelling — earn from my luggage",
     ctaSend: "Send a parcel",
     verified: "Verified",
@@ -55,7 +56,7 @@ export const en = {
     statCountries: "African countries",
     statDelivery: "typical delivery",
     statDeliveryValue: "3–7 days",
-    statPrice: "or $29/yr — 0% commission",
+    statPrice: "after a free month — 0% commission",
     statHandover: "verified handover",
     statHandoverValue: "ID + code",
     trustItems: [
@@ -365,12 +366,12 @@ export const en = {
       "None of your trips fit this parcel — it must fly your route and leave before the parcel is needed. Post one and we'll prefill the route.",
   },
   pricing: {
-    heroTitle: "One membership. Every role.",
+    heroTitle: "Your first month is free.",
     trialBanner: (date: string) =>
       `Your free first month is running — it ends on ${date}. Choose a plan any time before then to keep posting; nothing is charged until you do.`,
     freeMonth: "First month free",
     heroSub:
-      "Send this month, receive next month, carry when you fly home — one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
+      "Start free for a month — no card needed. After that: one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
     free: "Free",
     freeTag: "Look around, receive, track.",
     freeFeatures: [

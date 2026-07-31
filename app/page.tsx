@@ -14,8 +14,7 @@ import {
   PackageCheck,
   Plane,
   ShieldCheck,
-  Star,
-} from "lucide-react";
+  Star, Gift,} from "lucide-react";
 
 const corridors = [
   { from: "🇬🇧 London", to: "🇳🇬 Lagos", price: "$8" },
@@ -82,6 +81,11 @@ export default function Home() {
                   {t.home.ctaSend}
                 </Link>
               </div>
+              {/* The single most useful thing a first-time visitor can know. */}
+              <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-gold">
+                <Gift className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                {t.home.freeMonthHero}
+              </p>
             </div>
 
             {/* Right: product preview */}

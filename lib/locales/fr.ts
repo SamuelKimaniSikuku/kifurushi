@@ -45,6 +45,7 @@ export const fr: Dict = {
     h1b: "en rentrant au pays",
     intro:
       "Vos kilos libres valent plus de 100 $ par voyage. Transportez des colis pour ceux qui envoient entre l'Afrique et l'étranger — vous gardez 100 % de ce que vous facturez, Kifurushi ne prend aucune commission. Et quand c'est vous qui envoyez, votre colis voyage avec un voyageur vérifié qui rentre déjà au pays.",
+    freeMonthHero: "Premier mois offert — aucune carte requise pour commencer",
     ctaTravel: "Je voyage — gagner avec mes bagages",
     ctaSend: "Envoyer un colis",
     verified: "Vérifié",
@@ -57,7 +58,7 @@ export const fr: Dict = {
     statCountries: "pays africains",
     statDelivery: "délai habituel",
     statDeliveryValue: "3–7 jours",
-    statPrice: "ou 29 $/an — 0 % de commission",
+    statPrice: "après un mois offert — 0 % de commission",
     statHandover: "remise vérifiée",
     statHandoverValue: "ID + code",
     trustItems: [
@@ -368,12 +369,12 @@ export const fr: Dict = {
       "Aucun de vos voyages ne convient — il doit suivre cet itinéraire et partir avant la date limite du colis. Publiez-en un, l'itinéraire est prérempli.",
   },
   pricing: {
-    heroTitle: "Un abonnement. Tous les rôles.",
+    heroTitle: "Votre premier mois est offert.",
     trialBanner: (date: string) =>
       `Votre premier mois gratuit est en cours — il se termine le ${date}. Choisissez une formule avant cette date pour continuer à publier ; rien n'est débité avant.`,
     freeMonth: "Premier mois offert",
     heroSub:
-      "Envoyez ce mois-ci, recevez le mois prochain, transportez quand vous rentrez — un compte, un prix, zéro commission. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
+      "Commencez gratuitement pendant un mois — aucune carte requise. Ensuite : un compte, un prix, zéro commission. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
     free: "Gratuit",
     freeTag: "Explorer, recevoir, suivre.",
     freeFeatures: [

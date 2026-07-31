@@ -45,6 +45,7 @@ export const sw: Dict = {
     h1b: "unaposafiri nyumbani",
     intro:
       "Kilo zako za ziada zina thamani ya $100+ kila safari. Beba vifurushi vya watu wanaotuma vitu kati ya Afrika na ughaibuni — unabaki na 100% ya unachotoza, Kifurushi haichukui chochote. Na unapotuma wewe, kifurushi chako husafiri na msafiri aliyethibitishwa ambaye tayari anarudi nyumbani.",
+    freeMonthHero: "Mwezi wa kwanza bure — huhitaji kadi kuanza",
     ctaTravel: "Ninasafiri — nipate pesa kwa mizigo yangu",
     ctaSend: "Tuma kifurushi",
     verified: "Amethibitishwa",
@@ -57,7 +58,7 @@ export const sw: Dict = {
     statCountries: "nchi za Afrika",
     statDelivery: "muda wa kawaida",
     statDeliveryValue: "siku 3–7",
-    statPrice: "au $29/mwaka — 0% kamisheni",
+    statPrice: "baada ya mwezi wa bure — 0% kamisheni",
     statHandover: "makabidhiano yaliyothibitishwa",
     statHandoverValue: "Kitambulisho + msimbo",
     trustItems: [
@@ -368,12 +369,12 @@ export const sw: Dict = {
       "Hakuna safari yako inayofaa — lazima ifuate njia hii na iondoke kabla ya tarehe ya kifurushi. Tangaza moja, njia imejazwa tayari.",
   },
   pricing: {
-    heroTitle: "Uanachama mmoja. Kila jukumu.",
+    heroTitle: "Mwezi wako wa kwanza ni bure.",
     trialBanner: (date: string) =>
       `Mwezi wako wa kwanza wa bure unaendelea — unaisha tarehe ${date}. Chagua mpango kabla ya hapo ili uendelee kutangaza; hutatozwa chochote hadi utakapofanya hivyo.`,
     freeMonth: "Mwezi wa kwanza bure",
     heroSub:
-      "Tuma mwezi huu, pokea mwezi ujao, beba unaporudi nyumbani — akaunti moja, bei moja, hakuna kamisheni. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
+      "Anza bure kwa mwezi mmoja — huhitaji kadi. Baadaye: akaunti moja, bei moja, hakuna kamisheni. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
     free: "Bure",
     freeTag: "Angalia, pokea, fuatilia.",
     freeFeatures: [
