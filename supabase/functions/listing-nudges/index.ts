@@ -24,6 +24,10 @@ const T: Record<
     parcelGoneBody: string;
     tripSoon: (city: string, date: string) => string;
     tripSoonBody: (kg: number, waiting: number) => string;
+    trialSoon: (date: string) => string;
+    trialSoonBody: (date: string) => string;
+    choosePlan: string;
+    footerTrial: string;
     editParcel: string;
     editTrip: string;
     browseTrips: string;
@@ -51,6 +55,12 @@ const T: Record<
             waiting === 1 ? "" : "s"
           } waiting on your route right now.`
         : ` Nothing is waiting on your route yet, but lowering your rate makes you the obvious choice when something appears.`),
+    trialSoon: (date) => `Your free month on Kifurushi ends ${date}`,
+    trialSoonBody: (date) =>
+      `Your free first month ends on <b>${date}</b>. After that you can still browse, receive parcels and track deliveries — but posting a trip or a parcel, and requesting a match, need a membership.` +
+      ` It's $5 a month or $29 a year, it covers sending and travelling both, and Kifurushi still takes no commission on anything you agree.`,
+    choosePlan: "Choose a plan",
+    footerTrial: "You get this because your free month on Kifurushi is ending.",
     editParcel: "Update my parcel",
     editTrip: "Update my trip",
     browseTrips: "See travellers",
@@ -75,6 +85,12 @@ const T: Record<
       (waiting > 0
         ? ` ${waiting} colis attend${waiting === 1 ? "" : "ent"} actuellement sur votre itinéraire.`
         : ` Rien n'attend encore sur votre itinéraire, mais baisser votre tarif vous rendra évident dès qu'un colis apparaîtra.`),
+    trialSoon: (date) => `Votre mois gratuit sur Kifurushi se termine le ${date}`,
+    trialSoonBody: (date) =>
+      `Votre premier mois gratuit se termine le <b>${date}</b>. Ensuite, vous pourrez toujours consulter les annonces, recevoir des colis et suivre les livraisons — mais publier un voyage ou un colis, et demander une mise en relation, nécessitent un abonnement.` +
+      ` 5 $ par mois ou 29 $ par an, pour l'envoi comme pour le voyage, et Kifurushi ne prend toujours aucune commission sur ce que vous convenez.`,
+    choosePlan: "Choisir une formule",
+    footerTrial: "Vous recevez ceci car votre mois gratuit sur Kifurushi se termine.",
     editParcel: "Modifier mon colis",
     editTrip: "Modifier mon voyage",
     browseTrips: "Voir les voyageurs",
@@ -97,6 +113,12 @@ const T: Record<
       (waiting > 0
         ? ` Kuna vifurushi ${waiting} vinavyosubiri kwenye njia yako sasa.`
         : ` Hakuna kinachosubiri kwenye njia yako bado, lakini kupunguza bei yako kutakufanya uchaguliwe kwanza.`),
+    trialSoon: (date) => `Mwezi wako wa bure kwenye Kifurushi unaisha ${date}`,
+    trialSoonBody: (date) =>
+      `Mwezi wako wa kwanza wa bure unaisha tarehe <b>${date}</b>. Baada ya hapo bado utaweza kuangalia matangazo, kupokea vifurushi na kufuatilia usafirishaji — lakini kuweka safari au kifurushi, na kuomba match, kunahitaji uanachama.` +
+      ` Ni $5 kwa mwezi au $29 kwa mwaka, kwa kutuma na kusafiri vyote, na Kifurushi bado haichukui kamisheni yoyote kwa mnayokubaliana.`,
+    choosePlan: "Chagua mpango",
+    footerTrial: "Unapata hii kwa sababu mwezi wako wa bure kwenye Kifurushi unaisha.",
     editParcel: "Badilisha kifurushi changu",
     editTrip: "Badilisha safari yangu",
     browseTrips: "Ona wasafiri",
@@ -105,7 +127,14 @@ const T: Record<
   },
 };
 
-function shell(heading: string, body: string, cta: string, href: string, lang: Lang) {
+function shell(
+  heading: string,
+  body: string,
+  cta: string,
+  href: string,
+  lang: Lang,
+  footer?: string
+) {
   return `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
@@ -114,7 +143,7 @@ function shell(heading: string, body: string, cta: string, href: string, lang: L
   <div style="font-size:14px;line-height:1.7;margin:20px 0">${body}</div>
   <a href="${href}" style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:600">${cta}</a>
   <p style="font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:12px;margin-top:24px">
-    ${T[lang].footer}
+    ${footer ?? T[lang].footer}
   </p>
 </div>`;
 }
@@ -305,6 +334,45 @@ Deno.serve(async (req) => {
         .from("trips")
         .update({ nudged_soon_at: new Date().toISOString() })
         .eq("id", tr.id);
+      sent++;
+    }
+  }
+
+  // ------------------------------------------- free month about to run out
+  // Warned once, three days out, while there is still time to decide. Someone
+  // discovering the paywall by finding they can no longer post is someone who
+  // concludes the app broke, not that their trial ended.
+  const { data: trialsEnding } = await admin
+    .from("memberships")
+    .select("user_id, current_period_end")
+    .eq("provider", "trial")
+    .eq("status", "active")
+    .is("trial_notified_at", null)
+    .gt("current_period_end", new Date().toISOString())
+    .lte("current_period_end", new Date(Date.now() + 3 * 86_400_000).toISOString());
+
+  for (const m of trialsEnding ?? []) {
+    const { email, lang } = await recipient(m.user_id);
+    if (!email) continue;
+    const L = T[lang];
+    const when = day(m.current_period_end, lang);
+    const ok = await sendEmail(
+      email,
+      L.trialSoon(when),
+      shell(
+        L.trialSoon(when),
+        L.trialSoonBody(when),
+        L.choosePlan,
+        `${SITE}/pricing`,
+        lang,
+        L.footerTrial
+      )
+    );
+    if (ok) {
+      await admin
+        .from("memberships")
+        .update({ trial_notified_at: new Date().toISOString() })
+        .eq("user_id", m.user_id);
       sent++;
     }
   }
