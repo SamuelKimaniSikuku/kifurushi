@@ -131,7 +131,7 @@ export const en = {
   auth: {
     joinTitle: "Join Kifurushi",
     welcomeBack: "Welcome back",
-    subtitle: "One account for sending and travelling.",
+    subtitle: "One account for sending and travelling. Your first month is free.",
     fullName: "Full name",
     email: "Email",
     password: "Password",
@@ -366,6 +366,9 @@ export const en = {
   },
   pricing: {
     heroTitle: "One membership. Every role.",
+    trialBanner: (date: string) =>
+      `Your free first month is running — it ends on ${date}. Choose a plan any time before then to keep posting; nothing is charged until you do.`,
+    freeMonth: "First month free",
     heroSub:
       "Send this month, receive next month, carry when you fly home — one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
     free: "Free",

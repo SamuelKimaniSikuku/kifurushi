@@ -11,8 +11,7 @@ import {
   Plane,
   RefreshCcw,
   Wallet,
-  X,
-} from "lucide-react";
+  X, Gift,} from "lucide-react";
 import {
   fetchSession, fetchMembership, joinMembership, startCheckout,
   BILLING_MODE, BillingPlan, Membership,
@@ -126,7 +125,10 @@ export default function PricingPage() {
     }
   }
 
-  const isMember = membership?.status === "member";
+  // A trial gives full access but is not a subscription: both plans must stay
+  // purchasable, or the member hits the paywall in a month with no way out.
+  const isTrial = membership?.status === "member" && membership.isTrial;
+  const isMember = membership?.status === "member" && !membership.isTrial;
   const currentPlan: BillingPlan = membership?.plan ?? "yearly";
   const currentLabel =
     currentPlan === "monthly" ? t.pricing.planMonthly : t.pricing.planYearly;
@@ -143,6 +145,20 @@ export default function PricingPage() {
       <p className="mx-auto mt-3 max-w-xl text-center text-muted">
         {t.pricing.heroSub}
       </p>
+
+      {isTrial && membership?.expires && (
+        <div className="mx-auto mt-6 flex max-w-xl items-start gap-3 rounded-2xl border border-gold bg-gold/10 p-4">
+          <Gift className="mt-0.5 h-5 w-5 shrink-0 text-forest" strokeWidth={2} aria-hidden />
+          <p className="text-sm leading-relaxed text-ink">
+            {t.pricing.trialBanner(
+              new Date(membership.expires).toLocaleDateString(undefined, {
+                day: "numeric",
+                month: "long",
+              })
+            )}
+          </p>
+        </div>
+      )}
 
       <div className="mt-12 grid items-stretch gap-6 md:grid-cols-3">
         {/* Free */}

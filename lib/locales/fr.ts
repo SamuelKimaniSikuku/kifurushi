@@ -134,7 +134,7 @@ export const fr: Dict = {
   auth: {
     joinTitle: "Rejoindre Kifurushi",
     welcomeBack: "Bon retour",
-    subtitle: "Un seul compte pour envoyer et voyager.",
+    subtitle: "Un seul compte pour envoyer et voyager. Votre premier mois est offert.",
     fullName: "Nom complet",
     email: "E-mail",
     password: "Mot de passe",
@@ -369,6 +369,9 @@ export const fr: Dict = {
   },
   pricing: {
     heroTitle: "Un abonnement. Tous les rôles.",
+    trialBanner: (date: string) =>
+      `Votre premier mois gratuit est en cours — il se termine le ${date}. Choisissez une formule avant cette date pour continuer à publier ; rien n'est débité avant.`,
+    freeMonth: "Premier mois offert",
     heroSub:
       "Envoyez ce mois-ci, recevez le mois prochain, transportez quand vous rentrez — un compte, un prix, zéro commission. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
     free: "Gratuit",

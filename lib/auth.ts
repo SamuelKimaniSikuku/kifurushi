@@ -74,9 +74,22 @@ export interface Membership {
   plan: BillingPlan | null;
   since: string | null;
   expires: string | null;
+  /**
+   * True while the free first month is running. The member has full access,
+   * but has paid nothing — so the UI says "free month, ends the 30th" rather
+   * than letting them believe they are already subscribed and be surprised
+   * when posting stops working.
+   */
+  isTrial: boolean;
 }
 
-const FREE: Membership = { status: "free", plan: null, since: null, expires: null };
+const FREE: Membership = {
+  status: "free",
+  plan: null,
+  since: null,
+  expires: null,
+  isTrial: false,
+};
 
 export async function fetchMembership(): Promise<Membership> {
   const { data: auth } = await supabase.auth.getSession();
@@ -85,7 +98,7 @@ export async function fetchMembership(): Promise<Membership> {
 
   const { data } = await supabase
     .from("memberships")
-    .select("status, plan, created_at, current_period_end")
+    .select("status, plan, provider, created_at, current_period_end")
     .eq("user_id", uid)
     .maybeSingle();
 
@@ -101,6 +114,7 @@ export async function fetchMembership(): Promise<Membership> {
     plan: data.plan as BillingPlan,
     since: data.created_at,
     expires: data.current_period_end,
+    isTrial: data.provider === "trial",
   };
 }
 

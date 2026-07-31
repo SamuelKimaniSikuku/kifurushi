@@ -134,7 +134,7 @@ export const sw: Dict = {
   auth: {
     joinTitle: "Jiunge na Kifurushi",
     welcomeBack: "Karibu tena",
-    subtitle: "Akaunti moja kwa kutuma na kusafiri.",
+    subtitle: "Akaunti moja kwa kutuma na kusafiri. Mwezi wako wa kwanza ni bure.",
     fullName: "Jina kamili",
     email: "Barua pepe",
     password: "Nenosiri",
@@ -369,6 +369,9 @@ export const sw: Dict = {
   },
   pricing: {
     heroTitle: "Uanachama mmoja. Kila jukumu.",
+    trialBanner: (date: string) =>
+      `Mwezi wako wa kwanza wa bure unaendelea — unaisha tarehe ${date}. Chagua mpango kabla ya hapo ili uendelee kutangaza; hutatozwa chochote hadi utakapofanya hivyo.`,
+    freeMonth: "Mwezi wa kwanza bure",
     heroSub:
       "Tuma mwezi huu, pokea mwezi ujao, beba unaporudi nyumbani — akaunti moja, bei moja, hakuna kamisheni. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
     free: "Bure",

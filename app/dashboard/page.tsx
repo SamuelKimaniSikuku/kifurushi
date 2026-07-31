@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star, Wallet,
+  Gift, Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star,
+  Wallet,
 } from "lucide-react";
 import {
   fetchSession, fetchMembership, signOut, Session, Membership,
@@ -96,10 +97,25 @@ export default function DashboardPage() {
           <p className="mt-1 text-sm text-muted">
             {session.email}
             {membership?.status === "member" ? (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-0.5 align-middle text-[11px] font-bold text-white">
-                <Star size={12} strokeWidth={2} className="fill-gold stroke-gold" aria-hidden />
-                Member
-              </span>
+              membership.isTrial ? (
+                // Full access, nothing paid — say which, and when it ends.
+                <Link
+                  href="/pricing"
+                  className="ml-2 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest"
+                >
+                  <Gift size={12} strokeWidth={2} aria-hidden />
+                  Free month · ends{" "}
+                  {new Date(membership.expires!).toLocaleDateString(undefined, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </Link>
+              ) : (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-0.5 align-middle text-[11px] font-bold text-white">
+                  <Star size={12} strokeWidth={2} className="fill-gold stroke-gold" aria-hidden />
+                  Member
+                </span>
+              )
             ) : membership ? (
               <Link href="/pricing" className="ml-2 inline-flex items-center rounded-full bg-sand-deep px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest underline">
                 Free plan — join from $5/mo
