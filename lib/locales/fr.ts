@@ -339,6 +339,31 @@ export const fr: Dict = {
       },
     ],
   },
+  howTo: {
+    title: "Comment commencer",
+    sub: "Environ deux minutes. Premier mois offert — aucune carte requise.",
+    accountStep: "Créez votre compte",
+    accountBody:
+      "Nom, e-mail, mot de passe. Nous vous envoyons un lien — cliquez dessus pour activer votre compte, puis connectez-vous.",
+    accountNote:
+      "Mot de passe : 10 caractères minimum, avec une majuscule, une minuscule et un chiffre.",
+    travelTitle: "Si vous voyagez",
+    travelSteps: [
+      "Ouvrez le menu et choisissez Je voyage → Publier un voyage.",
+      "Indiquez votre itinéraire, la date de votre vol, les kilos disponibles et votre prix au kilo (7–12 $ en général).",
+      "Les expéditeurs vous sollicitent. Acceptez qui vous voulez, convenez le prix directement, et transportez.",
+    ],
+    travelCta: "Publier un voyage",
+    sendTitle: "Si vous envoyez",
+    sendSteps: [
+      "Ouvrez le menu et choisissez J'envoie → Envoyer un colis.",
+      "Indiquez votre itinéraire, la date d'arrivée souhaitée, le poids et ce que vous êtes prêt à payer.",
+      "Des voyageurs se proposent. Choisissez-en un, convenez le prix directement, et remettez le colis.",
+    ],
+    sendCta: "Envoyer un colis",
+    verifyNote:
+      "Voyageurs : faites-vous vérifier avant votre premier transport. Une photo de votre pièce d'identité et un selfie, environ deux minutes — les expéditeurs cherchent le badge.",
+  },
   browse: {
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:

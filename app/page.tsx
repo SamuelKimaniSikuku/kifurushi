@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
 import TopEarner from "@/components/TopEarner";
+import HowToStart from "@/components/HowToStart";
 import {
   ArrowRight,
   BadgeCheck,
@@ -226,6 +227,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* What to actually do next — for people arriving from the group */}
+      <HowToStart />
 
       {/* Trust bar */}
       <div className="border-b border-line bg-white">

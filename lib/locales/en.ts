@@ -336,6 +336,30 @@ export const en = {
       },
     ],
   },
+  howTo: {
+    title: "How to start",
+    sub: "About two minutes. Your first month is free — no card needed.",
+    accountStep: "Create your account",
+    accountBody:
+      "Name, email, password. We send you a link — click it to activate your account, then sign in.",
+    accountNote: "Password: 10+ characters, with a capital, a small letter and a number.",
+    travelTitle: "If you're travelling",
+    travelSteps: [
+      "Open the menu and choose I'm travelling → Post a trip.",
+      "Enter your route, your flight date, how many spare kilos you have, and your price per kg ($7–12 is typical).",
+      "Senders request you. Accept the ones you want, agree the fee directly, and carry it.",
+    ],
+    travelCta: "Post a trip",
+    sendTitle: "If you're sending",
+    sendSteps: [
+      "Open the menu and choose I'm sending → Send a parcel.",
+      "Enter your route, the date it must arrive, the weight, and what you're willing to pay.",
+      "Travellers offer to carry it. Pick one, agree the fee directly, and hand it over.",
+    ],
+    sendCta: "Send a parcel",
+    verifyNote:
+      "Travellers: get verified before your first carry. A photo of your ID and a selfie, about two minutes — senders look for the badge.",
+  },
   browse: {
     tripsTitle: "Travellers going your way",
     tripsSub:
