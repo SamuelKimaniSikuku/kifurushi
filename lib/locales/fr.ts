@@ -398,6 +398,8 @@ export const fr: Dict = {
     trialBanner: (date: string) =>
       `Votre premier mois gratuit est en cours — il se termine le ${date}. Choisissez une formule avant cette date pour continuer à publier ; rien n'est débité avant.`,
     freeMonth: "Premier mois offert",
+    trialDormantBanner:
+      "Votre mois gratuit n'a pas encore commencé — il démarre à votre première annonce, voyage ou colis. Rien ne s'écoule pendant que vous explorez.",
     heroSub:
       "Commencez gratuitement pendant un mois — aucune carte requise. Ensuite : un compte, un prix, zéro commission. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
     free: "Gratuit",

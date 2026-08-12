@@ -81,6 +81,12 @@ export interface Membership {
    * when posting stops working.
    */
   isTrial: boolean;
+  /**
+   * True while the free month has not begun. It starts at the member's first
+   * trip or parcel, so someone who signs up and doesn't post yet keeps the
+   * whole month for when they actually use it.
+   */
+  trialDormant: boolean;
 }
 
 const FREE: Membership = {
@@ -89,6 +95,7 @@ const FREE: Membership = {
   since: null,
   expires: null,
   isTrial: false,
+  trialDormant: false,
 };
 
 export async function fetchMembership(): Promise<Membership> {
@@ -98,14 +105,20 @@ export async function fetchMembership(): Promise<Membership> {
 
   const { data } = await supabase
     .from("memberships")
-    .select("status, plan, provider, created_at, current_period_end")
+    .select("status, plan, provider, created_at, current_period_end, trial_activated_at")
     .eq("user_id", uid)
     .maybeSingle();
+
+  // 'infinity' is the dormant trial: the month hasn't started. Date parsing
+  // gives Invalid Date for it, which no comparison would survive, so it's
+  // resolved explicitly rather than left to chance.
+  const dormant =
+    data?.provider === "trial" && !data?.trial_activated_at;
 
   if (
     !data ||
     data.status !== "active" ||
-    new Date(data.current_period_end) <= new Date()
+    (!dormant && new Date(data.current_period_end) <= new Date())
   ) {
     return FREE;
   }
@@ -113,8 +126,9 @@ export async function fetchMembership(): Promise<Membership> {
     status: "member",
     plan: data.plan as BillingPlan,
     since: data.created_at,
-    expires: data.current_period_end,
+    expires: dormant ? null : data.current_period_end,
     isTrial: data.provider === "trial",
+    trialDormant: dormant,
   };
 }
 

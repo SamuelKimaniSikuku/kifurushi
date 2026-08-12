@@ -394,6 +394,8 @@ export const en = {
     trialBanner: (date: string) =>
       `Your free first month is running — it ends on ${date}. Choose a plan any time before then to keep posting; nothing is charged until you do.`,
     freeMonth: "First month free",
+    trialDormantBanner:
+      "Your free month hasn't started yet — it begins when you post your first trip or parcel, so nothing is ticking away while you look around.",
     heroSub:
       "Start free for a month — no card needed. After that: one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
     free: "Free",

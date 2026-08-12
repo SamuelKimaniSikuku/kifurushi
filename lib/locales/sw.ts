@@ -398,6 +398,8 @@ export const sw: Dict = {
     trialBanner: (date: string) =>
       `Mwezi wako wa kwanza wa bure unaendelea — unaisha tarehe ${date}. Chagua mpango kabla ya hapo ili uendelee kutangaza; hutatozwa chochote hadi utakapofanya hivyo.`,
     freeMonth: "Mwezi wa kwanza bure",
+    trialDormantBanner:
+      "Mwezi wako wa bure haujaanza bado — unaanza unapoweka safari au kifurushi chako cha kwanza. Hakuna kinachopita ukiwa unaangalia tu.",
     heroSub:
       "Anza bure kwa mwezi mmoja — huhitaji kadi. Baadaye: akaunti moja, bei moja, hakuna kamisheni. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
     free: "Bure",

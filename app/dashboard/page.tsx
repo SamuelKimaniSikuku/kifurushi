@@ -104,11 +104,18 @@ export default function DashboardPage() {
                   className="ml-2 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest"
                 >
                   <Gift size={12} strokeWidth={2} aria-hidden />
-                  Free month · ends{" "}
-                  {new Date(membership.expires!).toLocaleDateString(undefined, {
-                    day: "numeric",
-                    month: "short",
-                  })}
+                  {membership.trialDormant ? (
+                    // Nothing to count down to yet.
+                    <>Free month · starts when you post</>
+                  ) : (
+                    <>
+                      Free month · ends{" "}
+                      {new Date(membership.expires!).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </>
+                  )}
                 </Link>
               ) : (
                 <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-0.5 align-middle text-[11px] font-bold text-white">

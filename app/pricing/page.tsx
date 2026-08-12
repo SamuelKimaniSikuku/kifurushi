@@ -146,7 +146,16 @@ export default function PricingPage() {
         {t.pricing.heroSub}
       </p>
 
-      {isTrial && membership?.expires && (
+      {isTrial && membership?.trialDormant && (
+        <div className="mx-auto mt-6 flex max-w-xl items-start gap-3 rounded-2xl border border-gold bg-gold/10 p-4">
+          <Gift className="mt-0.5 h-5 w-5 shrink-0 text-forest" strokeWidth={2} aria-hidden />
+          <p className="text-sm leading-relaxed text-ink">
+            {t.pricing.trialDormantBanner}
+          </p>
+        </div>
+      )}
+
+      {isTrial && !membership?.trialDormant && membership?.expires && (
         <div className="mx-auto mt-6 flex max-w-xl items-start gap-3 rounded-2xl border border-gold bg-gold/10 p-4">
           <Gift className="mt-0.5 h-5 w-5 shrink-0 text-forest" strokeWidth={2} aria-hidden />
           <p className="text-sm leading-relaxed text-ink">
