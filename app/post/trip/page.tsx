@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
-import { tripSchema, zodErrors, FieldErrors } from "@/lib/validation";
+import {
+  tripSchema, zodErrors, touchedErrors, FieldErrors,
+} from "@/lib/validation";
 import CorridorHint from "@/components/CorridorHint";
 import {
   addTrip, CorridorFit, fetchTripById, fitForTrip, updateTrip,
@@ -47,6 +49,9 @@ function PostTripForm() {
   const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  // Which fields the member has actually finished with. Nothing complains
+  // until you have been there.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
     departDate: "", spaceKg: "10", pricePerKg: "9", notes: "",
@@ -116,6 +121,7 @@ function PostTripForm() {
     const parsed = tripSchema.safeParse(form);
     if (!parsed.success) {
       const errs = zodErrors(parsed.error);
+      setTouched((t) => ({ ...t, ...Object.fromEntries(FIELD_ORDER.map((f) => [f, true])) }));
       setErrors(errs);
       focusFirstInvalid(errs);
       return;
@@ -173,8 +179,21 @@ function PostTripForm() {
   const courierCost = valid ? Math.round(spaceNum * COURIER_RATE_PER_KG) : 0;
   const senderSavings = Math.max(0, courierCost - earnings);
 
+
+  // Keep the visible errors honest as the member types: a message appears the
+  // moment a touched field is wrong, and disappears the moment it is right.
+  useEffect(() => {
+    setErrors((prev) => {
+      const live = touchedErrors(tripSchema, form, touched);
+      const next: FieldErrors = { ...live };
+      if (prev._submit) next._submit = prev._submit;
+      return next;
+    });
+  }, [form, touched]);
+
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  const touch = (k: string) => () => setTouched((t) => ({ ...t, [k]: true }));
   const cls = (k: string) => (errors[k] ? "field field-invalid" : "field");
   const err = (k: string) =>
     errors[k]
@@ -201,7 +220,7 @@ function PostTripForm() {
           <div>
             <label htmlFor="fromCountry" className="field-label">{t.postTrip.fromCountry}</label>
             <div className={errors.fromCountry ? "[&>select]:border-danger" : undefined}>
-              <CountrySelect id="fromCountry" value={form.fromCountry} onChange={set("fromCountry")} />
+              <CountrySelect id="fromCountry" value={form.fromCountry} onChange={(v) => { set("fromCountry")(v); touch("fromCountry")(); }} />
             </div>
             {errors.fromCountry && (
               <p id="fromCountry-error" className="field-error">{errors.fromCountry}</p>
@@ -214,6 +233,7 @@ function PostTripForm() {
               className={cls("fromCity")}
               value={form.fromCity}
               onChange={(e) => set("fromCity")(e.target.value)}
+              onBlur={touch("fromCity")}
               placeholder={t.postTrip.cityFromPlaceholder}
               {...err("fromCity")}
             />
@@ -224,7 +244,7 @@ function PostTripForm() {
           <div>
             <label htmlFor="toCountry" className="field-label">{t.postTrip.toCountry}</label>
             <div className={errors.toCountry ? "[&>select]:border-danger" : undefined}>
-              <CountrySelect id="toCountry" value={form.toCountry} onChange={set("toCountry")} />
+              <CountrySelect id="toCountry" value={form.toCountry} onChange={(v) => { set("toCountry")(v); touch("toCountry")(); }} />
             </div>
             {errors.toCountry && (
               <p id="toCountry-error" className="field-error">{errors.toCountry}</p>
@@ -237,6 +257,7 @@ function PostTripForm() {
               className={cls("toCity")}
               value={form.toCity}
               onChange={(e) => set("toCity")(e.target.value)}
+              onBlur={touch("toCity")}
               placeholder={t.postTrip.cityToPlaceholder}
               {...err("toCity")}
             />
@@ -257,6 +278,7 @@ function PostTripForm() {
               className={cls("departDate")}
               value={form.departDate}
               onChange={(e) => set("departDate")(e.target.value)}
+              onBlur={touch("departDate")}
               {...err("departDate")}
             />
             {errors.departDate && (
@@ -275,6 +297,7 @@ function PostTripForm() {
               className={cls("spaceKg")}
               value={form.spaceKg}
               onChange={(e) => set("spaceKg")(e.target.value)}
+              onBlur={touch("spaceKg")}
               {...err("spaceKg")}
             />
             {errors.spaceKg && (
@@ -293,6 +316,7 @@ function PostTripForm() {
               className={cls("pricePerKg")}
               value={form.pricePerKg}
               onChange={(e) => set("pricePerKg")(e.target.value)}
+              onBlur={touch("pricePerKg")}
               {...err("pricePerKg")}
             />
             {errors.pricePerKg && (
@@ -369,6 +393,7 @@ function PostTripForm() {
               className={`${cls("notes")} min-h-[80px]`}
               value={form.notes}
               onChange={(e) => set("notes")(e.target.value)}
+              onBlur={touch("notes")}
               placeholder={t.postTrip.notesPlaceholder}
               {...err("notes")}
             />

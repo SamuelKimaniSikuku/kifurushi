@@ -5,19 +5,28 @@ const countryCode = z
   .string()
   .refine((v) => ALL_COUNTRIES.some((c) => c.code === v), "Pick a country");
 
+// Deliberately permissive. The old rule allowed only letters, spaces,
+// apostrophes, dots and hyphens — which rejected "Nairobi, Kenya",
+// "Paris 15", "Nairobi (JKIA)" and "Abidjan/Plateau", all of them things a
+// person types without a second thought. A member who writes their city the
+// way they say it out loud should not be argued with; we only block
+// characters that suggest a mistake or an injection attempt.
 const city = z
   .string()
   .trim()
   .min(2, "City is too short")
   .max(60, "City is too long")
-  .regex(/^[\p{L}\p{M}\s'’.-]+$/u, "City contains invalid characters");
+  .regex(
+    /^[\p{L}\p{M}\d\s'’.,()/-]+$/u,
+    "Use letters and numbers only — no symbols like < > @ #"
+  );
 
 const futureDate = z.string().refine((v) => {
   const d = new Date(v);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   return !isNaN(d.getTime()) && d >= today;
-}, "Date must be today or later");
+}, "That date has already passed — pick today or a later date");
 
 export const tripSchema = z
   .object({
@@ -31,7 +40,8 @@ export const tripSchema = z
     notes: z.string().trim().max(400, "Keep notes under 400 characters"),
   })
   .refine((d) => d.fromCountry !== d.toCountry, {
-    message: "Origin and destination must differ",
+    message:
+      "Choose a different country to fly to — Kifurushi connects two countries",
     path: ["toCountry"],
   });
 
@@ -51,7 +61,8 @@ export const parcelSchema = z
     budgetUsd: z.coerce.number().min(1, "Minimum $1").max(2000, "Max $2,000"),
   })
   .refine((d) => d.fromCountry !== d.toCountry, {
-    message: "Origin and destination must differ",
+    message:
+      "Choose a different destination country — Kifurushi sends between two countries",
     path: ["toCountry"],
   });
 
@@ -117,6 +128,32 @@ export function zodErrors(err: z.ZodError): FieldErrors {
   for (const issue of err.issues) {
     const key = issue.path.join(".") || "_";
     if (!out[key]) out[key] = issue.message;
+  }
+  return out;
+}
+
+
+/**
+ * Errors for the fields the member has actually interacted with.
+ *
+ * Validating the whole form on every keystroke would light up fields nobody
+ * has reached yet, which reads as hostile. Validating only on submit — what we
+ * did before — means someone fixes one thing, presses the button, and gets
+ * told about the next. This is the middle: once you have touched a field, it
+ * tells you the truth about itself as you type, and stops complaining the
+ * moment you fix it.
+ */
+export function touchedErrors(
+  schema: z.ZodTypeAny,
+  values: unknown,
+  touched: Record<string, boolean>
+): FieldErrors {
+  const parsed = schema.safeParse(values);
+  if (parsed.success) return {};
+  const all = zodErrors(parsed.error);
+  const out: FieldErrors = {};
+  for (const [k, v] of Object.entries(all)) {
+    if (touched[k]) out[k] = v;
   }
   return out;
 }

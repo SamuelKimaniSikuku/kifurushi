@@ -4,7 +4,9 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Ban, Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
-import { parcelSchema, zodErrors, FieldErrors } from "@/lib/validation";
+import {
+  parcelSchema, zodErrors, touchedErrors, FieldErrors,
+} from "@/lib/validation";
 import CorridorHint from "@/components/CorridorHint";
 import {
   addParcel, CorridorFit, fetchParcelById, fitForParcel, updateParcel,
@@ -49,6 +51,9 @@ function PostParcelForm() {
   const t = useT();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  // Which fields the member has actually finished with. Nothing complains
+  // until you have been there.
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
     neededBy: "", weightKg: "3", description: "", budgetUsd: "50",
@@ -105,6 +110,7 @@ function PostParcelForm() {
     const parsed = parcelSchema.safeParse(form);
     if (!parsed.success) {
       const errs = zodErrors(parsed.error);
+      setTouched((t) => ({ ...t, ...Object.fromEntries(FIELD_ORDER.map((f) => [f, true])) }));
       setErrors(errs);
       focusFirstInvalid(errs);
       return;
@@ -173,8 +179,21 @@ function PostParcelForm() {
         }
       : null;
 
+
+  // Keep the visible errors honest as the member types: a message appears the
+  // moment a touched field is wrong, and disappears the moment it is right.
+  useEffect(() => {
+    setErrors((prev) => {
+      const live = touchedErrors(parcelSchema, form, touched);
+      const next: FieldErrors = { ...live };
+      if (prev._submit) next._submit = prev._submit;
+      return next;
+    });
+  }, [form, touched]);
+
   const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
 
+  const touch = (k: string) => () => setTouched((t) => ({ ...t, [k]: true }));
   const cls = (k: string) => (errors[k] ? "field field-invalid" : "field");
   const err = (k: string) =>
     errors[k]
@@ -201,7 +220,7 @@ function PostParcelForm() {
           <div>
             <label htmlFor="fromCountry" className="field-label">{t.postTrip.fromCountry}</label>
             <div className={errors.fromCountry ? "[&>select]:border-danger" : undefined}>
-              <CountrySelect id="fromCountry" value={form.fromCountry} onChange={set("fromCountry")} />
+              <CountrySelect id="fromCountry" value={form.fromCountry} onChange={(v) => { set("fromCountry")(v); touch("fromCountry")(); }} />
             </div>
             {errors.fromCountry && (
               <p id="fromCountry-error" className="field-error">{errors.fromCountry}</p>
@@ -214,6 +233,7 @@ function PostParcelForm() {
               className={cls("fromCity")}
               value={form.fromCity}
               onChange={(e) => set("fromCity")(e.target.value)}
+              onBlur={touch("fromCity")}
               placeholder={t.postTrip.cityFromPlaceholder}
               {...err("fromCity")}
             />
@@ -224,7 +244,7 @@ function PostParcelForm() {
           <div>
             <label htmlFor="toCountry" className="field-label">{t.postTrip.toCountry}</label>
             <div className={errors.toCountry ? "[&>select]:border-danger" : undefined}>
-              <CountrySelect id="toCountry" value={form.toCountry} onChange={set("toCountry")} />
+              <CountrySelect id="toCountry" value={form.toCountry} onChange={(v) => { set("toCountry")(v); touch("toCountry")(); }} />
             </div>
             {errors.toCountry && (
               <p id="toCountry-error" className="field-error">{errors.toCountry}</p>
@@ -237,6 +257,7 @@ function PostParcelForm() {
               className={cls("toCity")}
               value={form.toCity}
               onChange={(e) => set("toCity")(e.target.value)}
+              onBlur={touch("toCity")}
               placeholder={t.postTrip.cityToPlaceholder}
               {...err("toCity")}
             />
@@ -257,6 +278,7 @@ function PostParcelForm() {
               className={cls("neededBy")}
               value={form.neededBy}
               onChange={(e) => set("neededBy")(e.target.value)}
+              onBlur={touch("neededBy")}
               {...err("neededBy")}
             />
             {errors.neededBy && (
@@ -275,6 +297,7 @@ function PostParcelForm() {
               className={cls("weightKg")}
               value={form.weightKg}
               onChange={(e) => set("weightKg")(e.target.value)}
+              onBlur={touch("weightKg")}
               {...err("weightKg")}
             />
             {errors.weightKg && (
@@ -293,6 +316,7 @@ function PostParcelForm() {
               className={cls("budgetUsd")}
               value={form.budgetUsd}
               onChange={(e) => set("budgetUsd")(e.target.value)}
+              onBlur={touch("budgetUsd")}
               {...err("budgetUsd")}
             />
             {errors.budgetUsd && (
@@ -375,6 +399,7 @@ function PostParcelForm() {
               className={`${cls("description")} min-h-[90px]`}
               value={form.description}
               onChange={(e) => set("description")(e.target.value)}
+              onBlur={touch("description")}
               placeholder={t.postParcel.insidePlaceholder}
               {...err("description")}
             />
