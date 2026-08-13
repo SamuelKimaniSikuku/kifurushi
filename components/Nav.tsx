@@ -141,25 +141,29 @@ export default function Nav() {
     };
   }, [session, pathname]);
 
-  // Two roles, each with "post mine" and "browse theirs".
-  const travelling: RoleItem[] = [
+  // Grouped by object, not by role: everything about trips in one menu,
+  // everything about parcels in the other. Each item carries a first-person
+  // role hint, so nobody has to know our vocabulary before opening a menu —
+  // and no menu is ever a dead end for either side. The old role-first
+  // grouping left a sender who opened "I'm travelling" with nothing.
+  const trips: RoleItem[] = [
     { href: "/post/trip", label: t.roles.postTrip, desc: t.roles.postTripDesc },
     {
-      href: "/parcels",
-      label: t.roles.browseParcels,
-      desc: t.roles.browseParcelsDesc,
+      href: "/trips",
+      label: t.roles.findTraveller,
+      desc: t.roles.findTravellerDesc,
     },
   ];
-  const sending: RoleItem[] = [
+  const parcels: RoleItem[] = [
     {
       href: "/post/parcel",
       label: t.roles.postParcel,
       desc: t.roles.postParcelDesc,
     },
     {
-      href: "/trips",
-      label: t.roles.findTraveller,
-      desc: t.roles.findTravellerDesc,
+      href: "/parcels",
+      label: t.roles.browseParcels,
+      desc: t.roles.browseParcelsDesc,
     },
   ];
   const plainLinks = [
@@ -200,15 +204,15 @@ export default function Nav() {
 
         <nav className="hidden items-center gap-5 lg:flex">
           <RoleMenu
-            label={t.roles.travelling}
+            label={t.roles.tripsMenu}
             Icon={Plane}
-            items={travelling}
+            items={trips}
             pathname={pathname}
           />
           <RoleMenu
-            label={t.roles.sending}
+            label={t.roles.parcelsMenu}
             Icon={Package}
-            items={sending}
+            items={parcels}
             pathname={pathname}
           />
           <span aria-hidden className="h-5 w-px bg-line" />
@@ -273,8 +277,8 @@ export default function Nav() {
       >
         <div className="px-4 py-3">
           {[
-            { label: t.roles.travelling, Icon: Plane, items: travelling },
-            { label: t.roles.sending, Icon: Package, items: sending },
+            { label: t.roles.tripsMenu, Icon: Plane, items: trips },
+            { label: t.roles.parcelsMenu, Icon: Package, items: parcels },
           ].map((group) => (
             <div key={group.label} className="mb-3">
               <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-forest">
