@@ -349,14 +349,14 @@ export const sw: Dict = {
       "Nenosiri: herufi 10 au zaidi, likiwa na herufi kubwa, ndogo na namba.",
     travelTitle: "Kama unasafiri",
     travelSteps: [
-      "Fungua menyu na uchague Ninasafiri → Weka safari.",
+      "Fungua menyu ya Safari na uchague Tangaza safari yangu.",
       "Jaza njia yako, tarehe ya safari, kilo zilizobaki, na bei yako kwa kilo ($7–12 ni kawaida).",
       "Watumaji watakuomba. Kubali unaowataka, kubaliana bei moja kwa moja, na ubebe.",
     ],
     travelCta: "Weka safari",
     sendTitle: "Kama unatuma",
     sendSteps: [
-      "Fungua menyu na uchague Ninatuma → Tuma kifurushi.",
+      "Fungua menyu ya Vifurushi na uchague Tuma kifurushi.",
       "Jaza njia yako, tarehe kinapohitajika kufika, uzito, na kiasi uko tayari kulipa.",
       "Wasafiri watajitolea kukibeba. Chagua mmoja, kubaliana bei moja kwa moja, na ukabidhi.",
     ],

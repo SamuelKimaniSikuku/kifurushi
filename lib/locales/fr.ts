@@ -349,14 +349,14 @@ export const fr: Dict = {
       "Mot de passe : 10 caractères minimum, avec une majuscule, une minuscule et un chiffre.",
     travelTitle: "Si vous voyagez",
     travelSteps: [
-      "Ouvrez le menu et choisissez Je voyage → Publier un voyage.",
+      "Ouvrez le menu Voyages et choisissez Publier mon voyage.",
       "Indiquez votre itinéraire, la date de votre vol, les kilos disponibles et votre prix au kilo (7–12 $ en général).",
       "Les expéditeurs vous sollicitent. Acceptez qui vous voulez, convenez le prix directement, et transportez.",
     ],
     travelCta: "Publier un voyage",
     sendTitle: "Si vous envoyez",
     sendSteps: [
-      "Ouvrez le menu et choisissez J'envoie → Envoyer un colis.",
+      "Ouvrez le menu Colis et choisissez Envoyer un colis.",
       "Indiquez votre itinéraire, la date d'arrivée souhaitée, le poids et ce que vous êtes prêt à payer.",
       "Des voyageurs se proposent. Choisissez-en un, convenez le prix directement, et remettez le colis.",
     ],

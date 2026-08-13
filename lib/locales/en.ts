@@ -345,14 +345,14 @@ export const en = {
     accountNote: "Password: 10+ characters, with a capital, a small letter and a number.",
     travelTitle: "If you're travelling",
     travelSteps: [
-      "Open the menu and choose I'm travelling → Post a trip.",
+      "Open the Trips menu and choose Post my trip.",
       "Enter your route, your flight date, how many spare kilos you have, and your price per kg ($7–12 is typical).",
       "Senders request you. Accept the ones you want, agree the fee directly, and carry it.",
     ],
     travelCta: "Post a trip",
     sendTitle: "If you're sending",
     sendSteps: [
-      "Open the menu and choose I'm sending → Send a parcel.",
+      "Open the Parcels menu and choose Send a parcel.",
       "Enter your route, the date it must arrive, the weight, and what you're willing to pay.",
       "Travellers offer to carry it. Pick one, agree the fee directly, and hand it over.",
     ],
