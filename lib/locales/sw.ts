@@ -45,7 +45,7 @@ export const sw: Dict = {
     h1b: "unaposafiri nyumbani",
     intro:
       "Kilo zako za ziada zina thamani ya $100+ kila safari. Beba vifurushi vya watu wanaotuma vitu kati ya Afrika na ughaibuni — unabaki na 100% ya unachotoza, Kifurushi haichukui chochote. Na unapotuma wewe, kifurushi chako husafiri na msafiri aliyethibitishwa ambaye tayari anarudi nyumbani.",
-    freeMonthHero: "Mwezi wa kwanza bure — huhitaji kadi kuanza",
+    freeMonthHero: "Bure wakati wa uzinduzi — hakuna kadi, hakuna malipo",
     ctaTravel: "Ninasafiri — nipate pesa kwa mizigo yangu",
     ctaSend: "Tuma kifurushi",
     verified: "Amethibitishwa",
@@ -58,7 +58,8 @@ export const sw: Dict = {
     statCountries: "nchi za Afrika",
     statDelivery: "muda wa kawaida",
     statDeliveryValue: "siku 3–7",
-    statPrice: "baada ya mwezi wa bure — 0% kamisheni",
+    statPriceValue: "Bure",
+    statPrice: "wakati wa uzinduzi — 0% kamisheni",
     statHandover: "makabidhiano yaliyothibitishwa",
     statHandoverValue: "Kitambulisho + msimbo",
     trustItems: [
@@ -135,7 +136,7 @@ export const sw: Dict = {
   auth: {
     joinTitle: "Jiunge na Kifurushi",
     welcomeBack: "Karibu tena",
-    subtitle: "Akaunti moja kwa kutuma na kusafiri. Mwezi wako wa kwanza ni bure.",
+    subtitle: "Akaunti moja kwa kutuma na kusafiri. Bure wakati wa uzinduzi.",
     fullName: "Jina kamili",
     email: "Barua pepe",
     password: "Nenosiri",
@@ -341,7 +342,7 @@ export const sw: Dict = {
   },
   howTo: {
     title: "Jinsi ya kuanza",
-    sub: "Takriban dakika mbili. Mwezi wa kwanza ni bure — huhitaji kadi.",
+    sub: "Takriban dakika mbili. Kifurushi ni bure wakati wa uzinduzi — huhitaji kadi.",
     accountStep: "Fungua akaunti yako",
     accountBody:
       "Jina, barua pepe, nenosiri. Tunakutumia kiungo — kibofye ili kuwasha akaunti yako, kisha ingia.",
@@ -394,14 +395,16 @@ export const sw: Dict = {
       "Hakuna safari yako inayofaa — lazima ifuate njia hii na iondoke kabla ya tarehe ya kifurushi. Tangaza moja, njia imejazwa tayari.",
   },
   pricing: {
-    heroTitle: "Mwezi wako wa kwanza ni bure.",
+    launchBanner:
+      "Kifurushi ni bure wakati wa uzinduzi — weka safari na vifurushi, omba match, usilipe chochote. Utajulishwa wazi kwa barua pepe kabla ya mabadiliko yoyote.",
+    heroTitle: "Bure wakati wa uzinduzi.",
     trialBanner: (date: string) =>
       `Mwezi wako wa kwanza wa bure unaendelea — unaisha tarehe ${date}. Chagua mpango kabla ya hapo ili uendelee kutangaza; hutatozwa chochote hadi utakapofanya hivyo.`,
     freeMonth: "Mwezi wa kwanza bure",
     trialDormantBanner:
       "Mwezi wako wa bure haujaanza bado — unaanza unapoweka safari au kifurushi chako cha kwanza. Hakuna kinachopita ukiwa unaangalia tu.",
     heroSub:
-      "Anza bure kwa mwezi mmoja — huhitaji kadi. Baadaye: akaunti moja, bei moja, hakuna kamisheni. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
+      "Kila kitu ni bure wakati wa uzinduzi. Bei zilizo hapa chini ni za uanachama baada ya kipindi hicho — na kamisheni inabaki 0% daima. Kifurushi kamwe haichukui sehemu ya kipato cha wasafiri.",
     free: "Bure",
     freeTag: "Angalia, pokea, fuatilia.",
     freeFeatures: [

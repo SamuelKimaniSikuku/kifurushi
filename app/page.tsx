@@ -156,7 +156,7 @@ export default function Home() {
             {[
               ["54", t.home.statCountries],
               [t.home.statDeliveryValue, t.home.statDelivery],
-              ["$5/mo", t.home.statPrice],
+              [t.home.statPriceValue, t.home.statPrice],
               [t.home.statHandoverValue, t.home.statHandover],
             ].map(([n, l]) => (
               <div key={l} className="rounded-2xl bg-white/5 px-4 py-4">

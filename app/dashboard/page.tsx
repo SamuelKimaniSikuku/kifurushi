@@ -104,13 +104,14 @@ export default function DashboardPage() {
                   className="ml-2 inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-0.5 align-middle text-[11px] font-bold text-forest"
                 >
                   <Gift size={12} strokeWidth={2} aria-hidden />
-                  {membership.trialDormant ? (
-                    // Nothing to count down to yet.
-                    <>Free month · starts when you post</>
+                  {!membership.expires ? (
+                    // Open-ended: the launch period, or a trial that hasn't
+                    // started counting. Either way there is no date to show.
+                    <>Free during launch</>
                   ) : (
                     <>
                       Free month · ends{" "}
-                      {new Date(membership.expires!).toLocaleDateString(undefined, {
+                      {new Date(membership.expires).toLocaleDateString(undefined, {
                         day: "numeric",
                         month: "short",
                       })}

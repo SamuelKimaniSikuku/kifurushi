@@ -45,7 +45,7 @@ export const fr: Dict = {
     h1b: "en rentrant au pays",
     intro:
       "Vos kilos libres valent plus de 100 $ par voyage. Transportez des colis pour ceux qui envoient entre l'Afrique et l'étranger — vous gardez 100 % de ce que vous facturez, Kifurushi ne prend aucune commission. Et quand c'est vous qui envoyez, votre colis voyage avec un voyageur vérifié qui rentre déjà au pays.",
-    freeMonthHero: "Premier mois offert — aucune carte requise pour commencer",
+    freeMonthHero: "Gratuit pendant le lancement — aucune carte, rien à payer",
     ctaTravel: "Je voyage — gagner avec mes bagages",
     ctaSend: "Envoyer un colis",
     verified: "Vérifié",
@@ -58,7 +58,8 @@ export const fr: Dict = {
     statCountries: "pays africains",
     statDelivery: "délai habituel",
     statDeliveryValue: "3–7 jours",
-    statPrice: "après un mois offert — 0 % de commission",
+    statPriceValue: "Gratuit",
+    statPrice: "pendant le lancement — 0 % de commission",
     statHandover: "remise vérifiée",
     statHandoverValue: "ID + code",
     trustItems: [
@@ -135,7 +136,7 @@ export const fr: Dict = {
   auth: {
     joinTitle: "Rejoindre Kifurushi",
     welcomeBack: "Bon retour",
-    subtitle: "Un seul compte pour envoyer et voyager. Votre premier mois est offert.",
+    subtitle: "Un seul compte pour envoyer et voyager. Gratuit pendant le lancement.",
     fullName: "Nom complet",
     email: "E-mail",
     password: "Mot de passe",
@@ -341,7 +342,7 @@ export const fr: Dict = {
   },
   howTo: {
     title: "Comment commencer",
-    sub: "Environ deux minutes. Premier mois offert — aucune carte requise.",
+    sub: "Environ deux minutes. Kifurushi est gratuit pendant le lancement — aucune carte requise.",
     accountStep: "Créez votre compte",
     accountBody:
       "Nom, e-mail, mot de passe. Nous vous envoyons un lien — cliquez dessus pour activer votre compte, puis connectez-vous.",
@@ -394,14 +395,16 @@ export const fr: Dict = {
       "Aucun de vos voyages ne convient — il doit suivre cet itinéraire et partir avant la date limite du colis. Publiez-en un, l'itinéraire est prérempli.",
   },
   pricing: {
-    heroTitle: "Votre premier mois est offert.",
+    launchBanner:
+      "Kifurushi est gratuit pendant le lancement — publiez des voyages et des colis, demandez des mises en relation, ne payez rien. Vous serez prévenu clairement par e-mail avant tout changement.",
+    heroTitle: "Gratuit pendant le lancement.",
     trialBanner: (date: string) =>
       `Votre premier mois gratuit est en cours — il se termine le ${date}. Choisissez une formule avant cette date pour continuer à publier ; rien n'est débité avant.`,
     freeMonth: "Premier mois offert",
     trialDormantBanner:
       "Votre mois gratuit n'a pas encore commencé — il démarre à votre première annonce, voyage ou colis. Rien ne s'écoule pendant que vous explorez.",
     heroSub:
-      "Commencez gratuitement pendant un mois — aucune carte requise. Ensuite : un compte, un prix, zéro commission. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
+      "Tout est gratuit pendant la période de lancement. Les prix ci-dessous sont ceux de l'abonnement une fois cette période terminée — et la commission reste à 0 % dans tous les cas. Kifurushi ne prend jamais de part sur ce que gagnent les voyageurs.",
     free: "Gratuit",
     freeTag: "Explorer, recevoir, suivre.",
     freeFeatures: [

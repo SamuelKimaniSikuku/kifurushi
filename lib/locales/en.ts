@@ -43,7 +43,7 @@ export const en = {
     h1b: "while travelling home",
     intro:
       "Your spare kilos are worth $100+ every trip. Carry parcels for people sending things between Africa and abroad — you keep 100% of what you charge, Kifurushi takes no cut. And when you're the one sending, your parcel travels with a verified traveller who's already going home.",
-    freeMonthHero: "First month free — no card needed to start",
+    freeMonthHero: "Free while we launch — no card, nothing to pay",
     ctaTravel: "I'm travelling — earn from my luggage",
     ctaSend: "Send a parcel",
     verified: "Verified",
@@ -56,7 +56,8 @@ export const en = {
     statCountries: "African countries",
     statDelivery: "typical delivery",
     statDeliveryValue: "3–7 days",
-    statPrice: "after a free month — 0% commission",
+    statPriceValue: "Free",
+    statPrice: "during launch — 0% commission",
     statHandover: "verified handover",
     statHandoverValue: "ID + code",
     trustItems: [
@@ -132,7 +133,7 @@ export const en = {
   auth: {
     joinTitle: "Join Kifurushi",
     welcomeBack: "Welcome back",
-    subtitle: "One account for sending and travelling. Your first month is free.",
+    subtitle: "One account for sending and travelling. Free while we launch.",
     fullName: "Full name",
     email: "Email",
     password: "Password",
@@ -338,7 +339,7 @@ export const en = {
   },
   howTo: {
     title: "How to start",
-    sub: "About two minutes. Your first month is free — no card needed.",
+    sub: "About two minutes. Kifurushi is free while we launch — no card needed.",
     accountStep: "Create your account",
     accountBody:
       "Name, email, password. We send you a link — click it to activate your account, then sign in.",
@@ -390,14 +391,16 @@ export const en = {
       "None of your trips fit this parcel — it must fly your route and leave before the parcel is needed. Post one and we'll prefill the route.",
   },
   pricing: {
-    heroTitle: "Your first month is free.",
+    launchBanner:
+      "Kifurushi is free while we launch — post trips and parcels, request matches, pay nothing. You'll get clear notice by email before that ever changes.",
+    heroTitle: "Free while we launch.",
     trialBanner: (date: string) =>
       `Your free first month is running — it ends on ${date}. Choose a plan any time before then to keep posting; nothing is charged until you do.`,
     freeMonth: "First month free",
     trialDormantBanner:
       "Your free month hasn't started yet — it begins when you post your first trip or parcel, so nothing is ticking away while you look around.",
     heroSub:
-      "Start free for a month — no card needed. After that: one account, one price, no commission. Kifurushi never takes a cut of what travellers earn.",
+      "Everything is free during the launch period. The prices below are what membership will cost once it ends — and the 0% commission never changes. Kifurushi never takes a cut of what travellers earn.",
     free: "Free",
     freeTag: "Look around, receive, track.",
     freeFeatures: [

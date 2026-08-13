@@ -109,16 +109,18 @@ export async function fetchMembership(): Promise<Membership> {
     .eq("user_id", uid)
     .maybeSingle();
 
-  // 'infinity' is the dormant trial: the month hasn't started. Date parsing
-  // gives Invalid Date for it, which no comparison would survive, so it's
-  // resolved explicitly rather than left to chance.
-  const dormant =
-    data?.provider === "trial" && !data?.trial_activated_at;
+  // 'infinity' means no end date — a dormant trial, or the launch period
+  // during which trials never expire. Date parsing gives Invalid Date for it,
+  // so it's resolved explicitly rather than left to chance.
+  const openEnded =
+    typeof data?.current_period_end === "string" &&
+    data.current_period_end.startsWith("infinity");
+  const dormant = data?.provider === "trial" && !data?.trial_activated_at;
 
   if (
     !data ||
     data.status !== "active" ||
-    (!dormant && new Date(data.current_period_end) <= new Date())
+    (!openEnded && new Date(data.current_period_end) <= new Date())
   ) {
     return FREE;
   }
@@ -126,7 +128,7 @@ export async function fetchMembership(): Promise<Membership> {
     status: "member",
     plan: data.plan as BillingPlan,
     since: data.created_at,
-    expires: dormant ? null : data.current_period_end,
+    expires: openEnded ? null : data.current_period_end,
     isTrial: data.provider === "trial",
     trialDormant: dormant,
   };
