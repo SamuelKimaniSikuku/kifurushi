@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Questions people ask — Kifurushi",
   description:
     "How Kifurushi works, what it costs, who carries your parcel, what happens if something goes wrong, and what we deliberately do not do.",
+  alternates: { canonical: "/faq" },
 };
 
 export default function FaqLayout({ children }: { children: React.ReactNode }) {

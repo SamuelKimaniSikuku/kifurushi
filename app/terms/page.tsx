@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Terms & Conditions — Kifurushi",
   description:
     "The terms that govern your use of Kifurushi, the platform that connects parcel senders with verified travellers.",
+  alternates: { canonical: "/terms" },
 };
 
 const EFFECTIVE_DATE = "29 July 2026";

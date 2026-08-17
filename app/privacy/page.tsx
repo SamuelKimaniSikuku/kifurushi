@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy — Kifurushi",
   description:
     "What personal data Kifurushi collects, why, who processes it, how long it is kept, and the rights you have over it under the GDPR.",
+  alternates: { canonical: "/privacy" },
 };
 
 const EFFECTIVE_DATE = "30 July 2026";

@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Trust & Safety — Kifurushi",
   description:
     "How Kifurushi protects senders, travellers and receivers: ID verification, sealed handovers, delivery codes, prohibited items and platform security.",
+  alternates: { canonical: "/safety" },
 };
 
 const prohibited = [
