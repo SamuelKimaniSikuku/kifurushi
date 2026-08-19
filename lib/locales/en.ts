@@ -361,6 +361,25 @@ export const en = {
     verifyNote:
       "Travellers: get verified before your first carry. A photo of your ID and a selfie, about two minutes — senders look for the badge.",
   },
+  recommend: {
+    tripsTitle: (n: number) =>
+      n === 1
+        ? "1 traveller can already take this"
+        : `${n} travellers can already take this`,
+    tripsNote:
+      "Requesting uses their route and travel date — you won't need to finish this form.",
+    departs: (date: string) => `departs ${date}`,
+    kgFree: (kg: number) => `${kg} kg free`,
+    estimate: (amount: number) => `≈ $${amount} for your parcel`,
+    parcelsTitle: (n: number) =>
+      n === 1
+        ? "1 parcel is already waiting on this route"
+        : `${n} parcels are already waiting on this route`,
+    parcelsNote:
+      "Post your trip and you can offer to carry them straight after.",
+    parcelMeta: (kg: number, budget: number) => `${kg} kg · budget $${budget}`,
+    neededBy: (date: string) => `needed by ${date}`,
+  },
   browse: {
     tripsTitle: "Travellers going your way",
     tripsSub:

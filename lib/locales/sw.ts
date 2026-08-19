@@ -365,6 +365,25 @@ export const sw: Dict = {
     verifyNote:
       "Wasafiri: hakikiwa kabla ya kubeba mara ya kwanza. Picha ya kitambulisho chako na selfie, takriban dakika mbili — watumaji wanatafuta alama hiyo.",
   },
+  recommend: {
+    tripsTitle: (n: number) =>
+      n === 1
+        ? "Msafiri 1 anaweza kukichukua sasa hivi"
+        : `Wasafiri ${n} wanaweza kukichukua sasa hivi`,
+    tripsNote:
+      "Ombi linatumia njia na tarehe yake ya safari — hutahitaji kumaliza fomu hii.",
+    departs: (date: string) => `anaondoka ${date}`,
+    kgFree: (kg: number) => `kg ${kg} wazi`,
+    estimate: (amount: number) => `≈ $${amount} kwa kifurushi chako`,
+    parcelsTitle: (n: number) =>
+      n === 1
+        ? "Kifurushi 1 tayari kinasubiri kwenye njia hii"
+        : `Vifurushi ${n} tayari vinasubiri kwenye njia hii`,
+    parcelsNote:
+      "Weka safari yako kisha uweze kujitolea kuvibeba mara moja.",
+    parcelMeta: (kg: number, budget: number) => `kg ${kg} · bajeti $${budget}`,
+    neededBy: (date: string) => `kinahitajika kabla ya ${date}`,
+  },
   browse: {
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:

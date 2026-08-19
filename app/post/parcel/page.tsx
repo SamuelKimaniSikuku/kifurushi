@@ -8,6 +8,7 @@ import {
   parcelSchema, zodErrors, touchedErrors, FieldErrors,
 } from "@/lib/validation";
 import CorridorHint from "@/components/CorridorHint";
+import { FittingTrips } from "@/components/PrePostMatches";
 import {
   addParcel, CorridorFit, fetchParcelById, fitForParcel, updateParcel,
 } from "@/lib/db";
@@ -335,6 +336,15 @@ function PostParcelForm() {
           fit={fit}
           mode="parcel"
           onUseSuggested={(d) => set("neededBy")(d)}
+        />
+
+        {/* Better than posting and waiting: the travellers who could take it
+            right now, requestable on the spot. */}
+        <FittingTrips
+          fromCountry={form.fromCountry}
+          toCountry={form.toCountry}
+          neededBy={form.neededBy}
+          weightKg={form.weightKg}
         />
 
         {/* Live budget vs courier comparison */}

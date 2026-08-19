@@ -365,6 +365,25 @@ export const fr: Dict = {
     verifyNote:
       "Voyageurs : faites-vous vérifier avant votre premier transport. Une photo de votre pièce d'identité et un selfie, environ deux minutes — les expéditeurs cherchent le badge.",
   },
+  recommend: {
+    tripsTitle: (n: number) =>
+      n === 1
+        ? "1 voyageur peut déjà le prendre"
+        : `${n} voyageurs peuvent déjà le prendre`,
+    tripsNote:
+      "La demande reprend son itinéraire et sa date — inutile de terminer ce formulaire.",
+    departs: (date: string) => `départ le ${date}`,
+    kgFree: (kg: number) => `${kg} kg libres`,
+    estimate: (amount: number) => `≈ ${amount} $ pour votre colis`,
+    parcelsTitle: (n: number) =>
+      n === 1
+        ? "1 colis attend déjà sur cet itinéraire"
+        : `${n} colis attendent déjà sur cet itinéraire`,
+    parcelsNote:
+      "Publiez votre voyage et vous pourrez proposer de les transporter juste après.",
+    parcelMeta: (kg: number, budget: number) => `${kg} kg · budget ${budget} $`,
+    neededBy: (date: string) => `requis avant le ${date}`,
+  },
   browse: {
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:

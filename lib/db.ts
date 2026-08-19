@@ -226,6 +226,69 @@ export async function fetchTopEarner(): Promise<TopEarner | null> {
   };
 }
 
+/**
+ * The trips a sender could request RIGHT NOW instead of posting a parcel and
+ * waiting. Same rules the database enforces at match time — corridor, flight
+ * on or before the deadline, weight within remaining space — so anything shown
+ * here is guaranteed requestable. Own trips are excluded: you can't carry for
+ * yourself.
+ */
+export async function fetchFittingTrips(
+  fromCountry: string,
+  toCountry: string,
+  neededBy: string,
+  weightKg: number
+): Promise<Trip[]> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  const today = new Date().toISOString().slice(0, 10);
+
+  let q = supabase
+    .from("trips")
+    .select(TRIP_SELECT)
+    .eq("status", "open")
+    .eq("from_country", fromCountry)
+    .eq("to_country", toCountry)
+    .gte("depart_date", today)
+    .gte("remaining_kg", weightKg > 0 ? weightKg : 0.1)
+    .order("depart_date", { ascending: true })
+    .limit(4);
+  if (neededBy) q = q.lte("depart_date", neededBy);
+
+  const { data, error } = await q;
+  if (error) return [];
+  return ((data ?? []) as unknown as TripRow[])
+    .map(mapTrip)
+    .filter((t) => t.travelerId !== uid)
+    .slice(0, 3);
+}
+
+/** The parcels already waiting for whoever posts a trip on this route. */
+export async function fetchWaitingParcels(
+  fromCountry: string,
+  toCountry: string,
+  departDate: string
+): Promise<ParcelRequest[]> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  const floor = departDate || new Date().toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("parcels")
+    .select(PARCEL_SELECT)
+    .eq("status", "open")
+    .eq("from_country", fromCountry)
+    .eq("to_country", toCountry)
+    .gte("needed_by", floor)
+    .order("needed_by", { ascending: true })
+    .limit(4);
+  if (error) return [];
+  return ((data ?? []) as unknown as ParcelRow[])
+    .map(mapParcel)
+    .filter((p) => p.senderId !== uid)
+    .slice(0, 3);
+}
+
 // ---------------------------------------------------------------------------
 // CORRIDOR FIT
 // The database refuses a match whose flight lands after the parcel's deadline,

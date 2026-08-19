@@ -8,6 +8,7 @@ import {
   tripSchema, zodErrors, touchedErrors, FieldErrors,
 } from "@/lib/validation";
 import CorridorHint from "@/components/CorridorHint";
+import { WaitingParcels } from "@/components/PrePostMatches";
 import {
   addTrip, CorridorFit, fetchTripById, fitForTrip, updateTrip,
 } from "@/lib/db";
@@ -140,7 +141,9 @@ function PostTripForm() {
       } else {
         await addTrip({ ...parsed.data, categoriesAccepted: cats });
       }
-      router.push("/trips");
+      // If parcels are already waiting on this route, land the traveller on
+      // them so the offer happens now — not on the list of rival trips.
+      router.push(fit && fit.fits > 0 ? "/parcels" : "/trips");
     } catch {
       setErrors({ _submit: t.postTrip.submitError });
       setSubmitting(false);
@@ -333,6 +336,13 @@ function PostTripForm() {
           fit={fit}
           mode="trip"
           onUseSuggested={(d) => set("departDate")(d)}
+        />
+
+        {/* Who is already waiting for this trip. */}
+        <WaitingParcels
+          fromCountry={form.fromCountry}
+          toCountry={form.toCountry}
+          departDate={form.departDate}
         />
 
         {/* Live earnings vs courier comparison */}
