@@ -14,6 +14,7 @@ import {
   fetchMessages, sendMessage,
 } from "@/lib/db";
 import { transitUpdateSchema, reviewSchema, messageSchema } from "@/lib/validation";
+import { useT } from "@/lib/i18n";
 import Stars from "@/components/ui/Stars";
 
 const CHAT_POLL_MS = 5000;
@@ -205,6 +206,7 @@ export default function MatchCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const t = useT();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
@@ -446,7 +448,8 @@ export default function MatchCard({
         <div className="mt-4 space-y-3">
           {match.status === "requested" &&
             (canRespond ? (
-              <div className="flex flex-wrap gap-2">
+              <div>
+                <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"
                   disabled={busy}
@@ -465,10 +468,14 @@ export default function MatchCard({
                 >
                   Decline
                 </button>
+                </div>
+                {/* The chat below is open already — accepting is not the only
+                    way to start talking, and people assume it is. */}
+                <p className="mt-2 text-xs text-muted">{t.browse.askFirst}</p>
               </div>
             ) : (
               <p className="text-sm text-muted">
-                Waiting for {match.counterpartyName} to accept.
+                {t.browse.chatWhileWaiting(match.counterpartyName)}
               </p>
             ))}
 

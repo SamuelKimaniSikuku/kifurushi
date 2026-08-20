@@ -385,6 +385,10 @@ export const sw: Dict = {
     neededBy: (date: string) => `kinahitajika kabla ya ${date}`,
   },
   browse: {
+    askFirst:
+      "Bado huna uhakika? Uliza maswali kwenye Messages hapa chini kwanza — kukubali kunaweza kusubiri.",
+    chatWhileWaiting: (name: string) =>
+      `Unasubiri ${name} akubali — mnaweza kuanza kuzungumza kwenye Messages hapa chini.`,
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:
       "Watu waliothibitishwa wenye nafasi ya ziada ya mizigo. Omba mmoja abebe kifurushi chako — mnakubaliana bei moja kwa moja.",

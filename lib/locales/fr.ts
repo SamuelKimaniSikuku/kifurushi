@@ -385,6 +385,10 @@ export const fr: Dict = {
     neededBy: (date: string) => `requis avant le ${date}`,
   },
   browse: {
+    askFirst:
+      "Pas encore sûr ? Posez d’abord vos questions dans Messages ci-dessous — accepter peut attendre.",
+    chatWhileWaiting: (name: string) =>
+      `En attente de la réponse de ${name} — vous pouvez déjà discuter dans Messages ci-dessous.`,
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
       "Des personnes vérifiées avec de la place dans leurs bagages. Demandez-en une pour transporter votre colis — vous convenez du prix directement.",

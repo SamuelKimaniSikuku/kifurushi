@@ -34,8 +34,8 @@ const COPY: Record<Lang, Record<Event, Copy>> = {
       heading: "Someone wants to work with you",
       body: (c) =>
         c.role === "traveler"
-          ? `<b>${c.other}</b> would like you to carry their parcel on <b>${c.route}</b>. Open your dashboard to accept or decline.`
-          : `<b>${c.other}</b> has offered to carry your parcel on <b>${c.route}</b>. Open your dashboard to see their profile and reviews.`,
+          ? `<b>${c.other}</b> would like you to carry their parcel on <b>${c.route}</b>. Not sure yet? You can chat with them in the match Messages before you accept or decline — open your dashboard to talk.`
+          : `<b>${c.other}</b> has offered to carry your parcel on <b>${c.route}</b>. You can chat with them in the match Messages before you decide — open your dashboard to see their profile, reviews and the chat.`,
     },
     accepted: {
       subject: "Your request was accepted ✅",
@@ -101,8 +101,8 @@ const COPY: Record<Lang, Record<Event, Copy>> = {
       heading: "Quelqu'un souhaite travailler avec vous",
       body: (c) =>
         c.role === "traveler"
-          ? `<b>${c.other}</b> aimerait que vous transportiez son colis sur <b>${c.route}</b>. Ouvrez votre tableau de bord pour accepter ou refuser.`
-          : `<b>${c.other}</b> propose de transporter votre colis sur <b>${c.route}</b>. Ouvrez votre tableau de bord pour voir son profil et ses avis.`,
+          ? `<b>${c.other}</b> aimerait que vous transportiez son colis sur <b>${c.route}</b>. Pas encore sûr ? Vous pouvez discuter avec lui dans les Messages du match avant d’accepter ou de refuser — ouvrez votre tableau de bord.`
+          : `<b>${c.other}</b> propose de transporter votre colis sur <b>${c.route}</b>. Vous pouvez discuter avec lui dans les Messages du match avant de décider — ouvrez votre tableau de bord pour voir son profil, ses avis et la discussion.`,
     },
     accepted: {
       subject: "Votre demande a été acceptée ✅",
@@ -168,8 +168,8 @@ const COPY: Record<Lang, Record<Event, Copy>> = {
       heading: "Mtu anataka kufanya kazi nawe",
       body: (c) =>
         c.role === "traveler"
-          ? `<b>${c.other}</b> anataka ubebe kifurushi chake kwenye <b>${c.route}</b>. Fungua dashibodi yako ukubali au ukatae.`
-          : `<b>${c.other}</b> amejitolea kubeba kifurushi chako kwenye <b>${c.route}</b>. Fungua dashibodi yako uone wasifu na tathmini zake.`,
+          ? `<b>${c.other}</b> anataka ubebe kifurushi chake kwenye <b>${c.route}</b>. Bado huna uhakika? Mnaweza kuzungumza kwenye Messages za match kabla ya kukubali au kukataa — fungua dashibodi yako.`
+          : `<b>${c.other}</b> amejitolea kubeba kifurushi chako kwenye <b>${c.route}</b>. Mnaweza kuzungumza kwenye Messages za match kabla ya kuamua — fungua dashibodi yako uone wasifu, tathmini na mazungumzo.`,
     },
     accepted: {
       subject: "Ombi lako limekubaliwa ✅",

@@ -381,6 +381,10 @@ export const en = {
     neededBy: (date: string) => `needed by ${date}`,
   },
   browse: {
+    askFirst:
+      "Not sure yet? Ask them in Messages below first — accepting can wait.",
+    chatWhileWaiting: (name: string) =>
+      `Waiting for ${name} to accept — you can already chat in Messages below.`,
     tripsTitle: "Travellers going your way",
     tripsSub:
       "Verified people with spare luggage space. Request one to carry your parcel — you agree the fee directly.",
