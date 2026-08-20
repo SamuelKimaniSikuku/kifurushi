@@ -516,6 +516,8 @@ export const fr: Dict = {
     toCity: "Ville d'arrivée",
     cityFromPlaceholder: "ex. Paris",
     cityToPlaceholder: "ex. Dakar",
+    tightDeparture:
+      "Vous partez bientôt — les expéditeurs réservent en général quelques jours à l'avance. Vous pouvez encore recevoir des demandes, mais les voyages publiés plus tôt en reçoivent davantage.",
     departureDate: "Date de départ",
     space: "Espace (kg)",
     pricePerKg: "Prix par kg (USD)",
@@ -545,6 +547,8 @@ export const fr: Dict = {
     sub: "Décrivez votre envoi — les voyageurs sur votre itinéraire sont prévenus.",
     roleBanner:
       "Vous demandez à un voyageur de transporter ce colis. Les voyageurs sur votre itinéraire vous feront des offres — vous convenez du prix directement avec eux, et Kifurushi ne prend aucune commission.",
+    tightDeadline:
+      "C'est très proche — trouver un voyageur prend en général quelques jours. Ceux qui peuvent encore arriver à temps s'afficheront ci-dessous, mais une date plus tardive en touche davantage.",
     neededBy: "À livrer avant le",
     weight: "Poids (kg)",
     budget: "Budget (USD)",

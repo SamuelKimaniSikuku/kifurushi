@@ -171,6 +171,13 @@ function PostTripForm() {
     };
   }, [form.fromCountry, form.toCountry, form.departDate, form]);
 
+  const daysToDeparture =
+    form.departDate && minDate
+      ? Math.round((Date.parse(form.departDate) - Date.parse(minDate)) / 86400000)
+      : null;
+  const tightDeparture =
+    daysToDeparture !== null && daysToDeparture >= 0 && daysToDeparture < 7;
+
   // Live earnings maths for the comparison band. Courier baseline matches
   // the marketing copy (5 kg London→Lagos runs $50–80 by courier).
   const spaceNum = parseFloat(form.spaceKg);
@@ -286,6 +293,9 @@ function PostTripForm() {
             />
             {errors.departDate && (
               <p id="departDate-error" className="field-error">{errors.departDate}</p>
+            )}
+            {tightDeparture && !errors.departDate && (
+              <p className="mt-1 text-xs text-warn">{t.postTrip.tightDeparture}</p>
             )}
           </div>
           <div>

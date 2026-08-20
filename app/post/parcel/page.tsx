@@ -160,6 +160,15 @@ function PostParcelForm() {
     };
   }, [form.fromCountry, form.toCountry, form.neededBy, form.weightKg, form]);
 
+  // How much runway the chosen deadline leaves. Matching takes real time;
+  // a deadline inside a week deserves a gentle warning, not a surprise.
+  const daysToDeadline =
+    form.neededBy && minDate
+      ? Math.round((Date.parse(form.neededBy) - Date.parse(minDate)) / 86400000)
+      : null;
+  const tightDeadline =
+    daysToDeadline !== null && daysToDeadline >= 0 && daysToDeadline < 7;
+
   const weightNum = parseFloat(form.weightKg);
   const budgetNum = parseFloat(form.budgetUsd);
   const rateGuide =
@@ -284,6 +293,9 @@ function PostParcelForm() {
             />
             {errors.neededBy && (
               <p id="neededBy-error" className="field-error">{errors.neededBy}</p>
+            )}
+            {tightDeadline && !errors.neededBy && (
+              <p className="mt-1 text-xs text-warn">{t.postParcel.tightDeadline}</p>
             )}
           </div>
           <div>

@@ -511,6 +511,8 @@ export const en = {
     toCity: "To city",
     cityFromPlaceholder: "e.g. London",
     cityToPlaceholder: "e.g. Lagos",
+    tightDeparture:
+      "You leave soon — senders usually book travellers a few days ahead. You can still get requests, but trips posted earlier get more of them.",
     departureDate: "Departure date",
     space: "Space (kg)",
     pricePerKg: "Price per kg (USD)",
@@ -538,6 +540,8 @@ export const en = {
     sub: "Describe what you're sending — travellers on your route get notified.",
     roleBanner:
       "You're asking a traveller to carry this. Travellers flying your route will offer — you agree the fee directly with them, and Kifurushi takes no cut.",
+    tightDeadline:
+      "That's very soon — finding a traveller usually takes a few days. Travellers who can still make it will show below, but a later date reaches more of them.",
     neededBy: "Needed by",
     weight: "Weight (kg)",
     budget: "Budget (USD)",

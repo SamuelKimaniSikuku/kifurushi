@@ -516,6 +516,8 @@ export const sw: Dict = {
     toCity: "Jiji la kwenda",
     cityFromPlaceholder: "mf. London",
     cityToPlaceholder: "mf. Nairobi",
+    tightDeparture:
+      "Unaondoka hivi karibuni — watumaji kwa kawaida huweka nafasi siku kadhaa mapema. Bado unaweza kupata maombi, lakini safari zilizowekwa mapema hupata mengi zaidi.",
     departureDate: "Tarehe ya kuondoka",
     space: "Nafasi (kg)",
     pricePerKg: "Bei kwa kg (USD)",
@@ -544,6 +546,8 @@ export const sw: Dict = {
     sub: "Eleza unachotuma — wasafiri wa njia yako wanapata taarifa.",
     roleBanner:
       "Unamwomba msafiri abebe hiki. Wasafiri wa njia yako watatoa maombi — mnakubaliana bei moja kwa moja, na Kifurushi haichukui chochote.",
+    tightDeadline:
+      "Hiyo ni karibu sana — kupata msafiri kwa kawaida huchukua siku kadhaa. Wanaoweza kufika kwa wakati wataonekana hapa chini, lakini tarehe ya baadaye inafikia wengi zaidi.",
     neededBy: "Kifike kabla ya",
     weight: "Uzito (kg)",
     budget: "Bajeti (USD)",
