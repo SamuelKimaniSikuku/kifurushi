@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { Package, X } from "lucide-react";
 import { addParcel, fetchMyOpenParcels, requestMatch } from "@/lib/db";
 import { CATEGORY_LABELS, ParcelCategory, Trip } from "@/lib/types";
+
+const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 import { useT } from "@/lib/i18n";
 
 export default function QuickRequest({
@@ -28,6 +30,14 @@ export default function QuickRequest({
   const [cats, setCats] = useState<ParcelCategory[]>(
     trip.categoriesAccepted.slice(0, 1)
   );
+  // Every category, the traveller's declared ones first. Their list is a
+  // preference, not a wall — the chat exists precisely to ask "would you take
+  // medicine too?" — so we don't hide options, we order and flag them.
+  const orderedCats: ParcelCategory[] = [
+    ...trip.categoriesAccepted,
+    ...ALL_CATEGORIES.filter((c) => !trip.categoriesAccepted.includes(c)),
+  ];
+  const outsideList = cats.some((c) => !trip.categoriesAccepted.includes(c));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -170,7 +180,7 @@ export default function QuickRequest({
           <div>
             <span className="field-label">{t.postParcel.categoriesLabel}</span>
             <div className="flex flex-wrap gap-2">
-              {trip.categoriesAccepted.map((c) => {
+              {orderedCats.map((c) => {
                 const on = cats.includes(c);
                 return (
                   <button
@@ -190,6 +200,11 @@ export default function QuickRequest({
                 );
               })}
             </div>
+            {outsideList && (
+              <p className="mt-2 text-xs text-muted">
+                {t.browse.quickCatHint(trip.travelerName)}
+              </p>
+            )}
           </div>
 
           <div>

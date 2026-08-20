@@ -410,6 +410,9 @@ export const fr: Dict = {
     quickSend: "Envoyer la demande",
     quickSending: "Envoi…",
     quickCancel: "Annuler",
+    quickCatHint: (name: string) =>
+      `${name} n’a pas listé certaines de ces catégories — vous pouvez quand même demander, il le verra avant de décider.`,
+    requestAgain: "Redemander",
     quickChatNote: (name: string) =>
       `L’envoi ouvre une discussion avec ${name} — posez vos questions et convenez des détails là-bas. Rien n’est définitif avant son acceptation.`,
     quickError: "Impossible d'envoyer la demande — veuillez réessayer.",

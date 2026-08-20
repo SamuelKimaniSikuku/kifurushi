@@ -406,6 +406,9 @@ export const en = {
     quickSend: "Send request",
     quickSending: "Sending…",
     quickCancel: "Cancel",
+    quickCatHint: (name: string) =>
+      `${name} didn't list some of these — you can still ask, and they'll see it before deciding.`,
+    requestAgain: "Request again",
     quickChatNote: (name: string) =>
       `Sending this opens a chat with ${name} — ask questions and agree details there. Nothing is final until they accept.`,
     quickError: "Could not send the request — please try again.",

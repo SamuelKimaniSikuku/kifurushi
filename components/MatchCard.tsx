@@ -8,7 +8,7 @@ import {
   STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
 } from "@/lib/types";
 import {
-  MatchDetail, respondMatch, advanceMatch, cancelMatch,
+  MatchDetail, requestMatch, respondMatch, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
   fetchMessages, sendMessage,
@@ -645,15 +645,36 @@ export default function MatchCard({
       )}
 
       {ended && (
-        <p className="mt-3 text-sm text-muted">
-          {match.status === "declined" &&
-            (isTraveler
-              ? "You declined this request."
-              : `${match.counterpartyName} declined this request.`)}
-          {match.status === "cancelled" && "This match was cancelled."}
-          {match.status === "disputed" &&
-            "This delivery is disputed — support has the full record."}
-        </p>
+        <div className="mt-3">
+          <p className="text-sm text-muted">
+            {match.status === "declined" &&
+              (canRespond
+                ? "You declined this request."
+                : `${match.counterpartyName} declined this request.`)}
+            {match.status === "cancelled" && "This match was cancelled."}
+            {match.status === "disputed" &&
+              "This delivery is disputed — support has the full record."}
+          </p>
+          {/* A decline is a no, not a never: slips happen, and minds change
+              after a chat. One live request per pair is still enforced, so
+              this can't be used to pester someone who hasn't answered. */}
+          {match.status === "declined" && !canRespond && (
+            <button
+              className="btn-ghost mt-2 min-h-[44px]"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  await requestMatch(match.tripId, match.parcelId);
+                }, "Could not send the request again — try again.")
+              }
+            >
+              {t.browse.requestAgain}
+            </button>
+          )}
+          {actionError && (
+            <p role="alert" className="field-error mt-2">{actionError}</p>
+          )}
+        </div>
       )}
 
       {/* Match-scoped chat — everywhere except dead matches */}

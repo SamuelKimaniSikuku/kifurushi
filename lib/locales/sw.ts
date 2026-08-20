@@ -410,6 +410,9 @@ export const sw: Dict = {
     quickSend: "Tuma ombi",
     quickSending: "Inatuma…",
     quickCancel: "Ghairi",
+    quickCatHint: (name: string) =>
+      `${name} hakuorodhesha baadhi ya hivi — bado unaweza kuomba, na ataviona kabla ya kuamua.`,
+    requestAgain: "Omba tena",
     quickChatNote: (name: string) =>
       `Kutuma hufungua gumzo na ${name} — uliza maswali na kubaliana maelezo humo. Hakuna la mwisho hadi akubali.`,
     quickError: "Imeshindikana kutuma ombi — tafadhali jaribu tena.",
