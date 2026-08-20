@@ -205,25 +205,28 @@ export async function fetchMoneyTotals(): Promise<MoneyTotals | null> {
   };
 }
 
-export interface TopEarner {
+export interface LeaderLine {
+  kind: "earned" | "saved";
   name: string;
   slug: string;
-  earned: number;
+  amount: number;
   deliveries: number;
 }
 
-/** Null until the marketplace is active enough for the number to mean something. */
-export async function fetchTopEarner(): Promise<TopEarner | null> {
-  const { data, error } = await supabase.rpc("top_earner");
-  if (error) return null;
-  const r = (data as Record<string, unknown>[] | null)?.[0];
-  if (!r) return null;
-  return {
+/**
+ * Empty until a code-confirmed delivery between two different people exists —
+ * a leaderboard of self-dealt numbers would be an advert, not proof.
+ */
+export async function fetchLeaderboard(): Promise<LeaderLine[]> {
+  const { data, error } = await supabase.rpc("leaderboard");
+  if (error) return [];
+  return ((data as Record<string, unknown>[] | null) ?? []).map((r) => ({
+    kind: r.kind as "earned" | "saved",
     name: String(r.full_name),
     slug: personSlug(String(r.full_name)),
-    earned: Number(r.earned),
+    amount: Number(r.amount),
     deliveries: Number(r.deliveries),
-  };
+  }));
 }
 
 /**

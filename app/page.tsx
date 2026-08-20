@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import TopEarner from "@/components/TopEarner";
+import Leaderboard from "@/components/Leaderboard";
 import HowToStart from "@/components/HowToStart";
 import {
   ArrowRight,
@@ -170,8 +170,8 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Real earnings, shown only once the numbers are real */}
-          <TopEarner />
+          {/* Real money, shown only once the numbers are real */}
+          <Leaderboard />
         </div>
       </section>
 
