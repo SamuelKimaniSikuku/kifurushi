@@ -392,6 +392,8 @@ export const sw: Dict = {
     neededBy: (date: string) => `kinahitajika kabla ya ${date}`,
   },
   browse: {
+    dateNeededBy: "Kinahitajika kabla ya (hiari)",
+    dateFlyOn: "Nasafiri tarehe (hiari)",
     askFirst:
       "Bado huna uhakika? Uliza maswali kwenye Messages hapa chini kwanza — kukubali kunaweza kusubiri.",
     chatWhileWaiting: (name: string) =>

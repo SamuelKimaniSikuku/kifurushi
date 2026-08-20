@@ -26,6 +26,8 @@ export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // Optional deadline: show only travellers who depart in time for it.
+  const [byDate, setByDate] = useState("");
   const [toast, setToast] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
@@ -45,14 +47,17 @@ export default function TripsPage() {
     () =>
       trips.filter(
         (t) =>
-          (!from || t.fromCountry === from) && (!to || t.toCountry === to)
+          (!from || t.fromCountry === from) &&
+          (!to || t.toCountry === to) &&
+          (!byDate || t.departDate <= byDate)
       ),
-    [trips, from, to]
+    [trips, from, to, byDate]
   );
 
   function clear() {
     setFrom("");
     setTo("");
+    setByDate("");
   }
 
   function swap() {
@@ -97,7 +102,7 @@ export default function TripsPage() {
       </h1>
       <p className="mt-2 max-w-2xl text-muted">{t.browse.tripsSub}</p>
 
-      <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_auto] sm:p-5">
+      <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_1fr_auto] sm:p-5">
         <div>
           <label className="field-label" htmlFor="trips-from">
             From
@@ -131,11 +136,24 @@ export default function TripsPage() {
           />
         </div>
 
+        <div>
+          <label className="field-label" htmlFor="trips-by">
+            {t.browse.dateNeededBy}
+          </label>
+          <input
+            id="trips-by"
+            type="date"
+            className="field"
+            value={byDate}
+            onChange={(e) => setByDate(e.target.value)}
+          />
+        </div>
+
         <button
           type="button"
           className="btn-ghost h-11 w-full sm:w-auto"
           onClick={clear}
-          disabled={!from && !to}
+          disabled={!from && !to && !byDate}
         >
           Clear filters
         </button>

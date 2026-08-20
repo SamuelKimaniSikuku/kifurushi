@@ -26,6 +26,8 @@ export default function ParcelsPage() {
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // Optional travel date: show only parcels still needed on/after it.
+  const [flyDate, setFlyDate] = useState("");
   const [toast, setToast] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
@@ -45,14 +47,17 @@ export default function ParcelsPage() {
     () =>
       parcels.filter(
         (p) =>
-          (!from || p.fromCountry === from) && (!to || p.toCountry === to)
+          (!from || p.fromCountry === from) &&
+          (!to || p.toCountry === to) &&
+          (!flyDate || p.neededBy >= flyDate)
       ),
-    [parcels, from, to]
+    [parcels, from, to, flyDate]
   );
 
   function clear() {
     setFrom("");
     setTo("");
+    setFlyDate("");
   }
 
   function swap() {
@@ -104,7 +109,7 @@ export default function ParcelsPage() {
       </h1>
       <p className="mt-2 max-w-2xl text-muted">{t.browse.parcelsSub}</p>
 
-      <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_auto] sm:p-5">
+      <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_1fr_auto] sm:p-5">
         <div>
           <label className="field-label" htmlFor="parcels-from">
             From
@@ -138,11 +143,24 @@ export default function ParcelsPage() {
           />
         </div>
 
+        <div>
+          <label className="field-label" htmlFor="parcels-fly">
+            {t.browse.dateFlyOn}
+          </label>
+          <input
+            id="parcels-fly"
+            type="date"
+            className="field"
+            value={flyDate}
+            onChange={(e) => setFlyDate(e.target.value)}
+          />
+        </div>
+
         <button
           type="button"
           className="btn-ghost h-11 w-full sm:w-auto"
           onClick={clear}
-          disabled={!from && !to}
+          disabled={!from && !to && !flyDate}
         >
           Clear filters
         </button>

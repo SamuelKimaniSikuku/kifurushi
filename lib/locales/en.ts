@@ -388,6 +388,8 @@ export const en = {
     neededBy: (date: string) => `needed by ${date}`,
   },
   browse: {
+    dateNeededBy: "Needed by (optional)",
+    dateFlyOn: "I fly on (optional)",
     askFirst:
       "Not sure yet? Ask them in Messages below first — accepting can wait.",
     chatWhileWaiting: (name: string) =>

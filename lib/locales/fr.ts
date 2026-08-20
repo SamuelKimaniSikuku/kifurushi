@@ -392,6 +392,8 @@ export const fr: Dict = {
     neededBy: (date: string) => `requis avant le ${date}`,
   },
   browse: {
+    dateNeededBy: "Requis avant le (optionnel)",
+    dateFlyOn: "Je pars le (optionnel)",
     askFirst:
       "Pas encore sûr ? Posez d’abord vos questions dans Messages ci-dessous — accepter peut attendre.",
     chatWhileWaiting: (name: string) =>
