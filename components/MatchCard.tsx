@@ -8,7 +8,7 @@ import {
   STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
 } from "@/lib/types";
 import {
-  MatchDetail, requestMatch, respondMatch, advanceMatch, cancelMatch,
+  MatchDetail, deliverNow, requestMatch, respondMatch, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
   fetchMessages, sendMessage,
@@ -662,6 +662,25 @@ export default function MatchCard({
               Cancel this match
             </button>
           )}
+
+          {/* Real handovers outrun the ladder: a same-day delivery has no
+              separate picked-up and in-transit moments worth clicking
+              through. The traveller can jump straight to the code — which
+              stays the only thing that completes the delivery. */}
+          {isTraveler &&
+            ["accepted", "escrow_paid", "picked_up", "in_transit"].includes(
+              match.status
+            ) && (
+              <button
+                className="btn-ghost min-h-[44px]"
+                disabled={busy}
+                onClick={() =>
+                  act(() => deliverNow(match.id), "Could not skip ahead — try again.")
+                }
+              >
+                Delivered already? Go straight to the code
+              </button>
+            )}
 
           {actionError && <p role="alert" className="field-error">{actionError}</p>}
         </div>

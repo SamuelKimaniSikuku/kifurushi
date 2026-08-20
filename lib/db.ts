@@ -780,6 +780,16 @@ export async function advanceMatch(matchId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Traveller shortcut: jump from any post-acceptance stage straight to
+ * 'delivered'. Real handovers often outrun the status ladder; the receiver's
+ * code remains the only way to actually complete.
+ */
+export async function deliverNow(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc("deliver_now", { p_match_id: matchId });
+  if (error) throw error;
+}
+
 export async function cancelMatch(matchId: string): Promise<void> {
   const { error } = await supabase.rpc("cancel_match", { p_match_id: matchId });
   if (error) throw error;
