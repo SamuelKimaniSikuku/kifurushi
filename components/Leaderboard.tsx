@@ -15,18 +15,31 @@ import { useT } from "@/lib/i18n";
 export default function Leaderboard() {
   const t = useT();
   const [lines, setLines] = useState<LeaderLine[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let live = true;
     fetchLeaderboard()
       .then((d) => live && setLines(d))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => live && setLoaded(true));
     return () => {
       live = false;
     };
   }, []);
 
-  if (lines.length === 0) return null;
+  if (!loaded) return null;
+
+  // Nothing completed yet: say so, as an invitation rather than a blank.
+  // This line retires itself the moment the first real delivery exists.
+  if (lines.length === 0) {
+    return (
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2 rounded-2xl bg-white/5 px-5 py-3 text-center">
+        <Trophy className="h-4 w-4 shrink-0 text-gold" strokeWidth={2} aria-hidden />
+        <span className="text-sm text-white/80">{t.home.leaderEmpty}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 space-y-2">

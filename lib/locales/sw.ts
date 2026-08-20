@@ -52,6 +52,7 @@ export const sw: Dict = {
     departs: "anaondoka Jpi 2 Ago",
     kgFree: "kilo 18 wazi",
     requestTraveller: "Omba msafiri huyu",
+    leaderEmpty: "Usafirishaji wa kwanza kukamilika utachukua nafasi hii.",
     leaderEarned: (amount: number, n: number) =>
       `Kiasi kikubwa alichopata msafiri mmoja: $${amount} kwa usafirishaji ${n} —`,
     leaderSaved: (amount: number) =>

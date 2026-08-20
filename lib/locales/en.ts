@@ -50,6 +50,7 @@ export const en = {
     departs: "departs Sun 2 Aug",
     kgFree: "18 kg free",
     requestTraveller: "Request this traveller",
+    leaderEmpty: "The first completed delivery claims this spot.",
     leaderEarned: (amount: number, n: number) =>
       `Most earned by one traveller so far: $${amount} across ${n} ${n === 1 ? "delivery" : "deliveries"} —`,
     leaderSaved: (amount: number) =>

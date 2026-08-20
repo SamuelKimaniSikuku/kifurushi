@@ -52,6 +52,7 @@ export const fr: Dict = {
     departs: "départ dim. 2 août",
     kgFree: "18 kg libres",
     requestTraveller: "Contacter ce voyageur",
+    leaderEmpty: "La première livraison terminée remportera cette place.",
     leaderEarned: (amount: number, n: number) =>
       `Record de gains d'un voyageur : ${amount} $ sur ${n} livraison${n === 1 ? "" : "s"} —`,
     leaderSaved: (amount: number) =>
