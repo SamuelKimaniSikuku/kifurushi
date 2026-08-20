@@ -84,7 +84,7 @@ export default function TripsPage() {
       }
       await requestMatch(trip.id, fits.id);
       setRequestedIds((prev) => new Set(prev).add(trip.id));
-      setToast(`Request sent to ${trip.travelerName}. Track it in your dashboard.`);
+      setToast(`Request sent to ${trip.travelerName} — you can chat with them from your dashboard now.`);
     } catch {
       setToast("Could not send the request — please try again.");
     }
@@ -193,7 +193,7 @@ export default function TripsPage() {
             const name = quickTrip.travelerName;
             setRequestedIds((prev) => new Set(prev).add(quickTrip.id));
             setQuickTrip(null);
-            setToast(`Request sent to ${name}. Track it in your dashboard.`);
+            setToast(`Request sent to ${name} — you can chat with them from your dashboard now.`);
           }}
         />
       )}

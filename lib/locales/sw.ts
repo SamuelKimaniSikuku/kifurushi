@@ -396,9 +396,9 @@ export const sw: Dict = {
     parcelsSub:
       "Watu wanatafuta mtu wa njia yao. Jitolee kubeba na ubaki na 100% ya unachotoza.",
     requestTraveller: "Omba msafiri huyu",
-    requestSent: "Ombi limetumwa",
+    requestSent: "Ombi limetumwa — zungumza kutoka dashibodi yako",
     offerToCarry: "Jitolee kubeba",
-    offerSent: "Ombi limetumwa",
+    offerSent: "Ombi limetumwa — zungumza kutoka dashibodi yako",
     yourTrip: "Safari yako",
     yourParcel: "Kifurushi chako",
     pending: (n: number) =>
@@ -410,6 +410,8 @@ export const sw: Dict = {
     quickSend: "Tuma ombi",
     quickSending: "Inatuma…",
     quickCancel: "Ghairi",
+    quickChatNote: (name: string) =>
+      `Kutuma hufungua gumzo na ${name} — uliza maswali na kubaliana maelezo humo. Hakuna la mwisho hadi akubali.`,
     quickError: "Imeshindikana kutuma ombi — tafadhali jaribu tena.",
     needTripFirst: "Tangaza safari yako ya njia hii kwanza — tumeijaza tayari.",
     edit: "Hariri",

@@ -396,9 +396,9 @@ export const fr: Dict = {
     parcelsSub:
       "Des personnes cherchent quelqu'un sur leur itinéraire. Proposez de le transporter et gardez 100 % de ce que vous facturez.",
     requestTraveller: "Contacter ce voyageur",
-    requestSent: "Demande envoyée",
+    requestSent: "Demande envoyée — discutez depuis votre tableau de bord",
     offerToCarry: "Proposer de le transporter",
-    offerSent: "Offre envoyée",
+    offerSent: "Offre envoyée — discutez depuis votre tableau de bord",
     yourTrip: "Votre voyage",
     yourParcel: "Votre colis",
     pending: (n: number) =>
@@ -410,6 +410,8 @@ export const fr: Dict = {
     quickSend: "Envoyer la demande",
     quickSending: "Envoi…",
     quickCancel: "Annuler",
+    quickChatNote: (name: string) =>
+      `L’envoi ouvre une discussion avec ${name} — posez vos questions et convenez des détails là-bas. Rien n’est définitif avant son acceptation.`,
     quickError: "Impossible d'envoyer la demande — veuillez réessayer.",
     needTripFirst: "Publiez d'abord votre voyage sur cet itinéraire — il est prérempli.",
     edit: "Modifier",

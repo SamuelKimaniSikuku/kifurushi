@@ -392,9 +392,9 @@ export const en = {
     parcelsSub:
       "People looking for someone on their route. Offer to carry and keep 100% of what you charge.",
     requestTraveller: "Request this traveller",
-    requestSent: "Request sent",
+    requestSent: "Request sent — chat from your dashboard",
     offerToCarry: "Offer to carry this",
-    offerSent: "Offer sent",
+    offerSent: "Offer sent — chat from your dashboard",
     yourTrip: "Your trip",
     yourParcel: "Your parcel",
     pending: (n: number) =>
@@ -406,6 +406,8 @@ export const en = {
     quickSend: "Send request",
     quickSending: "Sending…",
     quickCancel: "Cancel",
+    quickChatNote: (name: string) =>
+      `Sending this opens a chat with ${name} — ask questions and agree details there. Nothing is final until they accept.`,
     quickError: "Could not send the request — please try again.",
     needTripFirst: "Post your trip on this route first — we've prefilled it.",
     edit: "Edit",

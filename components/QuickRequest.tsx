@@ -206,6 +206,11 @@ export default function QuickRequest({
             />
           </div>
 
+          {/* The answer to "where do I message them?" — here, one click away. */}
+          <p className="rounded-xl bg-sand p-3 text-xs leading-relaxed text-muted">
+            {t.browse.quickChatNote(trip.travelerName)}
+          </p>
+
           {error && <p role="alert" className="field-error">{error}</p>}
 
           <div className="flex flex-col gap-2 pt-1 sm:flex-row-reverse">

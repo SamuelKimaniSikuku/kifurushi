@@ -91,7 +91,7 @@ export default function ParcelsPage() {
       }
       await requestMatch(sameRoute.id, parcel.id);
       setRequestedIds((prev) => new Set(prev).add(parcel.id));
-      setToast(`Offer sent to ${parcel.senderName}. Track it in your dashboard.`);
+      setToast(`Offer sent to ${parcel.senderName} — you can chat with them from your dashboard now.`);
     } catch {
       setToast("Could not send the offer — please try again.");
     }
