@@ -148,6 +148,10 @@ export default function Home() {
                   {t.home.requestTraveller}
                 </span>
               </div>
+            
+              {/* Real money, in the whitespace under the preview card —
+                  renders nothing until a real delivery completes. */}
+              <Leaderboard />
             </div>
           </div>
 
@@ -170,8 +174,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Real money, shown only once the numbers are real */}
-          <Leaderboard />
         </div>
       </section>
 
