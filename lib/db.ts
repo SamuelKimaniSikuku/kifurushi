@@ -213,6 +213,20 @@ export interface LeaderLine {
   deliveries: number;
 }
 
+export interface ParcelVolume {
+  total: number;
+  parcels: number;
+}
+
+/** Total value of every parcel ever posted — the live homepage counter. */
+export async function fetchParcelVolume(): Promise<ParcelVolume | null> {
+  const { data, error } = await supabase.rpc("parcel_volume");
+  if (error) return null;
+  const r = (data as Record<string, number>[] | null)?.[0];
+  if (!r) return null;
+  return { total: Number(r.total), parcels: Number(r.parcels) };
+}
+
 /**
  * Empty until a code-confirmed delivery between two different people exists —
  * a leaderboard of self-dealt numbers would be an advert, not proof.
