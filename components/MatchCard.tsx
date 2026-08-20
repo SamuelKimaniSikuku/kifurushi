@@ -111,6 +111,11 @@ function ChatPanel({
           )}
         </span>
         Messages
+        {messages.length > 0 && (
+          <span className="normal-case tracking-normal text-muted">
+            ({messages.length})
+          </span>
+        )}
         {unread > 0 && (
           <span className="ml-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-clay px-1.5 py-0.5 text-[11px] font-bold normal-case tracking-normal text-white">
             {unread > 9 ? "9+" : unread}
@@ -123,6 +128,24 @@ function ChatPanel({
           aria-hidden
         />
       </button>
+
+      {/* Collapsed is not blank: the last line of the conversation stays
+          visible, so you can see your message landed without opening the
+          panel — and an empty chat says so instead of looking broken. */}
+      {!open && (
+        <p className="mt-2 truncate text-left text-xs text-muted">
+          {messages.length === 0
+            ? "No messages yet — you can chat before anyone accepts."
+            : (() => {
+                const last = messages[messages.length - 1];
+                const who =
+                  last.senderId === myUserId
+                    ? "You"
+                    : counterpartyName.split(" ")[0];
+                return `${who}: ${last.body}`;
+              })()}
+        </p>
+      )}
 
       {open && (
         <>
