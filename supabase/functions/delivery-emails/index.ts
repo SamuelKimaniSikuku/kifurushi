@@ -12,6 +12,13 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
+  // Test-run guard: temp accounts created during verification use "+test"
+  // aliases. Their matches exercise the real pipeline, but nobody should
+  // receive the mail — least of all the founder's inbox.
+  if (/\+test/i.test(to)) {
+    console.log("skipping test-alias recipient", to);
+    return ;
+  }
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return;
   try {

@@ -160,6 +160,13 @@ function shell(
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+  // Test-run guard: temp accounts created during verification use "+test"
+  // aliases. Their matches exercise the real pipeline, but nobody should
+  // receive the mail — least of all the founder's inbox.
+  if (/\+test/i.test(to)) {
+    console.log("skipping test-alias recipient", to);
+    return true;
+  }
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return false;
   const res = await fetch("https://api.resend.com/emails", {
