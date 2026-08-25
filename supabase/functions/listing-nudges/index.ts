@@ -24,6 +24,8 @@ const T: Record<
     parcelGoneBody: string;
     tripSoon: (city: string, date: string) => string;
     tripSoonBody: (kg: number, waiting: number) => string;
+    tripGone: (city: string) => string;
+    tripGoneBody: (waiting: number) => string;
     trialSoon: (date: string) => string;
     trialSoonBody: (date: string) => string;
     trialOver: string;
@@ -46,9 +48,9 @@ const T: Record<
             alt === 1 ? "s" : ""
           } just after that date — pushing your deadline back a few days would put them within reach.`
         : ` Allowing a later date widens the pool of travellers who can take it.`),
-    parcelGone: (city) => `Your ${city} parcel expired without a traveller`,
+    parcelGone: (city) => `We're sorry — no traveller took your ${city} parcel in time`,
     parcelGoneBody:
-      "The date you needed it by has passed and nobody took it. Reposting with a later deadline usually finds someone — most travellers post their trips two to six weeks ahead.",
+      "Your deadline passed without a match, and we know that's a real letdown when something needed to get home. The honest reason is usually timing: most travellers post their trips two to six weeks ahead. If it still needs to go, repost with a later deadline — it costs nothing, and we'll alert every fitting traveller the moment you do.",
     tripSoon: (city, date) => `You leave for ${city} on ${date} with space unused`,
     tripSoonBody: (kg, waiting) =>
       `You still have <b>${kg} kg</b> free.` +
@@ -57,6 +59,12 @@ const T: Record<
             waiting === 1 ? "" : "s"
           } waiting on your route right now.`
         : ` Nothing is waiting on your route yet, but lowering your rate makes you the obvious choice when something appears.`),
+    tripGone: (city) => `We're sorry — your ${city} trip flew with space unsold`,
+    tripGoneBody: (waiting) =>
+      "Your departure passed without a match, and we're sorry the kilos went empty — that's money that should have been yours." +
+      (waiting > 0
+        ? ` There ${waiting === 1 ? "is" : "are"} ${waiting} parcel${waiting === 1 ? "" : "s"} waiting on that route right now, so if you fly it again, post the trip as early as you can — we'll alert every fitting sender instantly.`
+        : ` Next time, posting as early as you can makes the difference — most matches need a few days to form, and we now alert every fitting sender the moment you post.`),
     trialSoon: (date) => `Your free month on Kifurushi ends ${date}`,
     trialSoonBody: (date) =>
       `Your free first month ends on <b>${date}</b>. After that you can still browse, receive parcels and track deliveries — but posting a trip or a parcel, and requesting a match, need a membership.` +
@@ -81,15 +89,21 @@ const T: Record<
             alt === 1 ? "" : "ent"
           } juste après cette date — repousser votre échéance de quelques jours les rendrait accessibles.`
         : ` Accepter une date plus tardive élargit le nombre de voyageurs possibles.`),
-    parcelGone: (city) => `Votre colis pour ${city} a expiré sans voyageur`,
+    parcelGone: (city) => `Désolés — aucun voyageur n'a pris votre colis pour ${city} à temps`,
     parcelGoneBody:
-      "La date limite est passée et personne ne l'a pris. Republier avec une échéance plus tardive fonctionne généralement : la plupart des voyageurs publient deux à six semaines à l'avance.",
+      "Votre échéance est passée sans mise en relation, et nous savons que c'est décevant quand quelque chose devait rentrer au pays. La raison honnête est souvent le calendrier : la plupart des voyageurs publient deux à six semaines à l'avance. S'il doit toujours partir, republiez avec une échéance plus tardive — c'est gratuit, et nous alerterons chaque voyageur compatible dès la publication.",
     tripSoon: (city, date) => `Vous partez pour ${city} le ${date} avec de la place libre`,
     tripSoonBody: (kg, waiting) =>
       `Il vous reste <b>${kg} kg</b> de libre.` +
       (waiting > 0
         ? ` ${waiting} colis attend${waiting === 1 ? "" : "ent"} actuellement sur votre itinéraire.`
         : ` Rien n'attend encore sur votre itinéraire, mais baisser votre tarif vous rendra évident dès qu'un colis apparaîtra.`),
+    tripGone: (city) => `Désolés — votre voyage vers ${city} est parti avec de la place invendue`,
+    tripGoneBody: (waiting) =>
+      "Votre départ est passé sans mise en relation, et nous sommes désolés que ces kilos soient restés vides — c'était de l'argent qui aurait dû être le vôtre." +
+      (waiting > 0
+        ? ` ${waiting} colis attend${waiting === 1 ? "" : "ent"} actuellement sur cet itinéraire : si vous le refaites, publiez votre voyage le plus tôt possible — nous alertons chaque expéditeur compatible instantanément.`
+        : ` La prochaine fois, publier le plus tôt possible fait la différence — la plupart des mises en relation prennent quelques jours, et nous alertons désormais chaque expéditeur compatible dès la publication.`),
     trialSoon: (date) => `Votre mois gratuit sur Kifurushi se termine le ${date}`,
     trialSoonBody: (date) =>
       `Votre premier mois gratuit se termine le <b>${date}</b>. Ensuite, vous pourrez toujours consulter les annonces, recevoir des colis et suivre les livraisons — mais publier un voyage ou un colis, et demander une mise en relation, nécessitent un abonnement.` +
@@ -112,15 +126,21 @@ const T: Record<
       (alt > 0
         ? ` Wasafiri ${alt} kwenye njia yako wanaondoka baada ya tarehe hiyo — kuongeza siku kadhaa kutawafanya wafikike.`
         : ` Kuruhusu tarehe ya baadaye huongeza wasafiri wanaoweza kukichukua.`),
-    parcelGone: (city) => `Kifurushi chako cha ${city} kilipita bila msafiri`,
+    parcelGone: (city) => `Samahani — hakuna msafiri aliyechukua kifurushi chako cha ${city} kwa wakati`,
     parcelGoneBody:
-      "Tarehe uliyohitaji imepita na hakuna aliyekichukua. Kuweka tangazo jipya na tarehe ya baadaye mara nyingi hufanikiwa — wasafiri wengi hutangaza safari zao wiki mbili hadi sita mbele.",
+      "Tarehe yako imepita bila match, na tunajua inavunja moyo wakati kitu kilihitajika kufika nyumbani. Sababu ya kweli mara nyingi ni muda: wasafiri wengi hutangaza safari zao wiki mbili hadi sita mapema. Kama bado kinahitaji kwenda, weka tangazo jipya na tarehe ya baadaye — ni bure, na tutawaarifu wasafiri wote wanaofaa mara moja.",
     tripSoon: (city, date) => `Unaondoka kwenda ${city} ${date} na nafasi bado ipo`,
     tripSoonBody: (kg, waiting) =>
       `Bado una <b>kg ${kg}</b> wazi.` +
       (waiting > 0
         ? ` Kuna vifurushi ${waiting} vinavyosubiri kwenye njia yako sasa.`
         : ` Hakuna kinachosubiri kwenye njia yako bado, lakini kupunguza bei yako kutakufanya uchaguliwe kwanza.`),
+    tripGone: (city) => `Samahani — safari yako ya ${city} iliondoka na nafasi tupu`,
+    tripGoneBody: (waiting) =>
+      "Tarehe yako ya kuondoka imepita bila match, na samahani kwamba kilo hizo zilikwenda tupu — hiyo ilikuwa pesa ambayo ingekuwa yako." +
+      (waiting > 0
+        ? ` Kuna vifurushi ${waiting} vinavyosubiri kwenye njia hiyo sasa hivi — ukiisafiri tena, weka safari mapema uwezavyo, tutawaarifu watumaji wote wanaofaa papo hapo.`
+        : ` Wakati ujao, kuweka tangazo mapema uwezavyo ndiko kunakoleta tofauti — match nyingi huchukua siku kadhaa, na sasa tunawaarifu watumaji wanaofaa mara tangazo linapowekwa.`),
     trialSoon: (date) => `Mwezi wako wa bure kwenye Kifurushi unaisha ${date}`,
     trialSoonBody: (date) =>
       `Mwezi wako wa kwanza wa bure unaisha tarehe <b>${date}</b>. Baada ya hapo bado utaweza kuangalia matangazo, kupokea vifurushi na kufuatilia usafirishaji — lakini kuweka safari au kifurushi, na kuomba match, kunahitaji uanachama.` +
@@ -351,6 +371,50 @@ Deno.serve(async (req) => {
       await admin
         .from("trips")
         .update({ nudged_soon_at: new Date().toISOString() })
+        .eq("id", tr.id);
+      sent++;
+    }
+  }
+
+  // ------------------------------------------------ trips flown unmatched
+  // The apology the sender side always had and the traveller side never did.
+  // Status is ignored on purpose: the nightly closer marks departed trips
+  // 'closed', and that must not silence this. Once per trip.
+  const { data: tripsGone } = await admin
+    .from("trips")
+    .select("id, user_id:traveler_id, to_city, from_country, to_country")
+    .is("nudged_expired_at", null)
+    .lt("depart_date", today);
+
+  for (const tr of tripsGone ?? []) {
+    if (await hasLiveMatch("trip_id", tr.id)) continue;
+    const { email, lang } = await recipient(tr.user_id);
+    if (!email) continue;
+
+    const { count: waiting } = await admin
+      .from("parcels")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .eq("from_country", tr.from_country)
+      .eq("to_country", tr.to_country)
+      .gte("needed_by", today);
+
+    const L = T[lang];
+    const ok = await sendEmail(
+      email,
+      L.tripGone(tr.to_city),
+      shell(
+        L.tripGone(tr.to_city),
+        L.tripGoneBody(waiting ?? 0),
+        L.editTrip,
+        `${SITE}/post/trip`,
+        lang
+      )
+    );
+    if (ok) {
+      await admin
+        .from("trips")
+        .update({ nudged_expired_at: new Date().toISOString() })
         .eq("id", tr.id);
       sent++;
     }
