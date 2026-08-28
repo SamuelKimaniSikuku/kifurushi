@@ -48,12 +48,13 @@ export const sw: Dict = {
     freeMonthHero: "Bure wakati wa uzinduzi — hakuna kadi, hakuna malipo",
     ctaTravel: "Ninasafiri — nipate pesa kwa mizigo yangu",
     ctaSend: "Tuma kifurushi",
+    exampleListing: "Mfano tu — hii si safari halisi",
     verified: "Amethibitishwa",
-    departs: "anaondoka Jpi 2 Ago",
+    departs: "mfano wa tarehe ya kuondoka",
     kgFree: "kilo 18 wazi",
     requestTraveller: "Omba msafiri huyu",
     volumeLine: (n: number) =>
-      `za usafirishaji ulioombwa kupitia Kifurushi — vifurushi ${n} na vinaendelea`,
+      `za bajeti zilizowekwa kwenye maombi ${n} ya vifurushi`,
     leaderEmpty: "Usafirishaji wa kwanza kukamilika utachukua nafasi hii.",
     leaderEarned: (amount: number, n: number) =>
       `Kiasi kikubwa alichopata msafiri mmoja: $${amount} kwa usafirishaji ${n} —`,
@@ -79,7 +80,7 @@ export const sw: Dict = {
     processLabel: "Mchakato",
     howTitle: "Jinsi Kifurushi inavyofanya kazi",
     howSub:
-      "Imejengwa ili hakuna upande unaolazimika kumwamini mgeni — jukwaa ndilo linalobeba hatari, si wewe.",
+      "Imejengwa kupunguza hatari ya kushughulika na mgeni kwa uthibitisho wa utambulisho, makabidhiano yaliyoandikwa na rekodi za usafirishaji.",
     steps: [
       {
         title: "Tangaza au tafuta",
@@ -99,15 +100,15 @@ export const sw: Dict = {
       },
     ],
     routesLabel: "Njia",
-    corridorsTitle: "Njia maarufu wiki hii",
+    corridorsTitle: "Njia maarufu za diaspora",
     corridorFrom: (price: string) => `kuanzia ${price}/kg`,
     corridorsNote:
-      "Njia yoyote inafaa — msafiri akiiruka, Kifurushi inaifikia.",
+      "Njia yoyote inaweza kutumika msafiri anapotangaza safari inayolingana.",
     browseAll: "Tazama safari zote",
     securityLabel: "Uaminifu na usalama",
     securityTitle: "Usalama ndiyo bidhaa yenyewe",
     securityIntro:
-      "Kugawana mizigo kienyeji tayari kunafanyika katika kila jamii ya Kiafrika ughaibuni — vikundi vya WhatsApp, matangazo kanisani, binamu wa binamu. Kifurushi inabaki na moyo wa kijamii na kuondoa hatari.",
+      "Kugawana mizigo kienyeji tayari kunafanyika katika jamii za Kiafrika ughaibuni — vikundi vya WhatsApp, matangazo kanisani, binamu wa binamu. Kifurushi inahifadhi moyo wa kijamii huku ikifanya kila makabidhiano yafuatilike zaidi.",
     securityPoints: [
       {
         title: "Pesa yako inabaki yako",
@@ -144,6 +145,9 @@ export const sw: Dict = {
     joinTitle: "Jiunge na Kifurushi",
     welcomeBack: "Karibu tena",
     subtitle: "Akaunti moja kwa kutuma na kusafiri. Bure wakati wa uzinduzi.",
+    intentTrip: "Fungua akaunti ili utangaze safari yako. Tutakurudisha huko mara moja baada ya hapo.",
+    intentParcel: "Fungua akaunti ili utangaze kifurushi chako. Tutakurudisha huko mara moja baada ya hapo.",
+    intentVerify: "Fungua akaunti ili uthibitishe utambulisho wako. Tutakurudisha kwenye uthibitisho baada ya hapo.",
     fullName: "Jina kamili",
     email: "Barua pepe",
     password: "Nenosiri",
@@ -464,6 +468,8 @@ export const sw: Dict = {
     monthlyNote: "Unalipa kila mwezi. Sitisha wakati wowote.",
     yearlyNote: "Ni $2.42 tu kwa mwezi, unalipa mara moja — okoa $31.",
     bestValue: "Bei bora · Okoa 52%",
+    futurePrice: "Bei ya baadaye — hakuna malipo wakati wa uzinduzi",
+    startFree: "Anza bure — hakuna kadi inayohitajika",
     joinFor: (price: string) => `Jiunge kwa ${price}`,
     activating: "Inawashwa…",
     secureCheckout: "Malipo salama - sitisha wakati wowote",

@@ -14,7 +14,7 @@ import {
   X, Gift,} from "lucide-react";
 import {
   fetchSession, fetchMembership, joinMembership, startCheckout,
-  BILLING_MODE, BillingPlan, Membership,
+  BILLING_MODE, FREE_LAUNCH_ACTIVE, BillingPlan, Membership,
 } from "@/lib/auth";
 import { useT, type Dict } from "@/lib/i18n";
 
@@ -146,6 +146,14 @@ export default function PricingPage() {
         {t.pricing.heroSub}
       </p>
 
+      {FREE_LAUNCH_ACTIVE && !isMember && (
+        <div className="mt-6 text-center">
+          <Link href="/auth?next=/dashboard" className="btn-accent btn-lg">
+            {t.pricing.startFree}
+          </Link>
+        </div>
+      )}
+
       {isTrial && (
         <div className="mx-auto mt-6 flex max-w-xl items-start gap-3 rounded-2xl border border-gold bg-gold/10 p-4">
           <Gift className="mt-0.5 h-5 w-5 shrink-0 text-forest" strokeWidth={2} aria-hidden />
@@ -204,7 +212,11 @@ export default function PricingPage() {
               <FeatureList items={t.pricing.memberFeatures} />
 
               <div className="mt-auto pt-7">
-                {isMember ? (
+                {FREE_LAUNCH_ACTIVE && !isMember ? (
+                  <div className="rounded-xl bg-sand-deep px-4 py-3 text-center text-sm font-semibold text-forest">
+                    {t.pricing.futurePrice}
+                  </div>
+                ) : isMember ? (
                   p.key === currentPlan ? (
                     <div className="flex items-center justify-center gap-2 rounded-xl bg-success-bg px-4 py-3 text-center text-sm font-semibold text-success">
                       <BadgeCheck className="h-5 w-5 shrink-0" strokeWidth={2} />

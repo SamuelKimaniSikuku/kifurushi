@@ -12,7 +12,7 @@ function AuthForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
   const [mode, setMode] = useState<"signin" | "signup">("signup");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [authError, setAuthError] = useState<string | null>(null);
@@ -22,6 +22,14 @@ function AuthForm() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const t = useT();
+  const intentSubtitle =
+    safeNext.startsWith("/post/trip")
+      ? t.auth.intentTrip
+      : safeNext.startsWith("/post/parcel")
+        ? t.auth.intentParcel
+        : safeNext.startsWith("/verify")
+          ? t.auth.intentVerify
+          : t.auth.subtitle;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,7 +129,7 @@ function AuthForm() {
         {mode === "signup" ? t.auth.joinTitle : t.auth.welcomeBack}
       </h1>
       <p className="mt-2 text-center text-sm text-muted">
-        {t.auth.subtitle}
+        {mode === "signup" ? intentSubtitle : t.auth.subtitle}
       </p>
 
       <form onSubmit={submit} className="card mt-6 space-y-4 p-6 sm:p-8" noValidate>

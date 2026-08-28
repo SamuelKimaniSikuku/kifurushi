@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeftRight } from "lucide-react";
 import TripCard from "@/components/TripCard";
 import QuickRequest from "@/components/QuickRequest";
@@ -17,15 +18,16 @@ import { useT } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 
-export default function TripsPage() {
+function TripsContent() {
   const gate = useContactGate();
   const t = useT();
   const { session } = useSession();
   const [attention, setAttention] = useState<Attention | null>(null);
   const [quickTrip, setQuickTrip] = useState<Trip | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const params = useSearchParams();
+  const [from, setFrom] = useState(() => params.get("from") ?? "");
+  const [to, setTo] = useState(() => params.get("to") ?? "");
   // Optional deadline: show only travellers who depart in time for it.
   const [byDate, setByDate] = useState("");
   const [toast, setToast] = useState("");
@@ -218,5 +220,13 @@ export default function TripsPage() {
 
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </div>
+  );
+}
+
+export default function TripsPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10" />}>
+      <TripsContent />
+    </Suspense>
   );
 }

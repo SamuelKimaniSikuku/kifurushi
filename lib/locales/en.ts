@@ -46,12 +46,13 @@ export const en = {
     freeMonthHero: "Free while we launch — no card, nothing to pay",
     ctaTravel: "I'm travelling — earn from my luggage",
     ctaSend: "Send a parcel",
+    exampleListing: "Example listing — not a live trip",
     verified: "Verified",
-    departs: "departs Sun 2 Aug",
+    departs: "example departure date",
     kgFree: "18 kg free",
     requestTraveller: "Request this traveller",
     volumeLine: (n: number) =>
-      `in deliveries requested through Kifurushi — ${n} ${n === 1 ? "parcel" : "parcels"} and counting`,
+      `in posted parcel budgets across ${n} ${n === 1 ? "request" : "requests"}`,
     leaderEmpty: "The first completed delivery claims this spot.",
     leaderEarned: (amount: number, n: number) =>
       `Most earned by one traveller so far: $${amount} across ${n} ${n === 1 ? "delivery" : "deliveries"} —`,
@@ -77,7 +78,7 @@ export const en = {
     processLabel: "The process",
     howTitle: "How Kifurushi works",
     howSub:
-      "Built so that neither side has to trust a stranger — the platform holds the risk, not you.",
+      "Built to reduce the risk of dealing with a stranger through identity checks, documented handovers and delivery records.",
     steps: [
       {
         title: "Post or find",
@@ -97,14 +98,14 @@ export const en = {
       },
     ],
     routesLabel: "Routes",
-    corridorsTitle: "Popular corridors this week",
+    corridorsTitle: "Popular diaspora corridors",
     corridorFrom: (price: string) => `from ${price}/kg`,
-    corridorsNote: "Any route works — if a traveller flies it, Kifurushi covers it.",
+    corridorsNote: "Any route can work when a traveller posts a matching trip.",
     browseAll: "Browse all trips",
     securityLabel: "Trust & safety",
     securityTitle: "Security is the product",
     securityIntro:
-      "Informal luggage-sharing already happens in every African community abroad — WhatsApp groups, church notice boards, a cousin of a cousin. Kifurushi keeps the community spirit and removes the risk.",
+      "Informal luggage-sharing already happens in African communities abroad — WhatsApp groups, church notice boards, a cousin of a cousin. Kifurushi keeps the community spirit while making each handover more traceable.",
     securityPoints: [
       {
         title: "Your money stays yours",
@@ -141,6 +142,9 @@ export const en = {
     joinTitle: "Join Kifurushi",
     welcomeBack: "Welcome back",
     subtitle: "One account for sending and travelling. Free while we launch.",
+    intentTrip: "Create an account to post your trip. We'll bring you straight back to it afterwards.",
+    intentParcel: "Create an account to post your parcel. We'll bring you straight back to it afterwards.",
+    intentVerify: "Create an account to verify your identity. We'll bring you straight back to verification afterwards.",
     fullName: "Full name",
     email: "Email",
     password: "Password",
@@ -460,6 +464,8 @@ export const en = {
     monthlyNote: "Billed monthly. Cancel anytime.",
     yearlyNote: "Just $2.42 a month, billed once — save $31.",
     bestValue: "Best value · Save 52%",
+    futurePrice: "Future price — no charge during launch",
+    startFree: "Start free — no card needed",
     joinFor: (price: string) => `Join for ${price}`,
     activating: "Activating…",
     secureCheckout: "Secure checkout - cancel anytime",

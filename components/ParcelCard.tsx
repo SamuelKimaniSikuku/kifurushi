@@ -26,6 +26,7 @@ export default function ParcelCard({
   const date = new Date(parcel.neededBy).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
+    year: "numeric",
   });
 
   return (
@@ -59,13 +60,13 @@ export default function ParcelCard({
 
       <div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="truncate font-semibold text-ink">{parcel.fromCity}</span>
+          <span className="truncate capitalize font-semibold text-ink">{parcel.fromCity}</span>
           <span className="flex min-w-[3rem] flex-1 items-center gap-1.5" aria-hidden>
             <span className="flex-1 border-t border-dashed border-line-strong" />
             <ArrowRight size={16} strokeWidth={2} className="shrink-0 text-clay" />
             <span className="flex-1 border-t border-dashed border-line-strong" />
           </span>
-          <span className="truncate text-right font-semibold text-ink">{parcel.toCity}</span>
+          <span className="truncate text-right capitalize font-semibold text-ink">{parcel.toCity}</span>
         </div>
         <div className="mt-1 text-xs text-muted">
           {label(parcel.fromCountry)} → {label(parcel.toCountry)}

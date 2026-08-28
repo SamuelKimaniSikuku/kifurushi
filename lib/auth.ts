@@ -145,6 +145,13 @@ export async function fetchIsMember(): Promise<boolean> {
 export const BILLING_MODE: "beta" | "stripe" =
   process.env.NEXT_PUBLIC_BILLING === "beta" ? "beta" : "stripe";
 
+/**
+ * Keep paid checkout out of the launch experience. Set this explicitly to
+ * "false" when the launch period ends and paid memberships are ready.
+ */
+export const FREE_LAUNCH_ACTIVE =
+  process.env.NEXT_PUBLIC_FREE_LAUNCH !== "false";
+
 /** Stripe Checkout: returns the hosted payment URL to redirect to. */
 export async function startCheckout(plan: BillingPlan): Promise<string> {
   try {

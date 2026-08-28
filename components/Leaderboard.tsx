@@ -3,16 +3,16 @@
 // The hero's right-column proof, under the preview card:
 //
 //   1. The live volume counter — total value of every parcel ever posted,
-//      whatever became of it. Animates up on load and re-polls every 30s,
-//      so it genuinely ticks as members post. Labelled "requested through
-//      Kifurushi": a posted parcel IS a delivery request at that value.
+//      whatever became of it. Re-polls every 30s, so it stays current as
+//      members post. The UI labels it as posted parcel budgets rather than
+//      implying that this money passed through Kifurushi.
 //      Never "passed through" — no money ever touches Kifurushi, and the
 //      Terms depend on that sentence staying true.
 //
 //   2. Once a code-confirmed delivery between two different people exists,
 //      the leaderboard lines join it: most earned, most saved.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PiggyBank, TrendingUp, Trophy } from "lucide-react";
 import {
@@ -20,36 +20,11 @@ import {
 } from "@/lib/db";
 import { useT } from "@/lib/i18n";
 
-/** Eased count-up toward a moving target — the odometer feel. */
-function useCountUp(target: number): number {
-  const [display, setDisplay] = useState(0);
-  const fromRef = useRef(0);
-
-  useEffect(() => {
-    const from = fromRef.current;
-    if (target === from) return;
-    const start = performance.now();
-    const duration = 1400;
-    let raf: number;
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(Math.round(from + (target - from) * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
-      else fromRef.current = target;
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-
-  return display;
-}
-
 export default function Leaderboard() {
   const t = useT();
   const [volume, setVolume] = useState<ParcelVolume | null>(null);
   const [lines, setLines] = useState<LeaderLine[]>([]);
-  const shown = useCountUp(volume?.total ?? 0);
+  const shown = volume?.total ?? 0;
 
   useEffect(() => {
     let live = true;

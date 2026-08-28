@@ -18,14 +18,14 @@ import {
   Star, Gift,} from "lucide-react";
 
 const corridors = [
-  { from: "🇬🇧 London", to: "🇳🇬 Lagos", price: "$8" },
-  { from: "🇫🇷 Paris", to: "🇸🇳 Dakar", price: "$7" },
-  { from: "🇺🇸 Atlanta", to: "🇰🇪 Nairobi", price: "$10" },
-  { from: "🇦🇪 Dubai", to: "🇪🇬 Cairo", price: "$6" },
-  { from: "🇩🇪 Frankfurt", to: "🇬🇭 Accra", price: "$8" },
-  { from: "🇨🇦 Toronto", to: "🇪🇹 Addis Ababa", price: "$11" },
-  { from: "🇿🇦 Joburg", to: "🇬🇧 Manchester", price: "$9" },
-  { from: "🇳🇬 Lagos", to: "🇺🇸 Chicago", price: "$12" },
+  { from: "🇬🇧 London", fromCode: "GB", to: "🇳🇬 Lagos", toCode: "NG", price: "$8" },
+  { from: "🇫🇷 Paris", fromCode: "FR", to: "🇸🇳 Dakar", toCode: "SN", price: "$7" },
+  { from: "🇺🇸 Atlanta", fromCode: "US", to: "🇰🇪 Nairobi", toCode: "KE", price: "$10" },
+  { from: "🇦🇪 Dubai", fromCode: "AE", to: "🇪🇬 Cairo", toCode: "EG", price: "$6" },
+  { from: "🇩🇪 Frankfurt", fromCode: "DE", to: "🇬🇭 Accra", toCode: "GH", price: "$8" },
+  { from: "🇨🇦 Toronto", fromCode: "CA", to: "🇪🇹 Addis Ababa", toCode: "ET", price: "$11" },
+  { from: "🇿🇦 Joburg", fromCode: "ZA", to: "🇬🇧 Manchester", toCode: "GB", price: "$9" },
+  { from: "🇳🇬 Lagos", fromCode: "NG", to: "🇺🇸 Chicago", toCode: "US", price: "$12" },
 ];
 
 const TRUST_ICONS = [HeartHandshake, BadgeCheck, KeyRound, Star, Ban];
@@ -91,6 +91,9 @@ export default function Home() {
 
             {/* Right: product preview */}
             <div className="mx-auto w-full max-w-sm lg:justify-self-end">
+              <div className="mb-2 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                {t.home.exampleListing}
+              </div>
               <div className="card w-full max-w-sm rotate-1 p-5 text-ink shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-forest text-sm font-semibold text-white">
@@ -298,7 +301,7 @@ export default function Home() {
             {corridors.map((c) => (
               <Link
                 key={c.from + c.to}
-                href="/trips"
+                href={`/trips?from=${c.fromCode}&to=${c.toCode}`}
                 className="card card-lift group flex items-center justify-between gap-3 p-4"
               >
                 <div className="min-w-0">

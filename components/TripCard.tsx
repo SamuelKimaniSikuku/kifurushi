@@ -27,6 +27,7 @@ export default function TripCard({
     weekday: "short",
     day: "numeric",
     month: "short",
+    year: "numeric",
   });
   const anchorPrice = Math.round(trip.pricePerKg * 5);
   const capacityPct = Math.min(100, Math.max(0, Math.round((trip.remainingKg / Math.max(trip.spaceKg, 1)) * 100)));
@@ -97,13 +98,13 @@ export default function TripCard({
 
       <div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="truncate font-semibold text-ink">{trip.fromCity}</span>
+          <span className="truncate capitalize font-semibold text-ink">{trip.fromCity}</span>
           <span className="flex min-w-[3rem] flex-1 items-center gap-1.5" aria-hidden>
             <span className="flex-1 border-t border-dashed border-line-strong" />
             <Plane size={16} strokeWidth={2} className="shrink-0 rotate-45 text-clay" />
             <span className="flex-1 border-t border-dashed border-line-strong" />
           </span>
-          <span className="truncate text-right font-semibold text-ink">{trip.toCity}</span>
+          <span className="truncate text-right capitalize font-semibold text-ink">{trip.toCity}</span>
         </div>
         <div className="mt-1 text-xs text-muted">
           {label(trip.fromCountry)} → {label(trip.toCountry)}

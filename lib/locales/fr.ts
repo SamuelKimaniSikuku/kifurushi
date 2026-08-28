@@ -48,12 +48,13 @@ export const fr: Dict = {
     freeMonthHero: "Gratuit pendant le lancement — aucune carte, rien à payer",
     ctaTravel: "Je voyage — gagner avec mes bagages",
     ctaSend: "Envoyer un colis",
+    exampleListing: "Exemple — ce voyage n'est pas une annonce réelle",
     verified: "Vérifié",
-    departs: "départ dim. 2 août",
+    departs: "exemple de date de départ",
     kgFree: "18 kg libres",
     requestTraveller: "Contacter ce voyageur",
     volumeLine: (n: number) =>
-      `de livraisons demandées via Kifurushi — ${n} colis et ça continue`,
+      `de budgets publiés sur ${n} demande${n === 1 ? "" : "s"} de colis`,
     leaderEmpty: "La première livraison terminée remportera cette place.",
     leaderEarned: (amount: number, n: number) =>
       `Record de gains d'un voyageur : ${amount} $ sur ${n} livraison${n === 1 ? "" : "s"} —`,
@@ -79,7 +80,7 @@ export const fr: Dict = {
     processLabel: "Le processus",
     howTitle: "Comment fonctionne Kifurushi",
     howSub:
-      "Conçu pour que personne n'ait à faire confiance à un inconnu — c'est la plateforme qui porte le risque, pas vous.",
+      "Conçu pour réduire le risque d'échanger avec un inconnu grâce aux identités vérifiées, aux remises documentées et aux dossiers de livraison.",
     steps: [
       {
         title: "Publier ou trouver",
@@ -99,15 +100,15 @@ export const fr: Dict = {
       },
     ],
     routesLabel: "Itinéraires",
-    corridorsTitle: "Corridors populaires cette semaine",
+    corridorsTitle: "Corridors populaires de la diaspora",
     corridorFrom: (price: string) => `dès ${price}/kg`,
     corridorsNote:
-      "Tous les itinéraires fonctionnent — si un voyageur le prend, Kifurushi le couvre.",
+      "Tout itinéraire peut fonctionner lorsqu'un voyageur publie un trajet correspondant.",
     browseAll: "Voir tous les voyages",
     securityLabel: "Confiance & sécurité",
     securityTitle: "La sécurité, c'est le produit",
     securityIntro:
-      "Le partage informel de bagages existe déjà dans chaque communauté africaine à l'étranger — groupes WhatsApp, annonces à l'église, le cousin d'un cousin. Kifurushi garde l'esprit communautaire et supprime le risque.",
+      "Le partage informel de bagages existe déjà dans les communautés africaines à l'étranger — groupes WhatsApp, annonces à l'église, le cousin d'un cousin. Kifurushi garde l'esprit communautaire tout en rendant chaque remise plus traçable.",
     securityPoints: [
       {
         title: "Votre argent reste le vôtre",
@@ -144,6 +145,9 @@ export const fr: Dict = {
     joinTitle: "Rejoindre Kifurushi",
     welcomeBack: "Bon retour",
     subtitle: "Un seul compte pour envoyer et voyager. Gratuit pendant le lancement.",
+    intentTrip: "Créez un compte pour publier votre voyage. Vous y serez ramené juste après.",
+    intentParcel: "Créez un compte pour publier votre colis. Vous y serez ramené juste après.",
+    intentVerify: "Créez un compte pour vérifier votre identité. Vous reviendrez ensuite directement à la vérification.",
     fullName: "Nom complet",
     email: "E-mail",
     password: "Mot de passe",
@@ -464,6 +468,8 @@ export const fr: Dict = {
     monthlyNote: "Facturé chaque mois. Résiliable à tout moment.",
     yearlyNote: "Soit 2,42 $ par mois, facturé une fois — économisez 31 $.",
     bestValue: "Meilleure offre · -52 %",
+    futurePrice: "Tarif futur — aucun paiement pendant le lancement",
+    startFree: "Commencer gratuitement — sans carte",
     joinFor: (price: string) => `Rejoindre pour ${price}`,
     activating: "Activation…",
     secureCheckout: "Paiement sécurisé - résiliable à tout moment",
