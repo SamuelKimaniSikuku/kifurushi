@@ -85,6 +85,26 @@ export default function PricingPage() {
   const router = useRouter();
   const t = useT();
   const PLANS = buildPlans(t);
+  const bandItems = [
+    {
+      Icon: Wallet,
+      label: t.pricing.bandCell1Label,
+      value: t.pricing.bandCell1a,
+      body: t.pricing.bandCell1b,
+    },
+    {
+      Icon: HeartHandshake,
+      label: t.pricing.bandCell2Label,
+      value: t.pricing.bandCell2a,
+      body: `${t.pricing.bandCell2b} ${t.pricing.bandCell2c}`,
+    },
+    {
+      Icon: Gift,
+      label: t.pricing.bandCell3Label,
+      value: t.pricing.bandCell3,
+      body: t.pricing.bandCell3b,
+    },
+  ];
   const [membership, setMembership] = useState<Membership | null>(null);
   const [joining, setJoining] = useState<BillingPlan | null>(null);
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -264,27 +284,44 @@ export default function PricingPage() {
         })}
       </div>
 
-      {/* What the membership fee is — and is not */}
-      <div className="mt-8 rounded-2xl bg-forest px-5 py-5 text-white sm:px-7">
-        <div className="flex items-center gap-2 text-sm font-bold">
-          <Plane className="h-4 w-4 shrink-0 text-gold" strokeWidth={2} />
-          {t.pricing.bandTitle}
+      {/* Free now, with transparent pricing for later. */}
+      <section className="mt-8 overflow-hidden rounded-3xl bg-forest text-white shadow-sm">
+        <div className="flex flex-col gap-4 px-5 pb-5 pt-6 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10 text-gold">
+              <Plane className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </span>
+            <h2 className="font-display text-xl font-bold tracking-tight sm:text-2xl">
+              {t.pricing.bandTitle}
+            </h2>
+          </div>
+          <span className="w-fit rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-gold">
+            {t.pricing.bandBadge}
+          </span>
         </div>
-        <div className="mt-2 grid gap-2 text-sm text-white/80 md:grid-cols-3 md:gap-6">
-          <div>
-            <b className="text-white">{t.pricing.bandCell1a}</b>{" "}
-            {t.pricing.bandCell1b}
-          </div>
-          <div>
-            {t.pricing.bandCell2a}{" "}
-            <b className="text-white">{t.pricing.bandCell2b}</b>{" "}
-            {t.pricing.bandCell2c}
-          </div>
-          <div className="font-semibold text-gold">
-            {t.pricing.bandCell3}
-          </div>
+
+        <div className="grid border-t border-white/10 bg-white/[0.03] md:grid-cols-3">
+          {bandItems.map(({ Icon, label, value, body }, index) => (
+            <div
+              key={label}
+              className={`p-5 sm:p-6 ${
+                index > 0 ? "border-t border-white/10 md:border-l md:border-t-0" : ""
+              }`}
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-gold">
+                <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+                {label}
+              </div>
+              <div className="mt-3 font-display text-2xl font-bold tracking-tight text-white">
+                {value}
+              </div>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/65">
+                {body}
+              </p>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
 
       {/* Why one price */}
       <div className="card mt-8 grid gap-8 p-7 md:grid-cols-3 md:gap-6">
