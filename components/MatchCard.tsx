@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ChevronDown, Copy, KeyRound, MessageSquare, Plane, Send, Star,
+  ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Plane, Send, Star,
 } from "lucide-react";
 import {
   STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
 } from "@/lib/types";
 import {
-  MatchDetail, deliverNow, requestMatch, respondMatch, advanceMatch, cancelMatch,
+  MatchDetail, deliverNow, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
   fetchMessages, sendMessage,
@@ -600,6 +600,39 @@ export default function MatchCard({
                 receiver confirms the handover with the delivery code below.
               </p>
             ))}
+
+          {/* Sender shortcut: confirm the delivery without going through
+              the code. For casual handovers between people who already know
+              each other — the code stays available for those who want it. */}
+          {!isTraveler &&
+            ["escrow_paid", "picked_up", "in_transit", "delivered"].includes(
+              match.status
+            ) && (
+              <div className="rounded-xl border border-forest/25 bg-sand p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-forest">
+                  <PackageCheck className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                  Did your recipient get the parcel?
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  If they&apos;ve confirmed it to you already (a call, a message,
+                  they&apos;re family), you can close this out here without the
+                  code — that finishes the delivery and unlocks reviews for
+                  both of you.
+                </p>
+                <button
+                  className="btn-primary mt-3 min-h-[44px]"
+                  disabled={busy}
+                  onClick={() =>
+                    act(
+                      () => senderConfirmDelivery(match.id),
+                      "Could not confirm — try again."
+                    )
+                  }
+                >
+                  Yes — mark delivered
+                </button>
+              </div>
+            )}
 
           {/* Sender: the one-time delivery code */}
           {senderCodeWindow && (

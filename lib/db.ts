@@ -807,6 +807,19 @@ export async function deliverNow(matchId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Sender-side release: skip the code ritual when the sender has confirmation
+ * from the recipient by other means (call, WhatsApp, they live together).
+ * Available from any post-acceptance state; recorded as released_via='sender'
+ * so the audit trail distinguishes it from a code-confirmed release.
+ */
+export async function senderConfirmDelivery(matchId: string): Promise<void> {
+  const { error } = await supabase.rpc("sender_confirm_delivery", {
+    p_match_id: matchId,
+  });
+  if (error) throw error;
+}
+
 export async function cancelMatch(matchId: string): Promise<void> {
   const { error } = await supabase.rpc("cancel_match", { p_match_id: matchId });
   if (error) throw error;
