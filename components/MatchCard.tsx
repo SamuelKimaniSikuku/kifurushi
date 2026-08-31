@@ -605,19 +605,20 @@ export default function MatchCard({
               the code. For casual handovers between people who already know
               each other — the code stays available for those who want it. */}
           {!isTraveler &&
-            ["escrow_paid", "picked_up", "in_transit", "delivered"].includes(
+            ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
               match.status
             ) && (
               <div className="rounded-xl border border-forest/25 bg-sand p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-forest">
                   <PackageCheck className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                  Did your recipient get the parcel?
+                  Know each other? You can skip the code.
                 </div>
                 <p className="mt-1 text-xs text-muted">
-                  If they&apos;ve confirmed it to you already (a call, a message,
-                  they&apos;re family), you can close this out here without the
-                  code — that finishes the delivery and unlocks reviews for
-                  both of you.
+                  The code exists to protect strangers. If your recipient is
+                  family or a friend and they&apos;ve told you the parcel
+                  arrived, close it out here — that completes the delivery and
+                  unlocks reviews for both of you. Only press it once it has
+                  actually arrived.
                 </p>
                 <button
                   className="btn-primary mt-3 min-h-[44px]"
@@ -639,7 +640,7 @@ export default function MatchCard({
             <div className="rounded-xl bg-sand p-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
                 <KeyRound className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                Delivery code
+                Meeting a stranger? Use the code
               </div>
               {code ? (
                 <div className="mt-2">
