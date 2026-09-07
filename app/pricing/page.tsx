@@ -258,7 +258,7 @@ export default function PricingPage() {
           <Plane className="h-4 w-4 shrink-0 text-gold" strokeWidth={2} />
           {t.pricing.bandTitle}
         </div>
-        <div className="mt-2 grid gap-2 text-sm text-white/80 md:grid-cols-3 md:gap-6">
+        <div className="mt-2 grid gap-2 text-sm text-white/80 md:grid-cols-[1.2fr_1.6fr_1fr] md:items-center md:gap-6">
           <div>
             <b className="text-white">{t.pricing.bandCell1a}</b>{" "}
             {t.pricing.bandCell1b}
