@@ -1,7 +1,10 @@
 // English dictionary — the source of truth for the translation shape.
 // fr.ts and sw.ts must mirror this exactly (the Dict type enforces it).
 
+import { enExperience } from "./experience";
+
 export const en = {
+  experience: enExperience,
   nav: {
     findTraveller: "Find a traveller",
     parcelRequests: "Parcel requests",

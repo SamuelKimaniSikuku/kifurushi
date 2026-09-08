@@ -20,7 +20,7 @@ export function useContactGate(): () => Promise<boolean> {
 
   return useCallback(async () => {
     if (!(await fetchSession())) {
-      router.push(`/auth?next=${encodeURIComponent(pathname)}`);
+      router.push(`/auth?next=${encodeURIComponent(pathname + window.location.search)}`);
       return false;
     }
     if (!(await fetchIsMember())) {

@@ -5,7 +5,7 @@ import { ArrowRight, BellRing, Calendar, Check, Pencil, Scale } from "lucide-rea
 import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -23,13 +23,14 @@ export default function ParcelCard({
   pending?: number;
 }) {
   const t = useT();
-  const date = new Date(parcel.neededBy).toLocaleDateString(undefined, {
+  const { lang } = useLang();
+  const date = new Date(`${parcel.neededBy}T12:00:00`).toLocaleDateString(lang, {
     day: "numeric",
     month: "short",
   });
 
   return (
-    <article className="card card-lift group flex h-full flex-col gap-3 p-5">
+    <article className="card card-lift group flex h-full min-w-0 flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={parcel.senderName} />
@@ -44,7 +45,7 @@ export default function ParcelCard({
               <VerifiedBadge small />
             ) : (
               <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
-                Unverified
+                {t.experience.unverified}
               </span>
             )}
           </div>
@@ -54,32 +55,33 @@ export default function ParcelCard({
           <div className="font-display text-2xl font-extrabold leading-none text-forest">
             ${parcel.budgetUsd}
           </div>
+          <p className="mt-1 text-sm text-muted">{t.experience.totalBudget}</p>
         </div>
       </div>
 
       <div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="truncate font-semibold text-ink">{parcel.fromCity}</span>
-          <span className="flex min-w-[3rem] flex-1 items-center gap-1.5" aria-hidden>
+          <span className="min-w-0 flex-1 break-words font-semibold text-ink">{parcel.fromCity}</span>
+          <span className="flex w-12 shrink-0 items-center gap-1.5" aria-hidden>
             <span className="flex-1 border-t border-dashed border-line-strong" />
             <ArrowRight size={16} strokeWidth={2} className="shrink-0 text-clay" />
             <span className="flex-1 border-t border-dashed border-line-strong" />
           </span>
-          <span className="truncate text-right font-semibold text-ink">{parcel.toCity}</span>
+          <span className="min-w-0 flex-1 break-words text-right font-semibold text-ink">{parcel.toCity}</span>
         </div>
         <div className="mt-1 text-xs text-muted">
           {label(parcel.fromCountry)} → {label(parcel.toCountry)}
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <span className="flex items-center gap-1.5">
           <Scale size={14} strokeWidth={2} className="shrink-0" aria-hidden />
           {parcel.weightKg} kg
         </span>
         <span className="flex items-center gap-1.5">
           <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />
-          needed by {date}
+          {t.experience.neededBy} {date}
         </span>
       </div>
 

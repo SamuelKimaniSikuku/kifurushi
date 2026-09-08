@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Globe, Menu, Package, Plane, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
 import { fetchAttention } from "@/lib/db";
@@ -53,6 +53,8 @@ function RoleMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
   const active = items.some((i) => i.href === pathname);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ function RoleMenu({
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") { setOpen(false); buttonRef.current?.focus(); }
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -72,11 +74,15 @@ function RoleMenu({
   }, [open]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onBlur={(event) => {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+    }}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        aria-controls={menuId}
         className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-1 py-1.5 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
           active || open ? "text-forest" : "text-ink hover:text-forest"
         }`}
@@ -92,11 +98,12 @@ function RoleMenu({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full z-50 mt-2 w-[19rem] rounded-2xl border border-line bg-white p-2 shadow-xl">
+        <div id={menuId} className="absolute left-0 top-full z-50 mt-2 w-[19rem] rounded-2xl border border-line bg-white p-2 shadow-xl">
           {items.map((i) => (
             <Link
               key={i.href}
               href={i.href}
+              aria-current={pathname === i.href ? "page" : undefined}
               onClick={() => setOpen(false)}
               className={`block rounded-xl px-3 py-2.5 transition hover:bg-sand ${
                 pathname === i.href ? "bg-sand" : ""
@@ -117,6 +124,7 @@ export default function Nav() {
   const { session } = useSession();
   const [open, setOpen] = useState(false);
   const [waiting, setWaiting] = useState(0);
+  const mobileButton = useRef<HTMLButtonElement>(null);
   const t = useT();
 
   // Badge on the dashboard button: how many matches need this member's
@@ -178,11 +186,11 @@ export default function Nav() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape" && open) { setOpen(false); mobileButton.current?.focus(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/85 backdrop-blur">
@@ -202,7 +210,7 @@ export default function Nav() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 lg:flex">
+        <nav className="hidden items-center gap-5 xl:flex">
           <RoleMenu
             label={t.roles.tripsMenu}
             Icon={Plane}
@@ -232,7 +240,7 @@ export default function Nav() {
           ))}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="hidden shrink-0 items-center gap-2 xl:flex">
           <LanguageSwitcher />
           {session ? (
             <Link href="/dashboard" className="btn-primary relative whitespace-nowrap">
@@ -245,15 +253,16 @@ export default function Nav() {
               )}
             </Link>
           ) : (
-            <Link href="/auth" className="btn-primary whitespace-nowrap">
+            <Link href="/auth?mode=signin" className="btn-primary whitespace-nowrap">
               {t.nav.signIn}
             </Link>
           )}
         </div>
 
         <button
+          ref={mobileButton}
           type="button"
-          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] lg:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-line-strong bg-white text-forest transition-all hover:border-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] xl:hidden"
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-controls="mobile-nav"
@@ -269,10 +278,11 @@ export default function Nav() {
 
       <nav
         id="mobile-nav"
-        className={`overflow-hidden border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out lg:hidden ${
+        onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setOpen(false); }}
+        className={`border-t bg-white transition-[max-height,opacity,visibility] duration-300 ease-out xl:hidden ${
           open
-            ? "visible max-h-[640px] border-line opacity-100"
-            : "invisible max-h-0 border-transparent opacity-0"
+            ? "visible max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain border-line opacity-100"
+            : "invisible max-h-0 overflow-hidden border-transparent opacity-0"
         }`}
       >
         <div className="px-4 py-3">
@@ -323,7 +333,7 @@ export default function Nav() {
             <LanguageSwitcher compact />
           </div>
           <Link
-            href={session ? "/dashboard" : "/auth"}
+            href={session ? "/dashboard" : "/auth?mode=signin"}
             className="btn-primary w-full"
           >
             {session ? t.nav.dashboard : t.nav.signIn}

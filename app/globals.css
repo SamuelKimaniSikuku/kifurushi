@@ -32,6 +32,16 @@
 
   body {
     @apply bg-sand font-body text-ink antialiased;
+    line-height: 1.6;
+  }
+
+  :where(a, button, summary):focus-visible {
+    outline: 2px solid var(--leaf);
+    outline-offset: 4px;
+  }
+
+  button, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1,
@@ -75,7 +85,7 @@
   .btn-ghost,
   .btn-inverse,
   .btn-outline-inverse {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60;
   }
 
   .btn-primary {
@@ -103,7 +113,7 @@
   }
 
   .field {
-    @apply w-full rounded-xl border border-line-strong bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition focus-visible:border-leaf focus-visible:ring-2 focus-visible:ring-[rgba(26,107,79,0.25)];
+    @apply min-h-12 min-w-0 w-full rounded-xl border border-line-strong bg-white px-3 py-2.5 text-base text-ink outline-none transition focus-visible:border-leaf focus-visible:ring-2 focus-visible:ring-[rgba(26,107,79,0.25)];
   }
 
   .field-invalid {
@@ -111,16 +121,39 @@
   }
 
   .field-label {
-    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+    @apply mb-1.5 block text-sm font-semibold text-muted;
   }
 
   .field-error {
-    @apply mt-1 text-xs font-medium text-danger;
+    @apply mt-1 text-sm font-medium text-danger;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-sand-deep px-2.5 py-1 text-xs font-semibold text-ink;
+    @apply inline-flex items-center gap-1 rounded-full bg-sand-deep px-2.5 py-1 text-sm font-semibold text-ink;
   }
+
+  .route-search {
+    @apply rounded-2xl border border-white/20 bg-white p-4 text-ink shadow-xl sm:p-5;
+  }
+
+  .section-eyebrow {
+    @apply text-sm font-semibold tracking-wide text-clay-deep;
+  }
+
+  .browse-filters {
+    @apply card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(0,1.15fr)_auto];
+  }
+}
+
+.getting-started > summary::-webkit-details-marker { display: none; }
+.getting-started[open] > summary > svg { transform: rotate(180deg); }
+.getting-started > section { padding-top: 1rem; padding-bottom: 1.5rem; }
+.getting-started > section > div:first-child { display: none; }
+.home-hero .btn-outline-inverse:focus-visible { outline-color: var(--gold); }
+
+@media (max-width: 374px) {
+  .route-search > div:first-of-type { grid-template-columns: minmax(0, 1fr); }
+  .route-search > div:first-of-type > button { justify-self: center; }
 }
 
 @media (prefers-reduced-motion: reduce) {

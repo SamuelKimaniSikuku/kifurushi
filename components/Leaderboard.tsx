@@ -27,6 +27,11 @@ function useCountUp(target: number): number {
 
   useEffect(() => {
     const from = fromRef.current;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      fromRef.current = target;
+      setDisplay(target);
+      return;
+    }
     if (target === from) return;
     const start = performance.now();
     const duration = 1400;

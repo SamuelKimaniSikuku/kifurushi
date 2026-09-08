@@ -1,9 +1,11 @@
 import type { Dict } from "./en";
+import { swExperience } from "./experience";
 
 // Kiswahili — Kenya, Tanzania, Uganda, DRC na diaspora yake.
 // "Kifurushi" ni Kiswahili tayari: neno linamaanisha "parcel".
 
 export const sw: Dict = {
+  experience: swExperience,
   nav: {
     findTraveller: "Wasafiri",
     parcelRequests: "Vifurushi",

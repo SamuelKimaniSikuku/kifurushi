@@ -1,9 +1,11 @@
 import type { Dict } from "./en";
+import { frExperience } from "./experience";
 
 // Français — couvre les 21 pays africains francophones et la diaspora en
 // France, Belgique, Suisse et au Canada.
 
 export const fr: Dict = {
+  experience: frExperience,
   nav: {
     findTraveller: "Voyageurs",
     parcelRequests: "Colis demandés",

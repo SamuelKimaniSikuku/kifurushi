@@ -1,5 +1,7 @@
 "use client";
 
+import { readPostRoute } from "@/lib/routes";
+
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
@@ -64,7 +66,7 @@ function PostTripForm() {
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      router.replace("/auth?next=/post/trip");
+      router.replace(`/auth?next=${encodeURIComponent("/post/trip" + window.location.search)}`);
       return;
     }
     // Posting is a member action (enforced server-side by RLS too).
@@ -100,18 +102,12 @@ function PostTripForm() {
       .catch(() => {});
   }, [editId]);
 
-  // Arriving from "Offer to carry this": the route is already known.
+  // Keep the selected route when arriving from browsing or signing in.
   useEffect(() => {
-    const fromCountry = params.get("fromCountry");
-    if (!fromCountry) return;
-    setForm((f) => ({
-      ...f,
-      fromCountry,
-      fromCity: params.get("fromCity") ?? f.fromCity,
-      toCountry: params.get("toCountry") ?? f.toCountry,
-      toCity: params.get("toCity") ?? f.toCity,
-    }));
-  }, [params]);
+    if (editId) return;
+    const route = readPostRoute(params);
+    if (Object.keys(route).length) setForm((current) => ({ ...current, ...route }));
+  }, [params, editId]);
 
   function toggleCat(c: ParcelCategory) {
     setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
