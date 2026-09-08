@@ -61,6 +61,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLangState(detectLang());
   }, []);
 
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   // Mirror the choice onto the member profile so server-sent emails
   // (delivery + payment confirmations) arrive in the same language.
   useEffect(() => {

@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MailCheck } from "lucide-react";
-import { signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
+import { Check, Eye, EyeOff, Gift, HeartHandshake, MailCheck, Package, Plane } from "lucide-react";
+import { signInSchema, signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
+import { safeReturnPath } from "@/lib/routes";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
@@ -11,9 +12,10 @@ import Link from "next/link";
 function AuthForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/dashboard";
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
-  const [mode, setMode] = useState<"signin" | "signup">("signup");
+  const safeNext = safeReturnPath(params.get("next"));
+  const requestedMode = params.get("mode");
+  const [mode, setMode] = useState<"signin" | "signup">(requestedMode === "signin" ? "signin" : "signup");
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,20 +24,39 @@ function AuthForm() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
   const t = useT();
+  const x = t.experience;
+
+  useEffect(() => {
+    setMode(requestedMode === "signin" ? "signin" : "signup");
+    setErrors({});
+    setAuthError(null);
+    setTermsError(false);
+    setShowPassword(false);
+  }, [requestedMode]);
+
+  function changeMode(value: "signin" | "signup") {
+    setMode(value);
+    setErrors({});
+    setAuthError(null);
+    setTermsError(false);
+    setShowPassword(false);
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     setAuthError(null);
     if (mode === "signup" && !termsAccepted) {
       setTermsError(true);
+      document.getElementById("terms")?.focus();
       return;
     }
     setTermsError(false);
-    const parsed = signUpSchema.safeParse(
-      mode === "signin" ? { ...form, name: form.name || "Member" } : form
-    );
+    const parsed = (mode === "signup" ? signUpSchema : signInSchema).safeParse(form);
     if (!parsed.success) {
-      setErrors(zodErrors(parsed.error));
+      const fieldErrors = zodErrors(parsed.error);
+      setErrors(fieldErrors);
+      document.getElementById(Object.keys(fieldErrors)[0])?.focus();
       return;
     }
     setErrors({});
@@ -47,7 +68,7 @@ function AuthForm() {
           password: form.password,
           options: {
             data: {
-              full_name: parsed.data.name,
+              full_name: "name" in parsed.data ? parsed.data.name : form.name.trim(),
               terms_accepted_at: new Date().toISOString(),
             },
           },
@@ -76,6 +97,8 @@ function AuthForm() {
         }
       }
       router.push(safeNext);
+    } catch {
+      setAuthError(x.connectionError);
     } finally {
       setSubmitting(false);
     }
@@ -100,12 +123,13 @@ function AuthForm() {
             {t.auth.checkEmailBody1} <b className="text-ink">{form.email}</b>.{" "}
             {t.auth.checkEmailBody2}
           </p>
+          <p className="mt-4 text-sm text-muted">{x.checkSpam}</p>
           <button
             type="button"
             className="btn-ghost mt-6 w-full"
             onClick={() => {
               setConfirmSent(false);
-              setMode("signin");
+              changeMode("signin");
             }}
           >
             {t.auth.backToSignIn}
@@ -116,15 +140,29 @@ function AuthForm() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-14">
-      <h1 className="text-center font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
+    <div className="mx-auto grid max-w-5xl items-start gap-8 px-4 py-10 md:grid-cols-2 md:gap-14 md:py-14">
+      <aside className="rounded-3xl bg-forest-deep p-6 text-white md:sticky md:top-24 md:p-9">
+        <div className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-gold"><Gift size={18} aria-hidden />{x.launch}</div>
+        <h2 className="text-2xl font-bold leading-tight md:text-4xl">{x.authNote}</h2>
+        <p className="mt-4 text-base leading-relaxed text-white/80">{x.authBody}</p>
+        <div className="mt-7 hidden space-y-4 border-t border-white/15 pt-6 text-sm md:block">
+          <p className="flex items-center gap-3"><Plane className="text-gold" size={19} aria-hidden />{t.roles.postTripDesc}</p>
+          <p className="flex items-center gap-3"><Package className="text-gold" size={19} aria-hidden />{t.roles.postParcelDesc}</p>
+          <p className="flex items-center gap-3"><HeartHandshake className="text-gold" size={19} aria-hidden />{x.commission}</p>
+        </div>
+      </aside>
+      <div className="min-w-0">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-forest">
         {mode === "signup" ? t.auth.joinTitle : t.auth.welcomeBack}
       </h1>
-      <p className="mt-2 text-center text-sm text-muted">
+      <p className="mt-2 text-base text-muted">
         {t.auth.subtitle}
       </p>
 
-      <form onSubmit={submit} className="card mt-6 space-y-4 p-6 sm:p-8" noValidate>
+      <form onSubmit={submit} className="card mt-6 space-y-5 p-5 sm:p-7" noValidate aria-busy={submitting}>
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-sand p-1" role="group" aria-label={x.chooseRole}>
+          {(["signup", "signin"] as const).map((value) => <button type="button" key={value} disabled={submitting} aria-pressed={mode === value} onClick={() => changeMode(value)} className={`min-h-11 rounded-lg px-2 py-2 text-sm font-semibold ${mode === value ? "bg-forest text-white shadow-sm" : "text-muted hover:text-forest"}`}>{value === "signup" ? t.auth.createAccount : t.auth.signIn}</button>)}
+        </div>
         {mode === "signup" && (
           <div>
             <label className="field-label" htmlFor="name">{t.auth.fullName}</label>
@@ -132,6 +170,8 @@ function AuthForm() {
               id="name"
               className={`field ${errors.name ? "field-invalid" : ""}`}
               autoComplete="name"
+              required
+              disabled={submitting}
               value={form.name}
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "name-error" : undefined}
@@ -149,6 +189,10 @@ function AuthForm() {
             type="email"
             className={`field ${errors.email ? "field-invalid" : ""}`}
             autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            disabled={submitting}
             value={form.email}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? "email-error" : undefined}
@@ -160,23 +204,26 @@ function AuthForm() {
         </div>
         <div>
           <label className="field-label" htmlFor="password">{t.auth.password}</label>
-          <input
+          <div className="relative"><input
             id="password"
-            type="password"
-            className={`field ${errors.password ? "field-invalid" : ""}`}
+            type={showPassword ? "text" : "password"}
+            className={`field pr-14 ${errors.password ? "field-invalid" : ""}`}
+            required
+            disabled={submitting}
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             value={form.password}
             aria-invalid={!!errors.password}
             aria-describedby={passwordDescribedBy}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
+          <button type="button" className="absolute right-1 top-1 grid h-10 w-11 place-items-center rounded-lg text-muted hover:text-forest" aria-label={showPassword ? x.hidePassword : x.showPassword} aria-pressed={showPassword} onClick={() => setShowPassword((shown) => !shown)}>{showPassword ? <EyeOff size={18} aria-hidden /> : <Eye size={18} aria-hidden />}</button></div>
           {errors.password && (
             <p id="password-error" className="field-error">{errors.password}</p>
           )}
           {mode === "signup" && (
-            <p id="password-hint" className="mt-1 text-xs text-muted">
-              {t.auth.passwordHint}
-            </p>
+            <ul id="password-hint" className="mt-3 grid gap-x-3 gap-y-1 text-sm sm:grid-cols-2">
+              {[[x.passwordLength, form.password.length >= 10], [x.passwordUpper, /[A-Z]/.test(form.password)], [x.passwordLower, /[a-z]/.test(form.password)], [x.passwordNumber, /[0-9]/.test(form.password)]].map(([label, met]) => <li key={String(label)} className={`flex items-center gap-1.5 ${met ? "text-success" : "text-muted"}`}><Check size={15} aria-hidden className={met ? "opacity-100" : "opacity-30"} /><span>{label}</span></li>)}
+            </ul>
           )}
         </div>
 
@@ -184,13 +231,14 @@ function AuthForm() {
           <div>
             <label
               htmlFor="terms"
-              className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl py-1 text-xs text-muted focus-within:ring-2 focus-within:ring-leaf"
+              className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-xl py-1 text-sm leading-relaxed text-muted focus-within:ring-2 focus-within:ring-leaf"
             >
               <input
                 id="terms"
                 type="checkbox"
                 className="mt-0.5 h-4 w-4 shrink-0 accent-forest"
                 checked={termsAccepted}
+                disabled={submitting}
                 aria-invalid={termsError || undefined}
                 aria-describedby={termsError ? "terms-error" : undefined}
                 onChange={(e) => {
@@ -208,6 +256,7 @@ function AuthForm() {
                   {t.auth.termsLink}
                 </Link>{" "}
                 {t.auth.termsAgree2}
+                {" "}<Link href="/privacy" target="_blank" className="font-semibold text-forest underline">{x.privacy}</Link>
               </span>
             </label>
             {termsError && (
@@ -230,21 +279,21 @@ function AuthForm() {
               : t.auth.signIn}
         </button>
 
-        <p className="text-center text-xs text-muted">
+        <p className="text-center text-sm text-muted">
           {mode === "signup" ? t.auth.alreadyMember : t.auth.newTo}{" "}
           <button
             type="button"
+            disabled={submitting}
             className="-my-2 inline-flex min-h-[44px] items-center rounded-lg px-1.5 py-2 font-semibold text-forest underline transition hover:text-forest-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
             onClick={() => {
-              setMode(mode === "signup" ? "signin" : "signup");
-              setErrors({});
-              setAuthError(null);
+              changeMode(mode === "signup" ? "signin" : "signup");
             }}
           >
             {mode === "signup" ? t.auth.signIn : t.auth.createLink}
           </button>
         </p>
       </form>
+      </div>
     </div>
   );
 }

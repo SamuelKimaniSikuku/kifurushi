@@ -82,6 +82,13 @@ export const signUpSchema = z.object({
     .regex(/[0-9]/, "Add a number"),
 });
 
+// Existing members authenticate with their current password; registration
+// requirements must not prevent a valid older password from being submitted.
+export const signInSchema = z.object({
+  email: z.string().trim().email("Enter a valid email"),
+  password: z.string().min(1, "Enter your password"),
+});
+
 export const messageSchema = z
   .string()
   .trim()

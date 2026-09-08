@@ -1,5 +1,7 @@
 "use client";
 
+import { readPostRoute } from "@/lib/routes";
+
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Ban, Package } from "lucide-react";
@@ -66,7 +68,7 @@ function PostParcelForm() {
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      router.replace("/auth?next=/post/parcel");
+      router.replace(`/auth?next=${encodeURIComponent("/post/parcel" + window.location.search)}`);
       return;
     }
     // Posting is a member action (enforced server-side by RLS too).
@@ -101,6 +103,13 @@ function PostParcelForm() {
       })
       .catch(() => {});
   }, [editId]);
+
+  // Keep the selected route when arriving from browsing or signing in.
+  useEffect(() => {
+    if (editId) return;
+    const route = readPostRoute(params);
+    if (Object.keys(route).length) setForm((current) => ({ ...current, ...route }));
+  }, [params, editId]);
 
   function toggleCat(c: ParcelCategory) {
     setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));

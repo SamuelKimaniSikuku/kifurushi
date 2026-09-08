@@ -5,7 +5,7 @@ import { BellRing, Calendar, Check, Pencil, Plane, Star } from "lucide-react";
 import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -23,18 +23,20 @@ export default function TripCard({
   pending?: number;
 }) {
   const t = useT();
-  const date = new Date(trip.departDate).toLocaleDateString(undefined, {
+  const { lang } = useLang();
+  const date = new Date(`${trip.departDate}T12:00:00`).toLocaleDateString(lang, {
     weekday: "short",
     day: "numeric",
     month: "short",
   });
-  const anchorPrice = Math.round(trip.pricePerKg * 5);
+  const exampleKg = Math.min(5, trip.remainingKg);
+  const anchorPrice = Number((trip.pricePerKg * exampleKg).toFixed(2));
   const capacityPct = Math.min(100, Math.max(0, Math.round((trip.remainingKg / Math.max(trip.spaceKg, 1)) * 100)));
   const shownCategories = trip.categoriesAccepted.slice(0, 3);
   const extraCategories = trip.categoriesAccepted.length - shownCategories.length;
 
   return (
-    <article className="card card-lift group flex h-full flex-col gap-3 p-5">
+    <article className="card card-lift group flex h-full min-w-0 flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <Avatar name={trip.travelerName} />
@@ -50,7 +52,7 @@ export default function TripCard({
                 <VerifiedBadge small />
               ) : (
                 <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
-                  Unverified
+                  {t.experience.unverified}
                 </span>
               )}
             </div>
@@ -69,22 +71,22 @@ export default function TripCard({
               </div>
             ) : (
               <div className="mt-0.5 text-xs text-muted">
-                New traveller · no deliveries yet
+                {t.experience.newTraveller}
               </div>
             )}
           </div>
         </div>
 
-        <div className="w-24 shrink-0 text-right">
+        <div className="w-28 shrink-0 text-right">
           <div className="font-display text-2xl font-extrabold leading-none text-forest">
             ${trip.pricePerKg}
             <span className="text-xs font-medium text-muted">/kg</span>
           </div>
           <div className="mt-1 text-xs text-muted">
-            ~ ${anchorPrice} for 5 kg
+            ~ ${anchorPrice} / {exampleKg} kg
           </div>
           <div className="mt-1.5">
-            <div className="text-xs text-muted">{trip.remainingKg} kg free</div>
+            <div className="text-sm text-muted">{t.experience.available(trip.remainingKg)}</div>
             <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-sand-deep">
               <div
                 className="h-full rounded-full bg-leaf"
@@ -97,22 +99,22 @@ export default function TripCard({
 
       <div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="truncate font-semibold text-ink">{trip.fromCity}</span>
-          <span className="flex min-w-[3rem] flex-1 items-center gap-1.5" aria-hidden>
+          <span className="min-w-0 flex-1 break-words font-semibold text-ink">{trip.fromCity}</span>
+          <span className="flex w-12 shrink-0 items-center gap-1.5" aria-hidden>
             <span className="flex-1 border-t border-dashed border-line-strong" />
             <Plane size={16} strokeWidth={2} className="shrink-0 rotate-45 text-clay" />
             <span className="flex-1 border-t border-dashed border-line-strong" />
           </span>
-          <span className="truncate text-right font-semibold text-ink">{trip.toCity}</span>
+          <span className="min-w-0 flex-1 break-words text-right font-semibold text-ink">{trip.toCity}</span>
         </div>
         <div className="mt-1 text-xs text-muted">
           {label(trip.fromCountry)} → {label(trip.toCountry)}
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 text-xs text-muted">
+      <div className="flex items-center gap-1.5 text-sm text-muted">
         <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />
-        departs {date}
+        {t.experience.departs} {date}
       </div>
 
       {trip.notes && (

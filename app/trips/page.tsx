@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
+import { Package, RefreshCw } from "lucide-react";
 import TripCard from "@/components/TripCard";
 import QuickRequest from "@/components/QuickRequest";
-import CountrySelect from "@/components/CountrySelect";
+import BrowseFilters from "@/components/BrowseFilters";
+import ListingError from "@/components/ListingError";
+import { postHref } from "@/lib/routes";
+import { useBrowseFilters } from "@/lib/useBrowseFilters";
 import Toast from "@/components/ui/Toast";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import EmptyState from "@/components/ui/EmptyState";
@@ -17,17 +20,18 @@ import { useT } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 
-export default function TripsPage() {
+function TripsContent() {
   const gate = useContactGate();
   const t = useT();
   const { session } = useSession();
   const [attention, setAttention] = useState<Attention | null>(null);
   const [quickTrip, setQuickTrip] = useState<Trip | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  // Optional deadline: show only travellers who depart in time for it.
-  const [byDate, setByDate] = useState("");
+  const browse = useBrowseFilters("/trips");
+  const { from, to, date, sort } = browse.filters;
+  const x = t.experience;
+  const [loadError, setLoadError] = useState(false);
+  const [reload, setReload] = useState(0);
   const [toast, setToast] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
@@ -37,37 +41,30 @@ export default function TripsPage() {
   }, [session]);
 
   useEffect(() => {
+    let active = true;
+    setLoaded(false);
+    setLoadError(false);
     fetchTrips()
-      .then(setTrips)
-      .catch(() => setToast("Could not load trips — please refresh."))
-      .finally(() => setLoaded(true));
-  }, []);
+      .then((items) => { if (active) setTrips(items); })
+      .catch(() => { if (active) setLoadError(true); })
+      .finally(() => { if (active) setLoaded(true); });
+    return () => { active = false; };
+  }, [reload]);
 
-  const filtered = useMemo(
-    () =>
-      trips.filter(
-        (t) =>
-          (!from || t.fromCountry === from) &&
-          (!to || t.toCountry === to) &&
-          (!byDate || t.departDate <= byDate)
-      ),
-    [trips, from, to, byDate]
+  const filtered = useMemo(() =>
+    trips.filter((item) =>
+      (!from || item.fromCountry === from) &&
+      (!to || item.toCountry === to) &&
+      (!date || item.departDate <= date)
+    ).sort((a, b) => sort === "price"
+      ? a.pricePerKg - b.pricePerKg || a.departDate.localeCompare(b.departDate)
+      : a.departDate.localeCompare(b.departDate)),
+    [trips, from, to, date, sort]
   );
 
-  function clear() {
-    setFrom("");
-    setTo("");
-    setByDate("");
-  }
-
-  function swap() {
-    setFrom(to);
-    setTo(from);
-  }
-
   async function handleRequest(trip: Trip) {
-    if (!(await gate())) return;
     try {
+      if (!(await gate())) return;
       // A match joins this trip to a parcel going the SAME way. Reuse one
       // of mine on that route if it exists; otherwise collect just the
       // parcel details, with the route inherited from the trip.
@@ -97,80 +94,27 @@ export default function TripsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
-        {t.browse.tripsTitle}
-      </h1>
-      <p className="mt-2 max-w-2xl text-muted">{t.browse.tripsSub}</p>
-
-      <div className="card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:grid-cols-[1fr_auto_1fr_1fr_auto] sm:p-5">
-        <div>
-          <label className="field-label" htmlFor="trips-from">
-            From
-          </label>
-          <CountrySelect
-            id="trips-from"
-            value={from}
-            onChange={setFrom}
-            placeholder="Any origin"
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={swap}
-          aria-label="Swap origin and destination"
-          className="btn-ghost mx-auto h-11 w-11 shrink-0 p-0"
-        >
-          <ArrowLeftRight size={18} strokeWidth={2} aria-hidden />
-        </button>
-
-        <div>
-          <label className="field-label" htmlFor="trips-to">
-            To
-          </label>
-          <CountrySelect
-            id="trips-to"
-            value={to}
-            onChange={setTo}
-            placeholder="Any destination"
-          />
-        </div>
-
-        <div>
-          <label className="field-label" htmlFor="trips-by">
-            {t.browse.dateNeededBy}
-          </label>
-          <input
-            id="trips-by"
-            type="date"
-            className="field"
-            value={byDate}
-            onChange={(e) => setByDate(e.target.value)}
-          />
-        </div>
-
-        <button
-          type="button"
-          className="btn-ghost h-11 w-full sm:w-auto"
-          onClick={clear}
-          disabled={!from && !to && !byDate}
-        >
-          Clear filters
-        </button>
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div><p className="section-eyebrow">{x.send}</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">{t.browse.tripsTitle}</h1><p className="mt-3 max-w-2xl text-base text-muted">{x.browseTripsSub}</p></div>
+        <Link href={postHref("parcel", { from, to })} className="btn-primary"><Package size={18} aria-hidden />{x.postParcel}</Link>
       </div>
+      <BrowseFilters kind="trips" {...browse} />
 
       {!loaded ? (
-        <div className="mt-6 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div aria-busy="true" aria-label={x.loading} className="mt-6 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : (
+      ) : loadError ? <ListingError retry={() => setReload((count) => count + 1)} /> : (
         <>
-          <p aria-live="polite" className="mt-6 text-sm text-muted">
-            <span className="font-semibold text-ink">{filtered.length}</span>
-            {filtered.length === 1 ? " traveller found" : " travellers found"}
-          </p>
+          <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
+            <div><p aria-live="polite" className="text-base font-semibold">{x.resultTrips(filtered.length)}</p><p className="mt-1 text-sm text-muted">{x.usd}</p></div>
+            <div className="flex items-end gap-2">
+              <div><label htmlFor="trips-sort" className="field-label">{x.sort}</label><select id="trips-sort" className="field" disabled={browse.pending} value={sort === "price" ? sort : "date"} onChange={(e) => browse.update({ sort: e.target.value as "date" | "price" })}><option value="date">{x.soonest}</option><option value="price">{x.cheapest}</option></select></div>
+              <button type="button" onClick={() => setReload((count) => count + 1)} className="btn-ghost h-12 w-12 px-0" aria-label={x.retry}><RefreshCw size={17} aria-hidden /></button>
+            </div>
+          </div>
 
           {filtered.length > 0 ? (
             <div className="mt-4 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -188,14 +132,14 @@ export default function TripsPage() {
           ) : (
             <div className="mt-4">
               <EmptyState
-                title="No trips on this route yet"
-                body="Try a different route or clear your filters — or post your parcel so travellers can find you."
+                title={x.emptyTrips}
+                body={x.emptyTripsBody}
               >
-                <Link href="/post/parcel" className="btn-primary">
-                  Post your parcel
+                <Link href={postHref("parcel", { from, to })} className="btn-primary">
+                  {x.postParcel}
                 </Link>
-                <button type="button" className="btn-ghost" onClick={clear}>
-                  Clear filters
+                <button type="button" className="btn-ghost" onClick={browse.clear}>
+                  {x.clear}
                 </button>
               </EmptyState>
             </div>
@@ -219,4 +163,8 @@ export default function TripsPage() {
       {toast && <Toast message={toast} onClose={() => setToast("")} />}
     </div>
   );
+}
+
+export default function TripsPage() {
+  return <Suspense fallback={<div className="mx-auto max-w-6xl px-4 py-10"><SkeletonCard /></div>}><TripsContent /></Suspense>;
 }
