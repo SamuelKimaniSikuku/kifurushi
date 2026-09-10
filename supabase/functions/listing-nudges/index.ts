@@ -26,6 +26,12 @@ const T: Record<
     tripSoonBody: (kg: number, waiting: number) => string;
     tripGone: (city: string) => string;
     tripGoneBody: (waiting: number) => string;
+    pendingAsk: (name: string) => string;
+    pendingAskBody: (c: { name: string; days: number; kg: number; budget: number; city: string }) => string;
+    pendingOffer: (name: string) => string;
+    pendingOfferBody: (c: { name: string; days: number; kg: number; city: string }) => string;
+    respondNow: string;
+    footerPending: string;
     trialSoon: (date: string) => string;
     trialSoonBody: (date: string) => string;
     trialOver: string;
@@ -65,6 +71,14 @@ const T: Record<
       (waiting > 0
         ? ` There ${waiting === 1 ? "is" : "are"} ${waiting} parcel${waiting === 1 ? "" : "s"} waiting on that route right now, so if you fly it again, post the trip as early as you can — we'll alert every fitting sender instantly.`
         : ` Next time, posting as early as you can makes the difference — most matches need a few days to form, and we now alert every fitting sender the moment you post.`),
+    pendingAsk: (name) => `${name} is still waiting for your answer 📦`,
+    pendingAskBody: (c) =>
+      `<b>${c.name}</b> asked you ${c.days} days ago to carry their ${c.kg} kg parcel to ${c.city} for $${c.budget}, and hasn't heard back. Accept, decline, or ask them a question in the chat — even a quick no lets them find another traveller in time.`,
+    pendingOffer: (name) => `${name} is still waiting for your answer ✈️`,
+    pendingOfferBody: (c) =>
+      `<b>${c.name}</b> offered ${c.days} days ago to carry your ${c.kg} kg parcel to ${c.city}, and hasn't heard back. Accept, decline, or ask them a question in the chat — travellers book their space out fast.`,
+    respondNow: "Reply now",
+    footerPending: "You get this because a match request on Kifurushi is waiting for your answer.",
     trialSoon: (date) => `Your free month on Kifurushi ends ${date}`,
     trialSoonBody: (date) =>
       `Your free first month ends on <b>${date}</b>. After that you can still browse, receive parcels and track deliveries — but posting a trip or a parcel, and requesting a match, need a membership.` +
@@ -104,6 +118,14 @@ const T: Record<
       (waiting > 0
         ? ` ${waiting} colis attend${waiting === 1 ? "" : "ent"} actuellement sur cet itinéraire : si vous le refaites, publiez votre voyage le plus tôt possible — nous alertons chaque expéditeur compatible instantanément.`
         : ` La prochaine fois, publier le plus tôt possible fait la différence — la plupart des mises en relation prennent quelques jours, et nous alertons désormais chaque expéditeur compatible dès la publication.`),
+    pendingAsk: (name) => `${name} attend toujours votre réponse 📦`,
+    pendingAskBody: (c) =>
+      `<b>${c.name}</b> vous a demandé il y a ${c.days} jours de transporter son colis de ${c.kg} kg vers ${c.city} pour ${c.budget} $, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — même un non rapide lui laisse le temps de trouver un autre voyageur.`,
+    pendingOffer: (name) => `${name} attend toujours votre réponse ✈️`,
+    pendingOfferBody: (c) =>
+      `<b>${c.name}</b> a proposé il y a ${c.days} jours de transporter votre colis de ${c.kg} kg vers ${c.city}, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — l'espace des voyageurs part vite.`,
+    respondNow: "Répondre maintenant",
+    footerPending: "Vous recevez ceci car une demande de mise en relation sur Kifurushi attend votre réponse.",
     trialSoon: (date) => `Votre mois gratuit sur Kifurushi se termine le ${date}`,
     trialSoonBody: (date) =>
       `Votre premier mois gratuit se termine le <b>${date}</b>. Ensuite, vous pourrez toujours consulter les annonces, recevoir des colis et suivre les livraisons — mais publier un voyage ou un colis, et demander une mise en relation, nécessitent un abonnement.` +
@@ -141,6 +163,14 @@ const T: Record<
       (waiting > 0
         ? ` Kuna vifurushi ${waiting} vinavyosubiri kwenye njia hiyo sasa hivi — ukiisafiri tena, weka safari mapema uwezavyo, tutawaarifu watumaji wote wanaofaa papo hapo.`
         : ` Wakati ujao, kuweka tangazo mapema uwezavyo ndiko kunakoleta tofauti — match nyingi huchukua siku kadhaa, na sasa tunawaarifu watumaji wanaofaa mara tangazo linapowekwa.`),
+    pendingAsk: (name) => `${name} bado anasubiri jibu lako 📦`,
+    pendingAskBody: (c) =>
+      `<b>${c.name}</b> alikuomba siku ${c.days} zilizopita ubebe kifurushi chake cha kg ${c.kg} kwenda ${c.city} kwa $${c.budget}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — hata "hapana" ya haraka inampa muda wa kutafuta msafiri mwingine.`,
+    pendingOffer: (name) => `${name} bado anasubiri jibu lako ✈️`,
+    pendingOfferBody: (c) =>
+      `<b>${c.name}</b> alijitolea siku ${c.days} zilizopita kubeba kifurushi chako cha kg ${c.kg} kwenda ${c.city}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — nafasi za wasafiri huchukuliwa haraka.`,
+    respondNow: "Jibu sasa",
+    footerPending: "Unapata hii kwa sababu ombi la match kwenye Kifurushi linasubiri jibu lako.",
     trialSoon: (date) => `Mwezi wako wa bure kwenye Kifurushi unaisha ${date}`,
     trialSoonBody: (date) =>
       `Mwezi wako wa kwanza wa bure unaisha tarehe <b>${date}</b>. Baada ya hapo bado utaweza kuangalia matangazo, kupokea vifurushi na kufuatilia usafirishaji — lakini kuweka safari au kifurushi, na kuomba match, kunahitaji uanachama.` +
@@ -416,6 +446,85 @@ Deno.serve(async (req) => {
         .from("trips")
         .update({ nudged_expired_at: new Date().toISOString() })
         .eq("id", tr.id);
+      sent++;
+    }
+  }
+
+  // ----------------------------------- match requests unanswered for 48h
+  // The responder got one email when the request landed and nothing since.
+  // One reminder, once per match. A request whose listings have since gone
+  // stale (trip departed, deadline passed) is marked without an email —
+  // there is nothing useful left to answer.
+  const cutoff = new Date(Date.now() - 48 * 3_600_000).toISOString();
+  const { data: pending } = await admin
+    .from("matches")
+    .select(
+      `id, requester_id, updated_at,
+       trip:trips!matches_trip_id_fkey(traveler_id, to_city, depart_date),
+       parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg, budget_usd, needed_by)`
+    )
+    .eq("status", "requested")
+    .is("request_nudged_at", null)
+    .lt("updated_at", cutoff)
+    .limit(50);
+
+  for (const m of pending ?? []) {
+    const trip = m.trip as unknown as {
+      traveler_id: string; to_city: string; depart_date: string;
+    } | null;
+    const parcel = m.parcel as unknown as {
+      sender_id: string; weight_kg: number; budget_usd: number; needed_by: string;
+    } | null;
+    if (!trip || !parcel) continue;
+
+    const mark = () =>
+      admin
+        .from("matches")
+        .update({ request_nudged_at: new Date().toISOString() })
+        .eq("id", m.id);
+
+    if (trip.depart_date < today || parcel.needed_by < today) {
+      await mark();
+      continue;
+    }
+
+    const senderRequested = m.requester_id === parcel.sender_id;
+    const responderId = senderRequested ? trip.traveler_id : parcel.sender_id;
+    const { email, lang } = await recipient(responderId);
+    if (!email) {
+      await mark();
+      continue;
+    }
+    const { data: reqProf } = await admin
+      .from("profiles")
+      .select("full_name")
+      .eq("id", m.requester_id)
+      .maybeSingle();
+    const name = reqProf?.full_name ?? "A member";
+    const days = Math.max(2, Math.floor((Date.now() - new Date(m.updated_at).getTime()) / 86_400_000));
+
+    const L = T[lang];
+    const ctx = {
+      name,
+      days,
+      kg: Number(parcel.weight_kg),
+      budget: Math.round(Number(parcel.budget_usd)),
+      city: trip.to_city,
+    };
+    const ok = await sendEmail(
+      email,
+      senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
+      shell(
+        senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
+        senderRequested ? L.pendingAskBody(ctx) : L.pendingOfferBody(ctx),
+        L.respondNow,
+        `${SITE}/dashboard`,
+        lang,
+        L.footerPending
+      )
+    );
+    if (ok) {
+      await mark();
       sent++;
     }
   }
