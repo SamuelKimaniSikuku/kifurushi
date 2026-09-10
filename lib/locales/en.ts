@@ -397,6 +397,10 @@ export const en = {
       "Not sure yet? Ask them in Messages below first — accepting can wait.",
     chatWhileWaiting: (name: string) =>
       `Waiting for ${name} to accept — you can already chat in Messages below.`,
+    waitingForYou: (name: string, days: number) =>
+      `${name} has been waiting ${days === 1 ? "a day" : `${days} days`} for your answer — accept, decline, or ask them a question below.`,
+    waitingSent: (days: number) =>
+      `Sent ${days === 1 ? "a day" : `${days} days`} ago — a friendly message below can move things along.`,
     tripsTitle: "Travellers going your way",
     tripsSub:
       "Verified people with spare luggage space. Request one to carry your parcel — you agree the fee directly.",

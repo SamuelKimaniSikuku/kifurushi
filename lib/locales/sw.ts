@@ -400,6 +400,10 @@ export const sw: Dict = {
       "Bado huna uhakika? Uliza maswali kwenye Messages hapa chini kwanza — kukubali kunaweza kusubiri.",
     chatWhileWaiting: (name: string) =>
       `Unasubiri ${name} akubali — mnaweza kuanza kuzungumza kwenye Messages hapa chini.`,
+    waitingForYou: (name: string, days: number) =>
+      `${name} amesubiri jibu lako kwa ${days === 1 ? "siku moja" : `siku ${days}`} — kubali, kataa, au muulize swali hapa chini.`,
+    waitingSent: (days: number) =>
+      `Ilitumwa ${days === 1 ? "siku moja" : `siku ${days}`} zilizopita — ujumbe mfupi hapa chini unaweza kusaidia.`,
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:
       "Watu waliothibitishwa wenye nafasi ya ziada ya mizigo. Omba mmoja abebe kifurushi chako — mnakubaliana bei moja kwa moja.",

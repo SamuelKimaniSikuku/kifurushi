@@ -400,6 +400,10 @@ export const fr: Dict = {
       "Pas encore sûr ? Posez d’abord vos questions dans Messages ci-dessous — accepter peut attendre.",
     chatWhileWaiting: (name: string) =>
       `En attente de la réponse de ${name} — vous pouvez déjà discuter dans Messages ci-dessous.`,
+    waitingForYou: (name: string, days: number) =>
+      `${name} attend votre réponse depuis ${days === 1 ? "un jour" : `${days} jours`} — acceptez, refusez, ou posez une question ci-dessous.`,
+    waitingSent: (days: number) =>
+      `Envoyée il y a ${days === 1 ? "un jour" : `${days} jours`} — un petit message ci-dessous peut faire avancer les choses.`,
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
       "Des personnes vérifiées avec de la place dans leurs bagages. Demandez-en une pour transporter votre colis — vous convenez du prix directement.",

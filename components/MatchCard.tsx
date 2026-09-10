@@ -257,6 +257,9 @@ export default function MatchCard({
   const inTransit = match.status === "picked_up" || match.status === "in_transit";
   const received = match.status === "delivered" || done;
   const cancellable = ["requested", "accepted", "escrow_paid"].includes(match.status);
+  const waitingDays = Math.floor(
+    (Date.now() - new Date(match.updatedAt).getTime()) / 86400000
+  );
   const senderCodeWindow =
     !isTraveler &&
     ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
@@ -472,6 +475,13 @@ export default function MatchCard({
           {match.status === "requested" &&
             (canRespond ? (
               <div>
+                {/* updated_at still equals the request time while nothing has
+                    answered it, so it doubles as "how long they've waited". */}
+                {waitingDays >= 1 && (
+                  <p className="mb-2 rounded-lg bg-gold/15 px-3 py-2 text-xs font-medium text-ink">
+                    {t.browse.waitingForYou(match.counterpartyName, waitingDays)}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"
@@ -499,6 +509,7 @@ export default function MatchCard({
             ) : (
               <p className="text-sm text-muted">
                 {t.browse.chatWhileWaiting(match.counterpartyName)}
+                {waitingDays >= 1 && <> {t.browse.waitingSent(waitingDays)}</>}
               </p>
             ))}
 
