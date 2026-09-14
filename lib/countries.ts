@@ -101,6 +101,7 @@ export const DIASPORA_COUNTRIES: Country[] = [
   c("NO", "Norway", "🇳🇴", "Europe", false),
   c("DK", "Denmark", "🇩🇰", "Europe", false),
   c("CH", "Switzerland", "🇨🇭", "Europe", false),
+  c("AT", "Austria", "🇦🇹", "Europe", false),
   c("IE", "Ireland", "🇮🇪", "Europe", false),
   c("US", "United States", "🇺🇸", "North America", false),
   c("CA", "Canada", "🇨🇦", "North America", false),

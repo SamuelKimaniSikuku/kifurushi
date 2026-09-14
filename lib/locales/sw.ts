@@ -28,7 +28,7 @@ export const sw: Dict = {
     trust: "Uaminifu",
     coverage: "Maeneo",
     coverageText:
-      "Nchi 54 za Afrika · maeneo 22 ya diaspora Ulaya, Amerika Kaskazini, Ghuba na Asia-Pasifiki.",
+      "Nchi 54 za Afrika · maeneo 23 ya diaspora Ulaya, Amerika Kaskazini, Ghuba na Asia-Pasifiki.",
     pricingLink: "Bei — uanachama mmoja",
     prohibitedItems: "Vitu vilivyokatazwa",
     howProtection: "Jinsi ulinzi unavyofanya kazi",
@@ -42,7 +42,7 @@ export const sw: Dict = {
       `© ${year} Kifurushi. Imejengwa kwa ajili ya diaspora ya Afrika.`,
   },
   home: {
-    badge: "NCHI ZOTE 54 ZA AFRIKA · MAENEO 22 YA DIASPORA",
+    badge: "NCHI ZOTE 54 ZA AFRIKA · MAENEO 23 YA DIASPORA",
     h1a: "Pata pesa",
     h1b: "unaposafiri nyumbani",
     intro:
@@ -339,7 +339,7 @@ export const sw: Dict = {
           },
           {
             q: "Mnahudumia nchi zipi?",
-            a: "Nchi zote 54 za Afrika na maeneo 22 ya diaspora barani Ulaya, Amerika Kaskazini, Ghuba na Asia-Pasifiki. Kama njia ina manufaa inategemea wanachama wanaoisafiri kweli.",
+            a: "Nchi zote 54 za Afrika na maeneo 23 ya diaspora barani Ulaya, Amerika Kaskazini, Ghuba na Asia-Pasifiki. Kama njia ina manufaa inategemea wanachama wanaoisafiri kweli.",
           },
           {
             q: "Kifurushi kinazungumza lugha gani?",

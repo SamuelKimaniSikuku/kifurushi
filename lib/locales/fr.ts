@@ -28,7 +28,7 @@ export const fr: Dict = {
     trust: "Confiance",
     coverage: "Couverture",
     coverageText:
-      "54 pays africains · 22 destinations de la diaspora en Europe, Amérique du Nord, dans le Golfe et en Asie-Pacifique.",
+      "54 pays africains · 23 destinations de la diaspora en Europe, Amérique du Nord, dans le Golfe et en Asie-Pacifique.",
     pricingLink: "Tarifs — un seul abonnement",
     prohibitedItems: "Objets interdits",
     howProtection: "Comment fonctionne la protection",
@@ -42,7 +42,7 @@ export const fr: Dict = {
       `© ${year} Kifurushi. Conçu pour la diaspora africaine.`,
   },
   home: {
-    badge: "54 PAYS AFRICAINS · 22 DESTINATIONS DE LA DIASPORA",
+    badge: "54 PAYS AFRICAINS · 23 DESTINATIONS DE LA DIASPORA",
     h1a: "Gagnez de l'argent",
     h1b: "en rentrant au pays",
     intro:
@@ -339,7 +339,7 @@ export const fr: Dict = {
           },
           {
             q: "Quels pays couvrez-vous ?",
-            a: "Les 54 pays africains et 22 destinations de la diaspora en Europe, en Amérique du Nord, dans le Golfe et en Asie-Pacifique. Qu'un itinéraire soit utile dépend des membres qui le volent réellement.",
+            a: "Les 54 pays africains et 23 destinations de la diaspora en Europe, en Amérique du Nord, dans le Golfe et en Asie-Pacifique. Qu'un itinéraire soit utile dépend des membres qui le volent réellement.",
           },
           {
             q: "Quelles langues parle Kifurushi ?",

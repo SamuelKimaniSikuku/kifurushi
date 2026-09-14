@@ -97,7 +97,7 @@ export default function OpengraphImage() {
             color: "rgba(255,255,255,0.65)",
           }}
         >
-          54 African countries · 22 diaspora destinations · ID-verified · 0%
+          54 African countries · 23 diaspora destinations · ID-verified · 0%
           commission
         </div>
       </div>

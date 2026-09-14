@@ -27,7 +27,7 @@ export const en = {
     trust: "Trust",
     coverage: "Coverage",
     coverageText:
-      "54 African countries · 22 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific.",
+      "54 African countries · 23 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific.",
     pricingLink: "Pricing — one membership",
     prohibitedItems: "Prohibited items",
     howProtection: "How protection works",
@@ -41,7 +41,7 @@ export const en = {
       `© ${year} Kifurushi. Built for the African diaspora.`,
   },
   home: {
-    badge: "ALL 54 AFRICAN COUNTRIES · 22 DIASPORA DESTINATIONS",
+    badge: "ALL 54 AFRICAN COUNTRIES · 23 DIASPORA DESTINATIONS",
     h1a: "Make money",
     h1b: "while travelling home",
     intro:
@@ -337,7 +337,7 @@ export const en = {
           },
           {
             q: "Which countries do you cover?",
-            a: "All 54 African countries and 22 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific. Whether a route is useful depends on members actually flying it.",
+            a: "All 54 African countries and 23 diaspora destinations across Europe, North America, the Gulf and Asia-Pacific. Whether a route is useful depends on members actually flying it.",
           },
           {
             q: "What languages does Kifurushi speak?",
