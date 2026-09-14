@@ -4,7 +4,7 @@ import { readPostRoute } from "@/lib/routes";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, Plane, ShieldCheck } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import {
   tripSchema, zodErrors, touchedErrors, FieldErrors,
@@ -12,7 +12,7 @@ import {
 import CorridorHint from "@/components/CorridorHint";
 import { WaitingParcels } from "@/components/PrePostMatches";
 import {
-  addTrip, CorridorFit, fetchTripById, fitForTrip, updateTrip,
+  addTrip, CorridorFit, fetchTripById, fitForTrip, hasDuplicateTrip, updateTrip,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
@@ -61,6 +61,9 @@ function PostTripForm() {
   });
   const [cats, setCats] = useState<ParcelCategory[]>(["documents", "clothing", "gifts"]);
   const [minDate, setMinDate] = useState("");
+  // Set when the member already has an open trip on this route and date; the
+  // next submit is taken as "yes, it really is a second trip".
+  const [dupWarning, setDupWarning] = useState(false);
   const editId = params.get("edit");
 
   useEffect(() => {
@@ -132,6 +135,11 @@ function PostTripForm() {
     if (!session || submitting) return;
     setSubmitting(true);
     try {
+      if (!editId && !dupWarning && (await hasDuplicateTrip(parsed.data))) {
+        setDupWarning(true);
+        setSubmitting(false);
+        return;
+      }
       if (editId) {
         await updateTrip(editId, { ...parsed.data, categoriesAccepted: cats });
       } else {
@@ -166,6 +174,11 @@ function PostTripForm() {
       clearTimeout(timer);
     };
   }, [form.fromCountry, form.toCountry, form.departDate, form]);
+
+  // A changed route or date is a different trip — retract the duplicate warning.
+  useEffect(() => {
+    setDupWarning(false);
+  }, [form.fromCountry, form.toCountry, form.departDate]);
 
   const daysToDeparture =
     form.departDate && minDate
@@ -427,13 +440,20 @@ function PostTripForm() {
           </p>
         </div>
 
+        {dupWarning && (
+          <div role="alert" className="mt-4 flex items-start gap-2.5 rounded-xl border border-warn bg-sand px-4 py-3 text-sm leading-relaxed">
+            <AlertTriangle size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-warn" />
+            <p>{t.postTrip.duplicateWarning}</p>
+          </div>
+        )}
         {errors._submit && (
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-primary mt-6 w-full py-3" disabled={submitting}>
           {editId
             ? submitting ? t.postTrip.saving : t.postTrip.save
-            : submitting ? t.postTrip.publishing : t.postTrip.publish}
+            : submitting ? t.postTrip.publishing
+            : dupWarning ? t.postTrip.postAnyway : t.postTrip.publish}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

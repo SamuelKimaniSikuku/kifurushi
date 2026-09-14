@@ -4,7 +4,7 @@ import { readPostRoute } from "@/lib/routes";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Ban, Package } from "lucide-react";
+import { AlertTriangle, ArrowRight, Ban, Package } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import {
   parcelSchema, zodErrors, touchedErrors, FieldErrors,
@@ -12,7 +12,7 @@ import {
 import CorridorHint from "@/components/CorridorHint";
 import { FittingTrips } from "@/components/PrePostMatches";
 import {
-  addParcel, CorridorFit, fetchParcelById, fitForParcel, updateParcel,
+  addParcel, CorridorFit, fetchParcelById, fitForParcel, hasDuplicateParcel, updateParcel,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useT } from "@/lib/i18n";
@@ -63,6 +63,9 @@ function PostParcelForm() {
   });
   const [cats, setCats] = useState<ParcelCategory[]>(["gifts"]);
   const [minDate, setMinDate] = useState("");
+  // Set when the member already has an open parcel on this route and deadline;
+  // the next submit is taken as "yes, it really is a second parcel".
+  const [dupWarning, setDupWarning] = useState(false);
   const editId = params.get("edit");
 
   useEffect(() => {
@@ -134,6 +137,11 @@ function PostParcelForm() {
     if (!session || submitting) return;
     setSubmitting(true);
     try {
+      if (!editId && !dupWarning && (await hasDuplicateParcel(parsed.data))) {
+        setDupWarning(true);
+        setSubmitting(false);
+        return;
+      }
       if (editId) {
         await updateParcel(editId, { ...parsed.data, categories: cats });
       } else {
@@ -168,6 +176,11 @@ function PostParcelForm() {
       clearTimeout(timer);
     };
   }, [form.fromCountry, form.toCountry, form.neededBy, form.weightKg, form]);
+
+  // A changed route or deadline is a different parcel — retract the warning.
+  useEffect(() => {
+    setDupWarning(false);
+  }, [form.fromCountry, form.toCountry, form.neededBy]);
 
   // How much runway the chosen deadline leaves. Matching takes real time;
   // a deadline inside a week deserves a gentle warning, not a surprise.
@@ -449,13 +462,20 @@ function PostParcelForm() {
           </p>
         </div>
 
+        {dupWarning && (
+          <div role="alert" className="mt-4 flex items-start gap-2.5 rounded-xl border border-warn bg-sand px-4 py-3 text-sm leading-relaxed">
+            <AlertTriangle size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-warn" />
+            <p>{t.postParcel.duplicateWarning}</p>
+          </div>
+        )}
         {errors._submit && (
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
         <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting}>
           {editId
             ? submitting ? t.postParcel.saving : t.postParcel.save
-            : submitting ? t.postParcel.posting : t.postParcel.post}
+            : submitting ? t.postParcel.posting
+            : dupWarning ? t.postParcel.postAnyway : t.postParcel.post}
           <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>

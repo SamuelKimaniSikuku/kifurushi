@@ -547,6 +547,9 @@ export const fr: Dict = {
     save: "Enregistrer",
     saving: "Enregistrement…",
     submitError: "Impossible de publier votre voyage — veuillez réessayer.",
+    duplicateWarning:
+      "Vous avez déjà un voyage ouvert sur cet itinéraire au même départ — cela ressemble à un doublon. Pour modifier des détails, éditez plutôt votre voyage existant depuis le tableau de bord. Vous faites vraiment deux voyages ? Publiez-le ci-dessous.",
+    postAnyway: "C'est un voyage distinct — publier",
   },
   postParcel: {
     title: "Envoyer un colis",
@@ -583,5 +586,8 @@ export const fr: Dict = {
     save: "Enregistrer",
     saving: "Enregistrement…",
     submitError: "Impossible de publier votre colis — veuillez réessayer.",
+    duplicateWarning:
+      "Vous avez déjà un colis ouvert sur cet itinéraire avec la même date limite — cela ressemble à un doublon. Pour modifier des détails, éditez plutôt votre colis existant depuis le tableau de bord. Vous envoyez vraiment deux colis ? Publiez-le ci-dessous.",
+    postAnyway: "C'est un colis distinct — publier",
   },
 };

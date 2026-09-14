@@ -546,6 +546,9 @@ export const sw: Dict = {
     save: "Hifadhi mabadiliko",
     saving: "Inahifadhi…",
     submitError: "Imeshindikana kutangaza safari yako — tafadhali jaribu tena.",
+    duplicateWarning:
+      "Tayari una safari iliyo wazi kwenye njia hii inayoondoka siku hiyo hiyo — hii inaonekana kama nakala. Kama unabadilisha maelezo, hariri safari yako iliyopo kutoka kwenye dashibodi. Kweli unasafiri mara mbili? Tangaza hapa chini.",
+    postAnyway: "Ni safari tofauti — tangaza",
   },
   postParcel: {
     title: "Tuma kifurushi",
@@ -582,5 +585,8 @@ export const sw: Dict = {
     save: "Hifadhi mabadiliko",
     saving: "Inahifadhi…",
     submitError: "Imeshindikana kutangaza kifurushi chako — tafadhali jaribu tena.",
+    duplicateWarning:
+      "Tayari una kifurushi kilicho wazi kwenye njia hii chenye tarehe ile ile ya mwisho — hii inaonekana kama nakala. Kama unabadilisha maelezo, hariri kifurushi chako kilichopo kutoka kwenye dashibodi. Kweli unatuma viwili? Tangaza hapa chini.",
+    postAnyway: "Ni kifurushi tofauti — tangaza",
   },
 };

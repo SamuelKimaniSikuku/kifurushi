@@ -426,6 +426,54 @@ export async function addParcel(p: NewParcel): Promise<void> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Duplicate listings
+// Re-posting the same route on the same date is almost always a mistake —
+// the post forms ask the member to confirm before letting it through.
+// ---------------------------------------------------------------------------
+
+export async function hasDuplicateTrip(t: {
+  fromCountry: string;
+  toCountry: string;
+  departDate: string;
+}): Promise<boolean> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  if (!uid) return false;
+  const { data, error } = await supabase
+    .from("trips")
+    .select("id")
+    .eq("traveler_id", uid)
+    .eq("status", "open")
+    .eq("from_country", t.fromCountry)
+    .eq("to_country", t.toCountry)
+    .eq("depart_date", t.departDate)
+    .limit(1);
+  if (error) return false; // never block posting on a failed check
+  return (data ?? []).length > 0;
+}
+
+export async function hasDuplicateParcel(p: {
+  fromCountry: string;
+  toCountry: string;
+  neededBy: string;
+}): Promise<boolean> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  if (!uid) return false;
+  const { data, error } = await supabase
+    .from("parcels")
+    .select("id")
+    .eq("sender_id", uid)
+    .eq("status", "open")
+    .eq("from_country", p.fromCountry)
+    .eq("to_country", p.toCountry)
+    .eq("needed_by", p.neededBy)
+    .limit(1);
+  if (error) return false; // never block posting on a failed check
+  return (data ?? []).length > 0;
+}
+
 /** Load one of my listings for editing. */
 export async function fetchTripById(id: string): Promise<Trip | null> {
   const { data, error } = await supabase

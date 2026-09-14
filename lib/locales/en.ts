@@ -541,6 +541,9 @@ export const en = {
     save: "Save changes",
     saving: "Saving…",
     submitError: "Could not post your trip — please try again.",
+    duplicateWarning:
+      "You already have an open trip on this route departing the same day — this looks like a duplicate. If you're changing details, edit your existing trip from the dashboard instead. Really taking two trips? Post it below.",
+    postAnyway: "It's a separate trip — post it",
   },
   postParcel: {
     title: "Send a parcel",
@@ -576,6 +579,9 @@ export const en = {
     save: "Save changes",
     saving: "Saving…",
     submitError: "Could not post your parcel — please try again.",
+    duplicateWarning:
+      "You already have an open parcel on this route with the same deadline — this looks like a duplicate. If you're changing details, edit your existing parcel from the dashboard instead. Really sending two? Post it below.",
+    postAnyway: "It's a separate parcel — post it",
   },
 };
 
