@@ -426,6 +426,15 @@ export const sw: Dict = {
     linkCopied: "Kiungo kimenakiliwa!",
     shareText: (from: string, to: string) =>
       `${from} → ${to} kwenye Kifurushi — bure wakati wa uzinduzi:`,
+    chatWhatsApp: (name: string) => `Zungumza na ${name} kwenye WhatsApp`,
+    waTitle: "WhatsApp kwa makabidhiano",
+    waHint:
+      "Hiari. Inaonekana tu kwa msafiri au mtumaji wako baada ya ombi kukubaliwa — kamwe si kwenye wasifu wako wa umma wala matangazo.",
+    waPlaceholder: "+254 712 345678",
+    waInvalid: "Tumia muundo wa kimataifa unaoanza na +, mfano +254712345678",
+    waSave: "Hifadhi namba",
+    waSaved: "Imehifadhiwa — mwenzako ataiona baada ya kukubaliwa.",
+    waRemove: "Ondoa",
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:
       "Watu waliothibitishwa wenye nafasi ya ziada ya mizigo. Omba mmoja abebe kifurushi chako — mnakubaliana bei moja kwa moja.",

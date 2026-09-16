@@ -426,6 +426,15 @@ export const fr: Dict = {
     linkCopied: "Lien copié !",
     shareText: (from: string, to: string) =>
       `${from} → ${to} sur Kifurushi — gratuit pendant le lancement :`,
+    chatWhatsApp: (name: string) => `Discuter avec ${name} sur WhatsApp`,
+    waTitle: "WhatsApp pour les remises en main propre",
+    waHint:
+      "Optionnel. Visible uniquement par votre voyageur ou expéditeur une fois la demande acceptée — jamais sur votre profil public ni vos annonces.",
+    waPlaceholder: "+33 6 12 34 56 78",
+    waInvalid: "Utilisez le format international commençant par +, ex. +33612345678",
+    waSave: "Enregistrer le numéro",
+    waSaved: "Enregistré — votre partenaire le verra après acceptation.",
+    waRemove: "Supprimer",
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
       "Des personnes vérifiées avec de la place dans leurs bagages. Demandez-en une pour transporter votre colis — vous convenez du prix directement.",

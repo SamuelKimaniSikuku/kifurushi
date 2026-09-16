@@ -423,6 +423,15 @@ export const en = {
     linkCopied: "Link copied!",
     shareText: (from: string, to: string) =>
       `${from} → ${to} on Kifurushi — free during launch:`,
+    chatWhatsApp: (name: string) => `Chat with ${name} on WhatsApp`,
+    waTitle: "WhatsApp for handovers",
+    waHint:
+      "Optional. Shown only to your matched traveller or sender once a request is accepted — never on your public profile or listings.",
+    waPlaceholder: "+254 712 345678",
+    waInvalid: "Use international format starting with +, e.g. +254712345678",
+    waSave: "Save number",
+    waSaved: "Saved — your matched party can now see it after acceptance.",
+    waRemove: "Remove",
     tripsTitle: "Travellers going your way",
     tripsSub:
       "Verified people with spare luggage space. Request one to carry your parcel — you agree the fee directly.",

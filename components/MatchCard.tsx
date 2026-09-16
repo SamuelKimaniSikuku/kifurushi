@@ -8,7 +8,7 @@ import {
   STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
 } from "@/lib/types";
 import {
-  MatchDetail, deliverNow, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
+  MatchDetail, deliverNow, fetchMatchWhatsapp, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
   fetchMessages, sendMessage,
@@ -260,6 +260,26 @@ export default function MatchCard({
   const waitingDays = Math.floor(
     (Date.now() - new Date(match.updatedAt).getTime()) / 86400000
   );
+  const [waNumber, setWaNumber] = useState<string | null>(null);
+
+  // The counterparty's opted-in WhatsApp number — the RPC answers only after
+  // acceptance, so pre-acceptance renders never even ask.
+  useEffect(() => {
+    if (
+      !["accepted", "escrow_paid", "picked_up", "in_transit", "delivered", "released"].includes(
+        match.status
+      )
+    ) {
+      return;
+    }
+    let live = true;
+    fetchMatchWhatsapp(match.id)
+      .then((n) => live && setWaNumber(n))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [match.id, match.status]);
   const senderCodeWindow =
     !isTraveler &&
     ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
@@ -467,6 +487,18 @@ export default function MatchCard({
             {STATUS_LABELS[match.status]}
           </p>
         </>
+      )}
+
+      {waNumber && !ended && (
+        <a
+          href={`https://wa.me/${waNumber.replace("+", "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-success-bg px-4 py-2 text-sm font-semibold text-success transition hover:brightness-95"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          {t.browse.chatWhatsApp(match.counterpartyName.split(" ")[0])}
+        </a>
       )}
 
       {/* Role-aware actions */}

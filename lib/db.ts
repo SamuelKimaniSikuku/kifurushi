@@ -868,6 +868,45 @@ export async function senderConfirmDelivery(matchId: string): Promise<void> {
   if (error) throw error;
 }
 
+/**
+ * Opt-in WhatsApp contact. The number lives in an owner-only table (profiles
+ * are public; a phone number must never be); the matched counterparty reads
+ * it through the match_contact RPC, which only answers after acceptance.
+ */
+export async function fetchMyWhatsapp(): Promise<string | null> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  if (!uid) return null;
+  const { data } = await supabase
+    .from("contact_details")
+    .select("whatsapp_e164")
+    .eq("user_id", uid)
+    .maybeSingle();
+  return data?.whatsapp_e164 ?? null;
+}
+
+export async function saveMyWhatsapp(number: string | null): Promise<void> {
+  const { data: auth } = await supabase.auth.getSession();
+  const uid = auth.session?.user.id;
+  if (!uid) throw new Error("Not signed in");
+  if (number === null) {
+    const { error } = await supabase.from("contact_details").delete().eq("user_id", uid);
+    if (error) throw error;
+    return;
+  }
+  const { error } = await supabase
+    .from("contact_details")
+    .upsert({ user_id: uid, whatsapp_e164: number });
+  if (error) throw error;
+}
+
+/** The counterparty's WhatsApp number — null unless they opted in AND the match is accepted. */
+export async function fetchMatchWhatsapp(matchId: string): Promise<string | null> {
+  const { data, error } = await supabase.rpc("match_contact", { p_match_id: matchId });
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
 export async function cancelMatch(matchId: string): Promise<void> {
   const { error } = await supabase.rpc("cancel_match", { p_match_id: matchId });
   if (error) throw error;

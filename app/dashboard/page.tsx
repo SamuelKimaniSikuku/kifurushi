@@ -15,6 +15,7 @@ import {
   MoneyTotals, VerificationState,
 } from "@/lib/db";
 import MatchCard from "@/components/MatchCard";
+import WhatsappSettings from "@/components/WhatsappSettings";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { useT } from "@/lib/i18n";
 
@@ -260,6 +261,8 @@ export default function DashboardPage() {
           </span>
         </Link>
       )}
+
+      <WhatsappSettings />
 
       <h2 className="mt-10 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
 
