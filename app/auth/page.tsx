@@ -89,6 +89,15 @@ function AuthForm() {
           }
           return;
         }
+        // With confirmations on, Supabase obfuscates an existing account as
+        // a "success" whose user has no identities — no error, and no email
+        // will arrive. Without this check the member is told to watch an
+        // inbox that stays empty forever.
+        if (data.user && data.user.identities?.length === 0) {
+          changeMode("signin");
+          setAuthError(t.auth.alreadyRegistered);
+          return;
+        }
         // Email confirmation on: no session until the link is clicked.
         if (!data.session) {
           setConfirmSent(true);
