@@ -178,6 +178,11 @@ export const fr: Dict = {
     resetExpiredBody:
       "Les liens de réinitialisation fonctionnent une fois et expirent au bout d'une heure. Demandez-en un nouveau depuis la page de connexion — cela ne prend qu'un instant.",
     requestNewLink: "Demander un nouveau lien",
+    alreadyRegistered:
+      "Vous avez déjà un compte avec cet e-mail — connectez-vous ci-dessous (ou utilisez « Mot de passe oublié ? »).",
+    magicLink: "Envoyez-moi plutôt un lien de connexion",
+    magicSentBody: (email: string) =>
+      `Si un compte existe pour ${email}, nous avons envoyé un lien de connexion en un clic — sans mot de passe. Il fonctionne une fois et expire au bout d'une heure.`,
   },
   roles: {
     tripsMenu: "Voyages",
@@ -417,6 +422,10 @@ export const fr: Dict = {
       `${name} attend votre réponse depuis ${days === 1 ? "un jour" : `${days} jours`} — acceptez, refusez, ou posez une question ci-dessous.`,
     waitingSent: (days: number) =>
       `Envoyée il y a ${days === 1 ? "un jour" : `${days} jours`} — un petit message ci-dessous peut faire avancer les choses.`,
+    share: "Partager",
+    linkCopied: "Lien copié !",
+    shareText: (from: string, to: string) =>
+      `${from} → ${to} sur Kifurushi — gratuit pendant le lancement :`,
     tripsTitle: "Voyageurs sur votre itinéraire",
     tripsSub:
       "Des personnes vérifiées avec de la place dans leurs bagages. Demandez-en une pour transporter votre colis — vous convenez du prix directement.",

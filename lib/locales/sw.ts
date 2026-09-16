@@ -178,6 +178,11 @@ export const sw: Dict = {
     resetExpiredBody:
       "Viungo vya nenosiri hufanya kazi mara moja na huisha baada ya saa moja. Omba kipya kutoka ukurasa wa kuingia — inachukua muda mfupi tu.",
     requestNewLink: "Omba kiungo kipya",
+    alreadyRegistered:
+      "Tayari una akaunti kwa barua pepe hii — ingia hapa chini (au tumia “Umesahau nenosiri?”).",
+    magicLink: "Nitumie kiungo cha kuingia badala yake",
+    magicSentBody: (email: string) =>
+      `Kama akaunti ipo kwa ${email}, tumetuma kiungo cha kuingia kwa mbofyo mmoja — bila nenosiri. Kinafanya kazi mara moja na kinaisha baada ya saa moja.`,
   },
   roles: {
     tripsMenu: "Safari",
@@ -417,6 +422,10 @@ export const sw: Dict = {
       `${name} amesubiri jibu lako kwa ${days === 1 ? "siku moja" : `siku ${days}`} — kubali, kataa, au muulize swali hapa chini.`,
     waitingSent: (days: number) =>
       `Ilitumwa ${days === 1 ? "siku moja" : `siku ${days}`} zilizopita — ujumbe mfupi hapa chini unaweza kusaidia.`,
+    share: "Shiriki",
+    linkCopied: "Kiungo kimenakiliwa!",
+    shareText: (from: string, to: string) =>
+      `${from} → ${to} kwenye Kifurushi — bure wakati wa uzinduzi:`,
     tripsTitle: "Wasafiri wa njia yako",
     tripsSub:
       "Watu waliothibitishwa wenye nafasi ya ziada ya mizigo. Omba mmoja abebe kifurushi chako — mnakubaliana bei moja kwa moja.",

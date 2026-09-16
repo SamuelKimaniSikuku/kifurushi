@@ -176,6 +176,11 @@ export const en = {
     resetExpiredBody:
       "Password links work once and expire after an hour. Request a fresh one from the sign-in page — it only takes a moment.",
     requestNewLink: "Request a new link",
+    alreadyRegistered:
+      "You already have an account with this email — sign in below (or use “Forgot password?”).",
+    magicLink: "Email me a sign-in link instead",
+    magicSentBody: (email: string) =>
+      `If an account exists for ${email}, we've emailed a one-tap sign-in link — no password needed. It works once and expires after an hour.`,
   },
   roles: {
     tripsMenu: "Trips",
@@ -414,6 +419,10 @@ export const en = {
       `${name} has been waiting ${days === 1 ? "a day" : `${days} days`} for your answer — accept, decline, or ask them a question below.`,
     waitingSent: (days: number) =>
       `Sent ${days === 1 ? "a day" : `${days} days`} ago — a friendly message below can move things along.`,
+    share: "Share",
+    linkCopied: "Link copied!",
+    shareText: (from: string, to: string) =>
+      `${from} → ${to} on Kifurushi — free during launch:`,
     tripsTitle: "Travellers going your way",
     tripsSub:
       "Verified people with spare luggage space. Request one to carry your parcel — you agree the fee directly.",

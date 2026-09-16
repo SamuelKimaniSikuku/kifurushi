@@ -22,6 +22,8 @@ function AuthForm() {
   const [confirmSent, setConfirmSent] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [resetBusy, setResetBusy] = useState(false);
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicBusy, setMagicBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
@@ -76,7 +78,15 @@ function AuthForm() {
           },
         });
         if (error) {
-          setAuthError(error.message);
+          // The most common dead end on this page: an existing member lands
+          // in sign-up mode, gets "already registered" and concludes the app
+          // is broken. Walk them to the door they meant to use instead.
+          if (/already registered/i.test(error.message)) {
+            changeMode("signin");
+            setAuthError(t.auth.alreadyRegistered);
+          } else {
+            setAuthError(error.message);
+          }
           return;
         }
         // Email confirmation on: no session until the link is clicked.
@@ -131,10 +141,67 @@ function AuthForm() {
     }
   }
 
+  async function sendMagicLink() {
+    if (magicBusy) return;
+    const email = form.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrors({ email: t.auth.resetEnterEmail });
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setErrors({});
+    setAuthError(null);
+    setMagicBusy(true);
+    try {
+      // shouldCreateUser off: this is a door for existing members, not a
+      // side entrance past the terms checkbox. The sent card shows either
+      // way — whether an address has an account is not revealed here.
+      await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          shouldCreateUser: false,
+        },
+      });
+      setMagicSent(true);
+    } catch {
+      setMagicSent(true);
+    } finally {
+      setMagicBusy(false);
+    }
+  }
+
   const passwordDescribedBy =
     [errors.password ? "password-error" : "", mode === "signup" ? "password-hint" : ""]
       .filter(Boolean)
       .join(" ") || undefined;
+
+  if (magicSent) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-14">
+        <div className="card p-8 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sand-deep">
+            <MailCheck className="h-6 w-6 text-forest" strokeWidth={2} />
+          </span>
+          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
+            {t.auth.checkEmailTitle}
+          </h1>
+          <p className="mt-2 text-sm text-muted">{t.auth.magicSentBody(form.email.trim())}</p>
+          <p className="mt-4 text-sm text-muted">{x.checkSpam}</p>
+          <button
+            type="button"
+            className="btn-ghost mt-6 w-full"
+            onClick={() => {
+              setMagicSent(false);
+              changeMode("signin");
+            }}
+          >
+            {t.auth.backToSignIn}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (resetSent) {
     return (
@@ -344,6 +411,17 @@ function AuthForm() {
               ? t.auth.createAccount
               : t.auth.signIn}
         </button>
+
+        {mode === "signin" && (
+          <button
+            type="button"
+            className="btn-ghost w-full"
+            disabled={submitting || magicBusy}
+            onClick={sendMagicLink}
+          >
+            {magicBusy ? t.auth.oneMoment : t.auth.magicLink}
+          </button>
+        )}
 
         <p className="text-center text-sm text-muted">
           {mode === "signup" ? t.auth.alreadyMember : t.auth.newTo}{" "}

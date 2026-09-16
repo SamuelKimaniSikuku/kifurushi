@@ -99,6 +99,24 @@ function ParcelsContent() {
     }
   }
 
+
+  // A shared link (?open=<id>) lands scrolled to that exact listing,
+  // briefly ringed so the eye finds it in the grid.
+  useEffect(() => {
+    if (!loaded) return;
+    const openId = new URLSearchParams(window.location.search).get("open");
+    if (!openId || !/^[0-9a-f-]{36}$/.test(openId)) return;
+    const el = document.getElementById(`listing-${openId}`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    el.classList.add("ring-2", "ring-leaf", "ring-offset-4", "ring-offset-sand");
+    const timer = setTimeout(
+      () => el.classList.remove("ring-2", "ring-leaf", "ring-offset-4", "ring-offset-sand"),
+      4000
+    );
+    return () => clearTimeout(timer);
+  }, [loaded]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-start justify-between gap-5">
@@ -128,14 +146,15 @@ function ParcelsContent() {
           {filtered.length > 0 ? (
             <div className="mt-4 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((p) => (
-                <ParcelCard
-                  key={p.id}
-                  parcel={p}
-                  onOffer={handleOffer}
-                  requested={requestedIds.has(p.id)}
-                  mine={!!session && p.senderId === session.userId}
-                  pending={attention?.byParcel[p.id] ?? 0}
-                />
+                <div key={p.id} id={`listing-${p.id}`} className="min-w-0 rounded-3xl">
+                  <ParcelCard
+                    parcel={p}
+                    onOffer={handleOffer}
+                    requested={requestedIds.has(p.id)}
+                    mine={!!session && p.senderId === session.userId}
+                    pending={attention?.byParcel[p.id] ?? 0}
+                  />
+                </div>
               ))}
             </div>
           ) : (

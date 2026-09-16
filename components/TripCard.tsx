@@ -7,6 +7,7 @@ import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
+import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
 export default function TripCard({
@@ -172,6 +173,12 @@ export default function TripCard({
           )}
         </div>
       )}
+      <div className="flex justify-end">
+        <ShareListing
+          url={`https://www.kifurushiapp.com/trips?open=${trip.id}`}
+          text={t.browse.shareText(trip.fromCity, trip.toCity)}
+        />
+      </div>
     </article>
   );
 }

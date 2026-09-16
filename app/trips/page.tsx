@@ -92,6 +92,24 @@ function TripsContent() {
     }
   }
 
+
+  // A shared link (?open=<id>) lands scrolled to that exact listing,
+  // briefly ringed so the eye finds it in the grid.
+  useEffect(() => {
+    if (!loaded) return;
+    const openId = new URLSearchParams(window.location.search).get("open");
+    if (!openId || !/^[0-9a-f-]{36}$/.test(openId)) return;
+    const el = document.getElementById(`listing-${openId}`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    el.classList.add("ring-2", "ring-leaf", "ring-offset-4", "ring-offset-sand");
+    const timer = setTimeout(
+      () => el.classList.remove("ring-2", "ring-leaf", "ring-offset-4", "ring-offset-sand"),
+      4000
+    );
+    return () => clearTimeout(timer);
+  }, [loaded]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-start justify-between gap-5">
@@ -119,14 +137,15 @@ function TripsContent() {
           {filtered.length > 0 ? (
             <div className="mt-4 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((t) => (
-                <TripCard
-                  key={t.id}
-                  trip={t}
-                  onRequest={handleRequest}
-                  requested={requestedIds.has(t.id)}
-                  mine={!!session && t.travelerId === session.userId}
-                  pending={attention?.byTrip[t.id] ?? 0}
-                />
+                <div key={t.id} id={`listing-${t.id}`} className="min-w-0 rounded-3xl">
+                  <TripCard
+                    trip={t}
+                    onRequest={handleRequest}
+                    requested={requestedIds.has(t.id)}
+                    mine={!!session && t.travelerId === session.userId}
+                    pending={attention?.byTrip[t.id] ?? 0}
+                  />
+                </div>
               ))}
             </div>
           ) : (
