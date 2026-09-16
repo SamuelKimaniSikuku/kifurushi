@@ -20,6 +20,8 @@ function AuthForm() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [confirmSent, setConfirmSent] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
@@ -104,10 +106,62 @@ function AuthForm() {
     }
   }
 
+  async function sendReset() {
+    if (resetBusy) return;
+    const email = form.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setErrors({ email: t.auth.resetEnterEmail });
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setErrors({});
+    setAuthError(null);
+    setResetBusy(true);
+    try {
+      // Always reports success: whether the address has an account is not
+      // something this page should reveal.
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset`,
+      });
+      setResetSent(true);
+    } catch {
+      setAuthError(x.connectionError);
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   const passwordDescribedBy =
     [errors.password ? "password-error" : "", mode === "signup" ? "password-hint" : ""]
       .filter(Boolean)
       .join(" ") || undefined;
+
+  if (resetSent) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-14">
+        <div className="card p-8 text-center">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-sand-deep">
+            <MailCheck className="h-6 w-6 text-forest" strokeWidth={2} />
+          </span>
+          <h1 className="mt-4 font-display text-2xl font-bold tracking-tight text-forest">
+            {t.auth.checkEmailTitle}
+          </h1>
+          <p className="mt-2 text-sm text-muted">{t.auth.resetSentBody(form.email.trim())}</p>
+          <p className="mt-4 text-sm text-muted">{x.checkSpam}</p>
+          <button
+            type="button"
+            className="btn-ghost mt-6 w-full"
+            onClick={() => {
+              setResetSent(false);
+              changeMode("signin");
+            }}
+          >
+            {t.auth.backToSignIn}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (confirmSent) {
     return (
@@ -203,7 +257,19 @@ function AuthForm() {
           )}
         </div>
         <div>
-          <label className="field-label" htmlFor="password">{t.auth.password}</label>
+          <div className="flex items-baseline justify-between gap-2">
+            <label className="field-label" htmlFor="password">{t.auth.password}</label>
+            {mode === "signin" && (
+              <button
+                type="button"
+                disabled={submitting || resetBusy}
+                onClick={sendReset}
+                className="-my-1 rounded px-1 py-1 text-sm font-semibold text-forest underline underline-offset-2 transition hover:text-forest-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
+              >
+                {resetBusy ? t.auth.oneMoment : t.auth.forgotPassword}
+              </button>
+            )}
+          </div>
           <div className="relative"><input
             id="password"
             type={showPassword ? "text" : "password"}

@@ -165,6 +165,19 @@ export const fr: Dict = {
     termsLink: "Conditions générales",
     termsAgree2: "et la Politique de confidentialité, et je comprends que Kifurushi ne fait que mettre en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre nous deux.",
     termsError: "Vous devez accepter les Conditions générales pour créer un compte.",
+    forgotPassword: "Mot de passe oublié ?",
+    resetSentBody: (email: string) =>
+      `Si un compte existe pour ${email}, nous avons envoyé un lien pour choisir un nouveau mot de passe. Il fonctionne une fois et expire au bout d'une heure.`,
+    resetEnterEmail: "Saisissez d'abord votre e-mail ci-dessus, puis appuyez à nouveau sur « Mot de passe oublié ? ».",
+    resetTitle: "Choisissez un nouveau mot de passe",
+    resetSub: "Pour votre compte Kifurushi — vous serez connecté dès qu'il sera enregistré.",
+    newPassword: "Nouveau mot de passe",
+    resetSave: "Enregistrer le nouveau mot de passe",
+    resetDone: "Mot de passe modifié — direction votre tableau de bord…",
+    resetExpiredTitle: "Ce lien a expiré",
+    resetExpiredBody:
+      "Les liens de réinitialisation fonctionnent une fois et expirent au bout d'une heure. Demandez-en un nouveau depuis la page de connexion — cela ne prend qu'un instant.",
+    requestNewLink: "Demander un nouveau lien",
   },
   roles: {
     tripsMenu: "Voyages",

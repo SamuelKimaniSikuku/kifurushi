@@ -163,6 +163,19 @@ export const en = {
     termsLink: "Terms & Conditions",
     termsAgree2: "and the Privacy Policy, and understand that Kifurushi only connects senders and travellers — every delivery is a direct agreement between the two of us.",
     termsError: "You must accept the Terms & Conditions to create an account.",
+    forgotPassword: "Forgot password?",
+    resetSentBody: (email: string) =>
+      `If an account exists for ${email}, we've sent a link to choose a new password. It works once and expires after an hour.`,
+    resetEnterEmail: "Enter your email above first, then tap “Forgot password?” again.",
+    resetTitle: "Choose a new password",
+    resetSub: "For your Kifurushi account — you'll be signed in as soon as it's saved.",
+    newPassword: "New password",
+    resetSave: "Save new password",
+    resetDone: "Password changed — taking you to your dashboard…",
+    resetExpiredTitle: "This link has expired",
+    resetExpiredBody:
+      "Password links work once and expire after an hour. Request a fresh one from the sign-in page — it only takes a moment.",
+    requestNewLink: "Request a new link",
   },
   roles: {
     tripsMenu: "Trips",

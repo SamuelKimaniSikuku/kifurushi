@@ -165,6 +165,19 @@ export const sw: Dict = {
     termsLink: "Sheria na Masharti",
     termsAgree2: "na Sera ya Faragha, na ninaelewa kuwa Kifurushi inaunganisha tu watumaji na wasafiri — kila usafirishaji ni makubaliano ya moja kwa moja kati yetu wawili.",
     termsError: "Lazima ukubali Sheria na Masharti ili kufungua akaunti.",
+    forgotPassword: "Umesahau nenosiri?",
+    resetSentBody: (email: string) =>
+      `Kama akaunti ipo kwa ${email}, tumetuma kiungo cha kuchagua nenosiri jipya. Kinafanya kazi mara moja na kinaisha baada ya saa moja.`,
+    resetEnterEmail: "Andika barua pepe yako hapo juu kwanza, kisha bonyeza “Umesahau nenosiri?” tena.",
+    resetTitle: "Chagua nenosiri jipya",
+    resetSub: "Kwa akaunti yako ya Kifurushi — utaingia mara tu litakapohifadhiwa.",
+    newPassword: "Nenosiri jipya",
+    resetSave: "Hifadhi nenosiri jipya",
+    resetDone: "Nenosiri limebadilishwa — tunakupeleka kwenye dashibodi yako…",
+    resetExpiredTitle: "Kiungo hiki kimeisha muda",
+    resetExpiredBody:
+      "Viungo vya nenosiri hufanya kazi mara moja na huisha baada ya saa moja. Omba kipya kutoka ukurasa wa kuingia — inachukua muda mfupi tu.",
+    requestNewLink: "Omba kiungo kipya",
   },
   roles: {
     tripsMenu: "Safari",
