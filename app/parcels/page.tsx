@@ -144,7 +144,7 @@ function ParcelsContent() {
           {filtered.length > 0 && <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-xl border border-line bg-white px-5 py-4"><span className="font-display text-2xl font-bold text-forest">${filtered.reduce((sum, parcel) => sum + parcel.budgetUsd, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span><span className="text-sm font-semibold">{x.budgetsLabel}</span><p className="w-full text-sm text-muted">{x.budgetsNote}</p></div>}
 
           {filtered.length > 0 ? (
-            <div className="mt-4 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((p) => (
                 <div key={p.id} id={`listing-${p.id}`} className="min-w-0 rounded-3xl">
                   <ParcelCard

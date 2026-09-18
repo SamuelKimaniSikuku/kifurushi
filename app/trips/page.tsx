@@ -135,7 +135,7 @@ function TripsContent() {
           </div>
 
           {filtered.length > 0 ? (
-            <div className="mt-4 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((t) => (
                 <div key={t.id} id={`listing-${t.id}`} className="min-w-0 rounded-3xl">
                   <TripCard
