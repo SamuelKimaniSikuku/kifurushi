@@ -299,6 +299,23 @@ export const sw: Dict = {
         ],
       },
       {
+        title: "Kuratibu usafirishaji wako",
+        items: [
+          {
+            q: "Tumeunganishwa — nitajuaje mwenzangu akijibu au akisogeza usafirishaji mbele?",
+            a: "Unapata barua pepe papo hapo, kila mara: akikutumia ujumbe, akikubali, kifurushi kikichukuliwa, kikiwa njiani au kikifika. Kila barua pepe ina kiungo cha dashibodi yako — huna haja ya kuweka programu wazi au kuangalia kila mara.",
+          },
+          {
+            q: "Je, tunabadilishana namba za simu?",
+            a: "Inawezekana, mkishaunganishwa. Weka namba yako ya WhatsApp chini ya \"WhatsApp kwa makabidhiano\" kwenye dashibodi yako — ni hiari, na inaonekana tu kwa mtu uliyeunganishwa naye baada ya kukubali, kamwe si kwenye wasifu wako wa umma. Mkiweka wote wawili, kitufe cha \"Zungumza kwenye WhatsApp\" kinaonekana kwenye kadi ya usafirishaji. Chat ya ndani ya programu inafanya kazi vyovyote vile na inahifadhi rekodi ya kila kitu.",
+          },
+          {
+            q: "Tunakubaliana malipo lini?",
+            a: "Kabla ya makabidhiano. Kubalianeni ada na jinsi itakavyolipwa (pesa taslimu, M-Pesa, uhamisho wa benki) kwenye chat, kisha bonyeza \"Terms agreed\" kwenye programu. Kifurushi haigusi pesa kamwe na haichukui kamisheni — kiasi kilichoandikwa kwenye chat ndicho kinacholinda nyote wawili. Mnapolipa ni makubaliano yenu; wengi hulipa wakati wa makabidhiano au kifurushi kikifika.",
+          },
+        ],
+      },
+      {
         title: "Uaminifu na usalama",
         items: [
           {

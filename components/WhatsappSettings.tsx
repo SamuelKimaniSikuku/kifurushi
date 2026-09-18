@@ -75,7 +75,7 @@ export default function WhatsappSettings() {
   if (!loaded) return null;
 
   return (
-    <div className="card mt-6 p-5">
+    <div id="whatsapp" className="card mt-6 scroll-mt-24 p-5">
       <div className="flex items-center gap-2 text-sm font-semibold text-forest">
         <MessageCircle className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
         {t.browse.waTitle}

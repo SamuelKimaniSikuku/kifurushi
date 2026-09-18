@@ -261,6 +261,7 @@ export default function MatchCard({
     (Date.now() - new Date(match.updatedAt).getTime()) / 86400000
   );
   const [waNumber, setWaNumber] = useState<string | null>(null);
+  const [confirmingTerms, setConfirmingTerms] = useState(false);
 
   // The counterparty's opted-in WhatsApp number — the RPC answers only after
   // acceptance, so pre-acceptance renders never even ask.
@@ -489,6 +490,19 @@ export default function MatchCard({
         </>
       )}
 
+      {!waNumber &&
+        !ended &&
+        ["accepted", "escrow_paid"].includes(match.status) && (
+          <p className="mt-4 text-xs text-muted">
+            Prefer WhatsApp for the handover?{" "}
+            <a href="#whatsapp" className="font-semibold text-forest underline">
+              Add your number
+            </a>{" "}
+            (optional) — only your matched partner sees it, and only after
+            acceptance.
+          </p>
+        )}
+
       {waNumber && !ended && (
         <a
           href={`https://wa.me/${waNumber.replace("+", "")}`}
@@ -550,17 +564,46 @@ export default function MatchCard({
               <p className="text-sm text-muted">
                 Agree the carriage fee and handover details with{" "}
                 {match.counterpartyName} — then confirm below. Payment is between
-                the two of you; Kifurushi never takes a cut.
+                the two of you; Kifurushi never takes a cut. You&apos;ll get an
+                email whenever {match.counterpartyName.split(" ")[0]} replies in
+                Messages or the delivery moves — no need to keep checking.
               </p>
-              <button
-                className="btn-primary min-h-[44px]"
-                disabled={busy}
-                onClick={() =>
-                  act(() => advanceMatch(match.id), "Could not update — try again.")
-                }
-              >
-                Terms agreed
-              </button>
+              {!confirmingTerms ? (
+                <button
+                  className="btn-primary min-h-[44px]"
+                  disabled={busy}
+                  onClick={() => setConfirmingTerms(true)}
+                >
+                  Terms agreed
+                </button>
+              ) : (
+                <div className="rounded-xl border border-forest/25 bg-sand p-4">
+                  <p className="text-sm text-ink">
+                    Have you agreed the fee <b>and how it&apos;ll be paid</b>{" "}
+                    (cash, M-Pesa, transfer) in Messages? Having it written
+                    there protects you both — Kifurushi never handles the
+                    money.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      className="btn-primary min-h-[44px]"
+                      disabled={busy}
+                      onClick={() =>
+                        act(() => advanceMatch(match.id), "Could not update — try again.")
+                      }
+                    >
+                      Yes — terms agreed
+                    </button>
+                    <button
+                      className="btn-ghost min-h-[44px]"
+                      disabled={busy}
+                      onClick={() => setConfirmingTerms(false)}
+                    >
+                      Not yet
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -583,9 +626,18 @@ export default function MatchCard({
               </>
             ) : (
               <p className="text-sm text-muted">
-                Waiting for {match.counterpartyName} to collect and seal the parcel.
+                Waiting for {match.counterpartyName} to collect and seal the
+                parcel — we&apos;ll email you the moment it happens.
               </p>
             ))}
+
+          {(match.status === "picked_up" || match.status === "in_transit") &&
+            !isTraveler && (
+              <p className="text-sm text-muted">
+                Your parcel is with {match.counterpartyName.split(" ")[0]}. We&apos;ll
+                email you at every step until it&apos;s delivered.
+              </p>
+            )}
 
           {match.status === "picked_up" && isTraveler && (
             <button

@@ -297,6 +297,23 @@ export const en = {
         ],
       },
       {
+        title: "Coordinating your delivery",
+        items: [
+          {
+            q: "We're matched — how do I know when the other person replies or moves the delivery?",
+            a: "You get an email immediately, every time: when they message you, accept, mark the parcel picked up, in transit or delivered. Each email links back to your dashboard, so you never need to keep the app open or keep checking.",
+          },
+          {
+            q: "Do we exchange phone numbers?",
+            a: "You can, once you're matched. Add your WhatsApp number under \"WhatsApp for handovers\" on your dashboard — it's optional, and it's only ever shown to the person you're matched with after they accept, never on your public profile. If you both add one, a \"Chat on WhatsApp\" button appears on your delivery card. The in-app chat works either way and keeps everything on record.",
+          },
+          {
+            q: "When do we agree the payment?",
+            a: "Before the handover. Agree the fee and how it'll be paid (cash at handover, M-Pesa, bank transfer) in the chat, then tap \"Terms agreed\" in the app. Kifurushi never touches the money and takes no cut — having the amount written in the chat is what protects you both. When you actually pay is whatever you two agree; many pay at handover or on delivery.",
+          },
+        ],
+      },
+      {
         title: "Trust and safety",
         items: [
           {

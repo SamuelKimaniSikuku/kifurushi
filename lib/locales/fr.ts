@@ -299,6 +299,23 @@ export const fr: Dict = {
         ],
       },
       {
+        title: "Coordonner votre livraison",
+        items: [
+          {
+            q: "Nous sommes mis en relation — comment savoir quand l'autre personne répond ou fait avancer la livraison ?",
+            a: "Vous recevez un e-mail immédiatement, à chaque fois : message, acceptation, colis récupéré, en transit ou livré. Chaque e-mail renvoie vers votre tableau de bord — inutile de garder l'application ouverte ou de vérifier sans cesse.",
+          },
+          {
+            q: "Échange-t-on nos numéros de téléphone ?",
+            a: "C'est possible, une fois mis en relation. Ajoutez votre numéro WhatsApp sous « WhatsApp pour les remises en main propre » sur votre tableau de bord — optionnel, et visible uniquement par la personne avec qui vous êtes mis en relation après acceptation, jamais sur votre profil public. Si vous l'ajoutez tous les deux, un bouton « Discuter sur WhatsApp » apparaît sur votre carte de livraison. Le chat intégré fonctionne dans tous les cas et garde une trace de tout.",
+          },
+          {
+            q: "Quand convient-on du paiement ?",
+            a: "Avant la remise. Convenez du montant et du mode de paiement (espèces à la remise, M-Pesa, virement) dans le chat, puis appuyez sur « Terms agreed » dans l'application. Kifurushi ne touche jamais l'argent et ne prend aucune commission — le montant écrit dans le chat est ce qui vous protège tous les deux. Le moment du paiement est ce que vous convenez ensemble ; beaucoup paient à la remise ou à la livraison.",
+          },
+        ],
+      },
+      {
         title: "Confiance et sécurité",
         items: [
           {
