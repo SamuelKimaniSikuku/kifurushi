@@ -29,6 +29,12 @@ export default function ParcelCard({
     day: "numeric",
     month: "short",
   });
+  const shareAction = (
+    <ShareListing
+      url={`https://www.kifurushiapp.com/parcels?open=${parcel.id}`}
+      text={t.browse.shareText(parcel.fromCity, parcel.toCity)}
+    />
+  );
 
   return (
     <article className="card card-lift group flex h-full min-w-0 flex-col gap-4 p-5">
@@ -100,7 +106,7 @@ export default function ParcelCard({
 
       {mine ? (
         <div className="mt-auto space-y-2 pt-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center rounded-full border border-line-strong px-2.5 py-1 text-[11px] font-semibold text-muted">
               {t.browse.yourParcel}
             </span>
@@ -111,6 +117,7 @@ export default function ParcelCard({
               <Pencil size={11} strokeWidth={2.5} aria-hidden />
               {t.browse.edit}
             </Link>
+            <div className="ml-auto flex">{shareAction}</div>
           </div>
           {pending > 0 && (
             <Link
@@ -122,30 +129,25 @@ export default function ParcelCard({
             </Link>
           )}
         </div>
-      ) : onOffer && (
-        <div className="mt-auto pt-1">
-          {requested ? (
+      ) : (
+        <div className="mt-auto flex items-stretch justify-end gap-2 pt-1">
+          {onOffer && (requested ? (
             <button
               type="button"
               disabled
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-success-bg px-5 py-2.5 text-sm font-semibold text-success"
+              className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-success-bg px-3 py-2.5 text-sm font-semibold text-success"
             >
-              <Check size={16} strokeWidth={2} aria-hidden />
+              <Check size={16} strokeWidth={2} className="shrink-0" aria-hidden />
               {t.browse.offerSent}
             </button>
           ) : (
-            <button className="btn-primary w-full" onClick={() => onOffer(parcel)}>
+            <button className="btn-primary min-w-0 flex-1 px-3" onClick={() => onOffer(parcel)}>
               {t.browse.offerToCarry}
             </button>
-          )}
+          ))}
+          {shareAction}
         </div>
       )}
-      <div className="flex justify-end">
-        <ShareListing
-          url={`https://www.kifurushiapp.com/parcels?open=${parcel.id}`}
-          text={t.browse.shareText(parcel.fromCity, parcel.toCity)}
-        />
-      </div>
     </article>
   );
 }

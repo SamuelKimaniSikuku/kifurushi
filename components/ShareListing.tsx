@@ -34,22 +34,27 @@ export default function ShareListing({ url, text }: { url: string; text: string 
   }
 
   return (
-    <button
-      type="button"
-      onClick={share}
-      className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-line-strong px-3 py-1 text-xs font-semibold text-muted transition hover:border-forest hover:text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
-    >
-      {copied ? (
-        <>
-          <Check size={13} strokeWidth={2.5} aria-hidden className="text-success" />
-          {t.browse.linkCopied}
-        </>
-      ) : (
-        <>
-          <Share2 size={13} strokeWidth={2.5} aria-hidden />
-          {t.browse.share}
-        </>
-      )}
-    </button>
+    <div className="relative flex shrink-0">
+      <button
+        type="button"
+        onClick={share}
+        className="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-line-strong bg-white px-3 py-2.5 text-sm font-semibold text-forest transition hover:border-forest hover:bg-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+      >
+        {copied ? (
+          <Check size={16} strokeWidth={2} aria-hidden className="text-success" />
+        ) : (
+          <Share2 size={16} strokeWidth={2} aria-hidden />
+        )}
+        {t.browse.share}
+      </button>
+      <span
+        role="status"
+        className={copied
+          ? "pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-max max-w-[15rem] rounded-lg bg-forest px-3 py-2 text-sm text-white shadow-sm"
+          : "sr-only"}
+      >
+        {copied ? t.browse.linkCopied : ""}
+      </span>
+    </div>
   );
 }
