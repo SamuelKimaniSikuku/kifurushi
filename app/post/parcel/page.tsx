@@ -1,6 +1,6 @@
 "use client";
 
-import { readPostRoute } from "@/lib/routes";
+import { readParcelPrefill } from "@/lib/routes";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -67,6 +67,8 @@ function PostParcelForm() {
   // the next submit is taken as "yes, it really is a second parcel".
   const [dupWarning, setDupWarning] = useState(false);
   const editId = params.get("edit");
+  const copiedDate = !editId && readParcelPrefill(params).neededBy;
+  const showDateHint = Boolean(copiedDate && form.neededBy === copiedDate);
 
   useEffect(() => {
     if (loading) return;
@@ -107,10 +109,10 @@ function PostParcelForm() {
       .catch(() => {});
   }, [editId]);
 
-  // Keep the selected route when arriving from browsing or signing in.
+  // Keep the selected route and date when arriving from browsing or signing in.
   useEffect(() => {
     if (editId) return;
-    const route = readPostRoute(params);
+    const route = readParcelPrefill(params);
     if (Object.keys(route).length) setForm((current) => ({ ...current, ...route }));
   }, [params, editId]);
 
@@ -312,7 +314,11 @@ function PostParcelForm() {
               onChange={(e) => set("neededBy")(e.target.value)}
               onBlur={touch("neededBy")}
               {...err("neededBy")}
+              aria-describedby={[errors.neededBy ? "neededBy-error" : "", showDateHint ? "neededBy-hint" : ""].filter(Boolean).join(" ") || undefined}
             />
+            {showDateHint && (
+              <p id="neededBy-hint" className="mt-1 text-xs text-muted">{t.experience.parcelDateHint}</p>
+            )}
             {errors.neededBy && (
               <p id="neededBy-error" className="field-error">{errors.neededBy}</p>
             )}

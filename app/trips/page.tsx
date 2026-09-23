@@ -30,6 +30,7 @@ function TripsContent() {
   const browse = useBrowseFilters("/trips");
   const { from, to, date, sort } = browse.filters;
   const x = t.experience;
+  const parcelHref = postHref("parcel", { from, to, date });
   const [loadError, setLoadError] = useState(false);
   const [reload, setReload] = useState(0);
   const [toast, setToast] = useState("");
@@ -112,10 +113,14 @@ function TripsContent() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="flex flex-wrap items-start justify-between gap-5">
-        <div><p className="section-eyebrow">{x.send}</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">{t.browse.tripsTitle}</h1><p className="mt-3 max-w-2xl text-base text-muted">{x.browseTripsSub}</p></div>
-        <Link href={postHref("parcel", { from, to })} className="btn-primary"><Package size={18} aria-hidden />{x.postParcel}</Link>
+      <div>
+        <p className="section-eyebrow">{x.send}</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">{t.browse.tripsTitle}</h1><p className="mt-3 max-w-2xl text-base text-muted">{x.browseTripsSub}</p>
       </div>
+      <section aria-labelledby="post-parcel-title" className="mt-6 rounded-2xl border border-forest/20 bg-white p-4 sm:p-5">
+        <h2 id="post-parcel-title" className="flex items-start gap-2 text-base font-semibold text-forest sm:text-lg"><Package size={20} className="mt-0.5 shrink-0" aria-hidden />{x.parcelPromptTitle}</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted">{x.parcelPromptBody}</p>
+        <Link href={parcelHref} className="btn-primary mt-4 w-full sm:w-auto">{x.postParcel}</Link>
+      </section>
       <BrowseFilters kind="trips" {...browse} />
 
       {!loaded ? (
@@ -154,7 +159,7 @@ function TripsContent() {
                 title={x.emptyTrips}
                 body={x.emptyTripsBody}
               >
-                <Link href={postHref("parcel", { from, to })} className="btn-primary">
+                <Link href={parcelHref} className="btn-primary w-full sm:w-auto">
                   {x.postParcel}
                 </Link>
                 <button type="button" className="btn-ghost" onClick={browse.clear}>
