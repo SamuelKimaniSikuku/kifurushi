@@ -16,13 +16,17 @@ import {
   fetchTrips, fetchMyOpenParcels, requestMatch, fetchAttention, type Attention,
 } from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
+import { safetyCopy } from "@/lib/locales/safety";
+import { laterDepartures, upcomingOnRoute } from "@/lib/tripDiscovery";
 
 function TripsContent() {
   const gate = useContactGate();
   const t = useT();
+  const { lang } = useLang();
+  const s = safetyCopy[lang];
   const { session } = useSession();
   const [attention, setAttention] = useState<Attention | null>(null);
   const [quickTrip, setQuickTrip] = useState<Trip | null>(null);
@@ -52,15 +56,12 @@ function TripsContent() {
   }, [reload]);
 
   const filtered = useMemo(() =>
-    trips.filter((item) =>
-      (!from || item.fromCountry === from) &&
-      (!to || item.toCountry === to) &&
-      (!date || item.departDate <= date)
-    ).sort((a, b) => sort === "price"
+    upcomingOnRoute(trips, from, to).filter((item) => !date || item.departDate <= date).sort((a, b) => sort === "price"
       ? a.pricePerKg - b.pricePerKg || a.departDate.localeCompare(b.departDate)
       : a.departDate.localeCompare(b.departDate)),
     [trips, from, to, date, sort]
   );
+  const later = useMemo(() => laterDepartures(trips, from, to, date), [trips, from, to, date]);
 
   async function handleRequest(trip: Trip) {
     try {
@@ -117,6 +118,7 @@ function TripsContent() {
         <Link href={postHref("parcel", { from, to })} className="btn-primary"><Package size={18} aria-hidden />{x.postParcel}</Link>
       </div>
       <BrowseFilters kind="trips" {...browse} />
+      {!date && <p className="mt-3 text-sm text-muted">{s.anyDate}</p>}
 
       {!loaded ? (
         <div aria-busy="true" aria-label={x.loading} className="mt-6 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -126,6 +128,11 @@ function TripsContent() {
         </div>
       ) : loadError ? <ListingError retry={() => setReload((count) => count + 1)} /> : (
         <>
+          {date && later.length > 0 && <div className="mt-6 rounded-2xl border border-line bg-white p-5">
+            <p className="font-semibold text-forest">{s.later}</p><p className="mt-1 text-sm text-muted">{s.laterNote}</p>
+            <div className="mt-3 flex flex-wrap gap-2">{Array.from(new Set(later.map((trip) => trip.departDate))).slice(0, 4).map((day) => <time key={day} dateTime={day} className="chip">{new Date(`${day}T12:00:00`).toLocaleDateString(lang, { day: "numeric", month: "short", year: "numeric" })}</time>)}</div>
+            <button type="button" className="btn-ghost mt-3" disabled={browse.pending} onClick={() => browse.update({ date: "" })}>{s.seeLater}</button>
+          </div>}
           <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
             <div><p aria-live="polite" className="text-base font-semibold">{x.resultTrips(filtered.length)}</p><p className="mt-1 text-sm text-muted">{x.usd}</p></div>
             <div className="flex items-end gap-2">

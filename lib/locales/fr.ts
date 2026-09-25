@@ -93,7 +93,7 @@ export const fr: Dict = {
       },
       {
         title: "Accord & scellage",
-        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, avec des photos échangées dans la messagerie du match.",
+        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, avec des photos et les deux confirmations enregistrées dans le tableau de bord.",
       },
       {
         title: "Livraison & confirmation",
@@ -332,7 +332,7 @@ export const fr: Dict = {
           },
           {
             q: "C'est quoi la règle d'inspection et de scellage ?",
-            a: "Le voyageur doit voir chaque article, ouvert, en personne, avant le scellage — puis vous scellez ensemble et photographiez avec vos propres téléphones, en envoyant les photos dans la messagerie du match, où elles sont horodatées et non modifiables. Un voyageur qui accepte un paquet déjà scellé le transporte comme le sien à la frontière. Les deux parties risquent le bannissement si cette règle est ignorée.",
+            a: "L'expéditeur déclare les articles, quantités et valeurs et ajoute des photos. À la collecte, inspectez chaque article ensemble, puis scellez le colis. Le voyageur ajoute des photos et chacun confirme la même déclaration dans le tableau de bord. La collecte est bloquée sans les deux confirmations et la vérification d'identité du voyageur. Un refus pour motif de sécurité n'entraîne aucune pénalité de plateforme.",
           },
           {
             q: "Comment la livraison est-elle confirmée ?",

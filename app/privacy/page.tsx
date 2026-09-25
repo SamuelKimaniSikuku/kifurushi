@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const EFFECTIVE_DATE = "30 July 2026";
+const EFFECTIVE_DATE = "25 September 2026";
 
 function Section({
   n,
@@ -111,6 +111,11 @@ export default function PrivacyPage() {
                 basis="Performance of a contract"
               />
               <Row
+                what="Private contents declarations, parcel photos, inspection confirmations and safety refusals"
+                why="To document the contents and handover, enforce collection checks and review safety concerns. These records are available to the sender, matched travellers and authorised support, not public listing visitors."
+                basis="Performance of a contract; legitimate interest in delivery safety and resolving disputes"
+              />
+              <Row
                 what="Phone number"
                 why="Kept private. It is never displayed to other members and is only used for identity checks and, where relevant, contact about a delivery."
                 basis="Performance of a contract"
@@ -181,6 +186,15 @@ export default function PrivacyPage() {
       </Section>
 
       <Section n={4} title="What other members can see">
+        <p>
+          Item-by-item declarations, declared values, contents photos and
+          handover photos are private to the sender and travellers matched with
+          that parcel. Inspection and refusal records are shared with the
+          corresponding match parties and authorised support. Photos are kept in
+          private storage. Confirmed records cannot be edited or deleted by
+          members through the app; contact us about access or deletion requests.
+          Do not include identity documents or contact details in parcel photos.
+        </p>
         <p>
           Your name, profile photo initials, verified badge, rating, completed
           delivery count and the listings you publish are visible to other

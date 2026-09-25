@@ -15,8 +15,12 @@ import {
   addParcel, CorridorFit, fetchParcelById, fitForParcel, hasDuplicateParcel, updateParcel,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
+import ContentsDeclaration from "@/components/ContentsDeclaration";
+import { declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
+import { fetchDeclaration } from "@/lib/safetyDb";
+import { safetyCopy } from "@/lib/locales/safety";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 
@@ -52,6 +56,13 @@ function PostParcelForm() {
   const params = useSearchParams();
   const { session, loading } = useSession();
   const t = useT();
+  const { lang } = useLang();
+  const s = safetyCopy[lang];
+  const [declaration, setDeclaration] = useState(emptyDeclaration);
+  const [uploading, setUploading] = useState(false);
+  const [declarationLoading, setDeclarationLoading] = useState(!!params.get("edit"));
+  const [declarationLoadError, setDeclarationLoadError] = useState(false);
+  const [declarationAttempt, setDeclarationAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   // Which fields the member has actually finished with. Nothing complains
@@ -87,6 +98,18 @@ function PostParcelForm() {
   }, []);
 
   // Editing an existing parcel: load it into the form.
+  useEffect(() => {
+    if (!editId || !session) return;
+    let active = true;
+    setDeclarationLoading(true);
+    setDeclarationLoadError(false);
+    fetchDeclaration(editId).then((d) => {
+      if (!active) return;
+      if (d) setDeclaration({ items: d.items.map((item) => ({ description: item.description, quantity: String(item.quantity), valueUsd: String(item.valueUsd) })), photoPaths: d.photo_paths, attested: false });
+    }).catch(() => { if (active) setDeclarationLoadError(true); }).finally(() => { if (active) setDeclarationLoading(false); });
+    return () => { active = false; };
+  }, [editId, session, declarationAttempt]);
+
   useEffect(() => {
     if (!editId) return;
     fetchParcelById(editId)
@@ -134,7 +157,12 @@ function PostParcelForm() {
       focusFirstInvalid(errs);
       return;
     }
-    if (!session || submitting) return;
+    if (!declarationSchema.safeParse(declaration).success) {
+      setErrors({ _submit: s.invalid });
+      document.getElementById("parcel-declaration")?.scrollIntoView({ block: "center" });
+      return;
+    }
+    if (!session || submitting || uploading || declarationLoading || declarationLoadError) return;
     setSubmitting(true);
     try {
       if (!editId && !dupWarning && (await hasDuplicateParcel(parsed.data))) {
@@ -143,13 +171,13 @@ function PostParcelForm() {
         return;
       }
       if (editId) {
-        await updateParcel(editId, { ...parsed.data, categories: cats });
+        await updateParcel(editId, { ...parsed.data, categories: cats, declaration });
       } else {
-        await addParcel({ ...parsed.data, categories: cats });
+        await addParcel({ ...parsed.data, categories: cats, declaration });
       }
       router.push("/parcels");
-    } catch {
-      setErrors({ _submit: t.postParcel.submitError });
+    } catch (e) {
+      setErrors({ _submit: e && typeof e === "object" && "message" in e ? String(e.message) : t.postParcel.submitError });
       setSubmitting(false);
     }
   }
@@ -453,6 +481,12 @@ function PostParcelForm() {
           </div>
         </div>
 
+        <div id="parcel-declaration" className="mt-6">
+          <ContentsDeclaration value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={submitting || uploading || declarationLoading || declarationLoadError} />
+          {declarationLoadError && <div className="mt-3"><p role="alert" className="field-error">{s.loadError}</p><button type="button" className="btn-ghost mt-2" onClick={() => setDeclarationAttempt((n) => n + 1)}>{s.retry}</button></div>}
+          {editId && <p className="mt-2 text-xs text-muted">{s.frozen}</p>}
+        </div>
+
         <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-sand-deep px-4 py-3 text-xs leading-relaxed text-muted">
           <Ban size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-danger" />
           <p>
@@ -471,7 +505,7 @@ function PostParcelForm() {
         {errors._submit && (
           <p role="alert" className="field-error mt-4">{errors._submit}</p>
         )}
-        <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting}>
+        <button type="submit" className="btn-accent mt-6 w-full py-3" disabled={submitting || uploading || declarationLoading || declarationLoadError}>
           {editId
             ? submitting ? t.postParcel.saving : t.postParcel.save
             : submitting ? t.postParcel.posting

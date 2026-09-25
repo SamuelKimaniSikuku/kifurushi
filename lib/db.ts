@@ -11,6 +11,8 @@ import {
   Message,
 } from "./types";
 import { personSlug } from "./people";
+import { declarationSchema, type DeclarationDraft } from "./parcelSafety";
+import { parcelSchema } from "./validation";
 
 // ---------------------------------------------------------------------------
 // Row mappers. Profile joins power the display fields (name, badge, rating).
@@ -399,23 +401,15 @@ export interface NewParcel {
   categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
+  declaration: DeclarationDraft;
 }
 
-export async function addParcel(p: NewParcel): Promise<void> {
-  const { data: auth } = await supabase.auth.getSession();
-  const uid = auth.session?.user.id;
-  if (!uid) throw new Error("Not signed in");
-  const { error } = await supabase.from("parcels").insert({
-    sender_id: uid,
-    from_country: p.fromCountry,
-    from_city: p.fromCity,
-    to_country: p.toCountry,
-    to_city: p.toCity,
-    needed_by: p.neededBy,
-    weight_kg: p.weightKg,
-    categories: p.categories,
-    description: p.description,
-    budget_usd: p.budgetUsd,
+export async function addParcel(p: NewParcel): Promise<string> {
+  const declaration = declarationSchema.parse(p.declaration);
+  const parcel = { ...parcelSchema.parse(p), categories: p.categories };
+  const { data, error } = await supabase.rpc("save_parcel", {
+    p_parcel: parcel, p_items: declaration.items,
+    p_photo_paths: declaration.photoPaths, p_attested: declaration.attested,
   });
   if (error) {
     await reportIncident("listing_post_failed", "A member could not post a parcel", {
@@ -424,6 +418,7 @@ export async function addParcel(p: NewParcel): Promise<void> {
     });
     throw error;
   }
+  return data as string;
 }
 
 // ---------------------------------------------------------------------------
@@ -514,20 +509,12 @@ export async function updateTrip(id: string, t: NewTrip): Promise<void> {
 }
 
 export async function updateParcel(id: string, p: NewParcel): Promise<void> {
-  const { error } = await supabase
-    .from("parcels")
-    .update({
-      from_country: p.fromCountry,
-      from_city: p.fromCity,
-      to_country: p.toCountry,
-      to_city: p.toCity,
-      needed_by: p.neededBy,
-      weight_kg: p.weightKg,
-      categories: p.categories,
-      description: p.description,
-      budget_usd: p.budgetUsd,
-    })
-    .eq("id", id);
+  const declaration = declarationSchema.parse(p.declaration);
+  const parcel = { ...parcelSchema.parse(p), categories: p.categories };
+  const { error } = await supabase.rpc("save_parcel", {
+    p_parcel_id: id, p_parcel: parcel, p_items: declaration.items,
+    p_photo_paths: declaration.photoPaths, p_attested: declaration.attested,
+  });
   if (error) throw error;
 }
 

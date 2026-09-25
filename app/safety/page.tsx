@@ -42,8 +42,9 @@ export default function SafetyPage() {
       </h1>
       <p className="mt-3 text-muted">
         Kifurushi exists because informal luggage-sharing already happens across
-        every African diaspora community — we make it safe. These are the rules
-        that protect all three parties: sender, traveller and receiver.
+        every African diaspora community. Contents declarations, identity checks
+        and recorded inspections help senders, travellers and receivers reduce
+        risk. They do not certify legality or replace airline and customs checks.
       </p>
 
       <section id="escrow" className="mt-12">
@@ -60,7 +61,7 @@ export default function SafetyPage() {
         </p>
         <ol className="mt-5 space-y-3 text-sm text-muted">
           <li className="card p-4 leading-relaxed"><b className="text-ink">Terms agreed on-platform.</b> Fee, weight, contents and dates are confirmed in the match before handover — so there is a written record both sides accepted.</li>
-          <li className="card p-4 leading-relaxed"><b className="text-ink">Co-sealed, with photos in the chat.</b> The parcel is inspected open, then sealed together. Photograph it on your own phones and send the pictures in the match chat — messages there are timestamped and cannot be edited or deleted, so both sides have a record they can point to.</li>
+          <li className="card p-4 leading-relaxed"><b className="text-ink">A private contents and inspection record.</b> The sender lists each item, quantity and value and adds contents photos. At collection, both people inspect and seal the parcel together. The traveller adds handover photos and both confirm the same declaration in the dashboard before pickup can be recorded.</li>
           <li className="card p-4 leading-relaxed"><b className="text-ink">Coded delivery.</b> The receiver gets a one-time 6-digit code. Entering it at handover is the proof of delivery that completes the record and unlocks reviews.</li>
           <li className="card p-4 leading-relaxed"><b className="text-ink">Disputes.</b> If something goes wrong, email hello@kifurushiapp.com and we review the agreed terms, the match chat and the journey updates. Accounts at fault are banned, and the full record is available to the parties for any claim they pursue.</li>
         </ol>
@@ -73,7 +74,7 @@ export default function SafetyPage() {
         </h2>
         <ul className="mt-4 space-y-2 text-sm leading-relaxed text-muted">
           <li>• Travellers must pass government-ID + liveness selfie checks before their first carry.</li>
-          <li>• Senders verify a phone number always, and full ID for parcels above $200 in declared value.</li>
+          <li>• Senders confirm an item-by-item contents declaration, including quantities, values and photos. This declaration is not an identity or customs verification.</li>
           <li>• Ratings are two-way and immutable. Accounts with confirmed misconduct are banned across all corridors, permanently.</li>
         </ul>
       </section>
@@ -86,11 +87,18 @@ export default function SafetyPage() {
         <p className="mt-4 text-sm leading-relaxed text-muted">
           The single most important rule: <b className="text-ink">the traveller inspects every item,
           open, in person, with the sender</b> — then both seal the parcel
-          together. Photograph it on your own phones and send the pictures in the
-          match chat, where they are timestamped and cannot be edited. A
-          traveller who accepts a
-          pre-sealed package carries it as their own at the border — which is
-          why the platform treats it as a bannable offence for both sides.
+          together. Add photos to the private inspection record in your dashboard.
+          Each person must separately confirm that the parcel was opened, that
+          the contents match the declaration, that it was sealed together and
+          that no safety concern remains. The traveller must be ID verified.
+          Pickup and delivery shortcuts cannot bypass these checks.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-muted">
+          Accepted declarations are locked. If the contents change before
+          collection, cancel the match, update the parcel and arrange a new
+          handover. Earlier versions and confirmations remain in the record.
+          Deliveries already collected before these checks were introduced can
+          complete their existing delivery process.
         </p>
       </section>
 
@@ -136,8 +144,12 @@ export default function SafetyPage() {
           Something feels off?
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-white/80">
-          Report any listing, message or user from the ⚑ button on their profile.
-          Reports freeze the related match automatically until reviewed.
+          Before collection, the traveller can choose <b>Refuse parcel / Report concern</b>{" "}
+          in the dashboard. A safety refusal cancels the match, releases reserved
+          luggage space and holds the parcel for support review. It does not
+          reduce the traveller&apos;s rating or create a platform penalty. Never
+          take an item you cannot identify or inspect. For a concern after
+          collection, contact hello@kifurushiapp.com.
         </p>
       </section>
     </div>

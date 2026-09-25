@@ -6,12 +6,16 @@
 // what's inside, how heavy, what you'll pay.
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Package, X } from "lucide-react";
-import { addParcel, fetchMyOpenParcels, requestMatch } from "@/lib/db";
+import { addParcel, requestMatch } from "@/lib/db";
+import ContentsDeclaration from "./ContentsDeclaration";
+import { declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
+import { safetyCopy } from "@/lib/locales/safety";
 import { CATEGORY_LABELS, ParcelCategory, Trip } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 
 export default function QuickRequest({
   trip,
@@ -23,6 +27,10 @@ export default function QuickRequest({
   onClose: () => void;
 }) {
   const t = useT();
+  const { lang } = useLang();
+  const [declaration, setDeclaration] = useState(emptyDeclaration);
+  const [uploading, setUploading] = useState(false);
+  const [createdParcelId, setCreatedParcelId] = useState<string | null>(null);
   const maxKg = Math.max(0.1, trip.remainingKg);
   const [weight, setWeight] = useState(String(Math.min(3, maxKg)));
   const [budget, setBudget] = useState(String(Math.round(trip.pricePerKg * 3)));
@@ -50,10 +58,10 @@ export default function QuickRequest({
   }, [weight, trip.pricePerKg]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && !uploading && onClose();
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, busy, uploading]);
 
   const weightNum = parseFloat(weight);
   const estimate =
@@ -63,7 +71,8 @@ export default function QuickRequest({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (busy) return;
+    if (busy || uploading) return;
+    if (!declarationSchema.safeParse(declaration).success) { setError(safetyCopy[lang].invalid); return; }
     if (description.trim().length < 10) {
       setError(t.postParcel.insidePlaceholder);
       return;
@@ -80,7 +89,7 @@ export default function QuickRequest({
     setError("");
     try {
       // The parcel inherits the traveller's route and travel date.
-      await addParcel({
+      const parcelId = createdParcelId ?? await addParcel({
         fromCountry: trip.fromCountry,
         fromCity: trip.fromCity,
         toCountry: trip.toCountry,
@@ -90,10 +99,10 @@ export default function QuickRequest({
         budgetUsd: parseFloat(budget),
         categories: cats,
         description: description.trim(),
+        declaration,
       });
-      const [mine] = await fetchMyOpenParcels();
-      if (!mine) throw new Error("parcel not found after insert");
-      await requestMatch(trip.id, mine.id);
+      setCreatedParcelId(parcelId);
+      await requestMatch(trip.id, parcelId);
       onDone();
     } catch {
       setError(t.browse.quickError);
@@ -110,7 +119,7 @@ export default function QuickRequest({
       className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/40 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      onClick={onClose}
+      onClick={() => { if (!busy && !uploading) onClose(); }}
     >
       <div
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-xl sm:rounded-3xl sm:p-7"
@@ -129,6 +138,7 @@ export default function QuickRequest({
           <button
             type="button"
             onClick={onClose}
+            disabled={busy || uploading}
             aria-label={t.browse.quickCancel}
             className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted transition hover:bg-sand hover:text-ink"
           >
@@ -137,6 +147,7 @@ export default function QuickRequest({
         </div>
 
         <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+          <fieldset disabled={busy || uploading || !!createdParcelId} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="q-weight" className="field-label">
@@ -221,6 +232,10 @@ export default function QuickRequest({
             />
           </div>
 
+          <ContentsDeclaration value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={busy || uploading || !!createdParcelId} />
+          </fieldset>
+          {createdParcelId && <p className="text-sm text-muted">{safetyCopy[lang].savedRequest} <Link className="font-semibold text-forest underline" href="/dashboard">{t.nav.dashboard}</Link></p>}
+
           {/* The answer to "where do I message them?" — here, one click away. */}
           <p className="rounded-xl bg-sand p-3 text-xs leading-relaxed text-muted">
             {t.browse.quickChatNote(trip.travelerName)}
@@ -229,7 +244,7 @@ export default function QuickRequest({
           {error && <p role="alert" className="field-error">{error}</p>}
 
           <div className="flex flex-col gap-2 pt-1 sm:flex-row-reverse">
-            <button type="submit" className="btn-accent w-full sm:w-auto" disabled={busy}>
+            <button type="submit" className="btn-accent w-full sm:w-auto" disabled={busy || uploading}>
               <Package className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
               {busy ? t.browse.quickSending : t.browse.quickSend}
             </button>
@@ -237,7 +252,7 @@ export default function QuickRequest({
               type="button"
               className="btn-ghost w-full sm:w-auto"
               onClick={onClose}
-              disabled={busy}
+              disabled={busy || uploading}
             >
               {t.browse.quickCancel}
             </button>

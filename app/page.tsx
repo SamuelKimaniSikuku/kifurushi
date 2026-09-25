@@ -9,6 +9,7 @@ import { browseHref } from "@/lib/routes";
 import Leaderboard from "@/components/Leaderboard";
 import HowToStart from "@/components/HowToStart";
 import RouteSearch from "@/components/RouteSearch";
+import UpcomingTravellers from "@/components/UpcomingTravellers";
 
 // These are navigation shortcuts, not claims about availability or prices.
 const corridors = [["FR", "KE"], ["GB", "NG"], ["FR", "SN"], ["US", "KE"], ["AE", "EG"], ["DE", "GH"], ["CA", "ET"], ["ZA", "GB"]];
@@ -50,6 +51,8 @@ export default function Home() {
           })}
         </div>
       </div>
+
+      <UpcomingTravellers />
 
       <section className="mx-auto max-w-6xl px-4 py-14 md:py-20">
         <div className="flex flex-wrap items-end justify-between gap-5">

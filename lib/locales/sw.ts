@@ -93,7 +93,7 @@ export const sw: Dict = {
       },
       {
         title: "Kubaliana na funga",
-        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na picha zinatumwa kwenye gumzo la match.",
+        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na picha pamoja na uthibitisho wa wote wawili hurekodiwa kwenye dashibodi.",
       },
       {
         title: "Fikisha na thibitisha",
@@ -332,7 +332,7 @@ export const sw: Dict = {
           },
           {
             q: "Kanuni ya kukagua na kufunga ni ipi?",
-            a: "Msafiri lazima aone kila kitu, wazi, ana kwa ana, kabla ya kufungwa — kisha mnafunga pamoja na kupiga picha kwa simu zenu wenyewe, mkizituma kwenye gumzo la match ambako zina muhuri wa muda na haziwezi kuhaririwa. Msafiri anayekubali kifurushi kilichofungwa tayari anakibeba kama chake mpakani. Pande zote mbili zinaweza kufungiwa kwa kupuuza hili.",
+            a: "Mtumaji hutaja kila kitu, idadi na thamani na kuongeza picha. Wakati wa kukichukua, kagueni kila kitu pamoja kisha mfunge kifurushi. Msafiri huongeza picha za makabidhiano na wote wawili huthibitisha tamko lilelile kwenye dashibodi. Kifurushi hakiwezi kuashiriwa kuchukuliwa hadi wote wathibitishe na utambulisho wa msafiri uthibitishwe. Kukataa kwa sababu ya usalama hakuna adhabu ya jukwaa.",
           },
           {
             q: "Usafirishaji unathibitishwaje?",

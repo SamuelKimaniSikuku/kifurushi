@@ -92,7 +92,7 @@ export const en = {
       },
       {
         title: "Agree & seal",
-        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with photos exchanged in the match chat.",
+        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with photos and both confirmations recorded in the dashboard.",
       },
       {
         title: "Deliver & confirm",
@@ -330,7 +330,7 @@ export const en = {
           },
           {
             q: "What is the inspect-and-seal rule?",
-            a: "The traveller must see every item, open, in person, before it is sealed — then you seal it together and photograph it on your own phones, sending the pictures in the match chat where they are timestamped and can't be edited. A traveller who accepts a pre-sealed package carries it as their own at the border. Both sides can be banned for skipping this.",
+            a: "The sender declares each item, quantity and value and adds contents photos. At collection, open and inspect every item together, then seal the parcel. The traveller adds handover photos and both people confirm the same declaration in the dashboard. Pickup is blocked until both confirm and the traveller is ID verified. Refuse any parcel you cannot inspect; a safety refusal has no platform penalty.",
           },
           {
             q: "How does the delivery get confirmed?",

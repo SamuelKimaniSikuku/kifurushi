@@ -9,6 +9,7 @@ import { useLang, useT } from "@/lib/i18n";
 import Avatar from "@/components/ui/Avatar";
 import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { safetyCopy } from "@/lib/locales/safety";
 
 export default function TripCard({
   trip,
@@ -16,12 +17,14 @@ export default function TripCard({
   requested,
   mine,
   pending = 0,
+  detailsHref,
 }: {
   trip: Trip;
   onRequest?: (trip: Trip) => void;
   requested?: boolean;
   mine?: boolean;
   pending?: number;
+  detailsHref?: string;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -29,6 +32,7 @@ export default function TripCard({
     weekday: "short",
     day: "numeric",
     month: "short",
+    year: "numeric",
   });
   const exampleKg = Math.min(5, trip.remainingKg);
   const anchorPrice = Number((trip.pricePerKg * exampleKg).toFixed(2));
@@ -119,9 +123,9 @@ export default function TripCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 text-sm text-muted">
-        <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />
-        {t.experience.departs} {date}
+      <div className="flex items-center gap-2 rounded-xl bg-success-bg px-3 py-2.5 text-sm font-semibold text-forest">
+        <Calendar size={17} strokeWidth={2} className="shrink-0" aria-hidden />
+        <span>{t.experience.departs} <time dateTime={trip.departDate}>{date}</time></span>
       </div>
 
       {trip.notes && (
@@ -164,6 +168,7 @@ export default function TripCard({
         </div>
       ) : (
         <div className="mt-auto flex items-stretch justify-end gap-2 pt-1">
+          {detailsHref && <Link href={detailsHref} className="btn-accent min-w-0 flex-1 px-3">{safetyCopy[lang].viewTrip}</Link>}
           {onRequest && (requested ? (
             <button
               type="button"

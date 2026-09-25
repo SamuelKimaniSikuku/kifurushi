@@ -16,6 +16,7 @@ import {
 import { transitUpdateSchema, reviewSchema, messageSchema } from "@/lib/validation";
 import { useT } from "@/lib/i18n";
 import Stars from "@/components/ui/Stars";
+import MatchSafety from "@/components/MatchSafety";
 
 const CHAT_POLL_MS = 5000;
 const CHAT_IDLE_POLL_MS = 30000;
@@ -262,6 +263,7 @@ export default function MatchCard({
   );
   const [waNumber, setWaNumber] = useState<string | null>(null);
   const [confirmingTerms, setConfirmingTerms] = useState(false);
+  const [inspectionReady, setInspectionReady] = useState(false);
 
   // The counterparty's opted-in WhatsApp number — the RPC answers only after
   // acceptance, so pre-acceptance renders never even ask.
@@ -515,6 +517,8 @@ export default function MatchCard({
         </a>
       )}
 
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} />
+
       {/* Role-aware actions */}
       {!done && !ended && (
         <div className="mt-4 space-y-3">
@@ -611,12 +615,12 @@ export default function MatchCard({
             (isTraveler ? (
               <>
                 <p className="text-sm text-muted">
-                  Inspect the parcel together, seal it, photograph it — then mark
-                  it picked up.
+                  Complete the inspection above together. Both people must confirm
+                  before the traveller can mark the parcel picked up.
                 </p>
                 <button
                   className="btn-primary min-h-[44px]"
-                  disabled={busy}
+                  disabled={busy || !inspectionReady}
                   onClick={() =>
                     act(() => advanceMatch(match.id), "Could not update — try again.")
                   }
@@ -700,7 +704,7 @@ export default function MatchCard({
               the code. For casual handovers between people who already know
               each other — the code stays available for those who want it. */}
           {!isTraveler &&
-            ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
+            ["picked_up", "in_transit", "delivered"].includes(
               match.status
             ) && (
               <div className="rounded-xl border border-forest/25 bg-sand p-4">
@@ -797,7 +801,7 @@ export default function MatchCard({
               through. The traveller can jump straight to the code — which
               stays the only thing that completes the delivery. */}
           {isTraveler &&
-            ["accepted", "escrow_paid", "picked_up", "in_transit"].includes(
+            ["picked_up", "in_transit"].includes(
               match.status
             ) && (
               <button
