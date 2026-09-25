@@ -10,14 +10,17 @@ export interface RouteFilters {
 const countryCodes = new Set(ALL_COUNTRIES.map((country) => country.code));
 const country = (value: string | null) => countryCodes.has(value ?? "") ? value! : "";
 
+function readDate(value: string | null | undefined): string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return "";
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value ? value : "";
+}
+
 export function readRouteFilters(params: Pick<URLSearchParams, "get">): RouteFilters {
-  const date = params.get("date") ?? "";
-  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) &&
-    !Number.isNaN(Date.parse(date)) && new Date(date).toISOString().slice(0, 10) === date;
   const sort = params.get("sort");
   return {
     from: country(params.get("from")), to: country(params.get("to")),
-    date: validDate ? date : "",
+    date: readDate(params.get("date")),
     sort: sort === "price" || sort === "budget" ? sort : "date",
   };
 }
@@ -31,10 +34,12 @@ export function browseHref(path: "/trips" | "/parcels", filters: Partial<RouteFi
   return params.size ? `${path}?${params}` : path;
 }
 
-export function postHref(kind: "trip" | "parcel", filters: Pick<RouteFilters, "from" | "to">) {
+export function postHref(kind: "trip" | "parcel", filters: Pick<RouteFilters, "from" | "to"> & Partial<Pick<RouteFilters, "date">>) {
   const params = new URLSearchParams();
   if (countryCodes.has(filters.from)) params.set("fromCountry", filters.from);
   if (countryCodes.has(filters.to)) params.set("toCountry", filters.to);
+  const date = readDate(filters.date);
+  if (kind === "parcel" && date) params.set("neededBy", date);
   return params.size ? `/post/${kind}?${params}` : `/post/${kind}`;
 }
 
@@ -45,6 +50,12 @@ export function readPostRoute(params: Pick<URLSearchParams, "get">) {
     ...(fromCountry ? { fromCountry, fromCity: params.get("fromCity") ?? "" } : {}),
     ...(toCountry ? { toCountry, toCity: params.get("toCity") ?? "" } : {}),
   };
+}
+
+/** The sender reviews the copied search date as an arrival deadline in the form. */
+export function readParcelPrefill(params: Pick<URLSearchParams, "get">) {
+  const neededBy = readDate(params.get("neededBy"));
+  return { ...readPostRoute(params), ...(neededBy ? { neededBy } : {}) };
 }
 
 /** Only relative paths within this app may be used after authentication. */
