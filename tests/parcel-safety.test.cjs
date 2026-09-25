@@ -16,9 +16,14 @@ test('declaration captures quantities and the value of goods separately from car
   assert.deepEqual(declarationSchema.parse(valid).items, [{ description: 'Cotton shirts', quantity: 2, valueUsd: 40 }]);
 });
 test('incomplete or unconfirmed contents cannot be posted', () => {
-  for (const draft of [{ ...valid, attested: false }, { ...valid, photoPaths: [] }, { ...valid, items: [] }, { ...valid, items: [{ description: 'Shirts', quantity: 0, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1.5, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: Infinity }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: '' }] }]) {
+  for (const draft of [{ ...valid, attested: false }, { ...valid, items: [] }, { ...valid, items: [{ description: 'Shirts', quantity: 0, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1.5, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: Infinity }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: '' }] }]) {
     assert.equal(declarationSchema.safeParse(draft).success, false);
   }
+});
+test('photos are optional but the contents confirmation is still required', () => {
+  assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: [] }).success, true);
+  assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: [], attested: false }).success, false);
+  assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: Array(7).fill('sender/photo.jpg') }).success, false);
 });
 test('evidence uploads reject documents, executable formats, empty files and oversize images', () => {
   for (const type of ['image/jpeg', 'image/png', 'image/webp']) assert.equal(validateEvidenceFile({ type, size: 100 }), true);

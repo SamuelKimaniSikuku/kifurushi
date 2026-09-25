@@ -93,7 +93,7 @@ export const sw: Dict = {
       },
       {
         title: "Kubaliana na funga",
-        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na picha pamoja na uthibitisho wa wote wawili hurekodiwa kwenye dashibodi.",
+        body: "Mnakubaliana bei moja kwa moja — pesa taslimu, M-Pesa, benki, chaguo lenu. Kifurushi kinakaguliwa na kufungwa pamoja, na uthibitisho wa wote wawili hurekodiwa kwenye dashibodi. Picha ni za hiari.",
       },
       {
         title: "Fikisha na thibitisha",
@@ -132,7 +132,7 @@ export const sw: Dict = {
     handoverLabel: "Makabidhiano yaliyolindwa",
     handoverSteps: [
       { title: "Ada imekubaliwa: $45", body: "Inalipwa moja kwa moja, msafiri anabaki na 100%" },
-      { title: "Makabidhiano na kufunga", body: "Picha zinatumwa kwenye gumzo la match" },
+      { title: "Makabidhiano na kufunga", body: "Thibitisha ukaguzi kwenye dashibodi; picha ni za hiari" },
       { title: "Safarini", body: "Taarifa za safari kwa pande zote mbili" },
       { title: "Msimbo 4 8 2 9 1 7", body: "Mpokeaji anathibitisha — rekodi imekamilika" },
     ],
@@ -332,7 +332,7 @@ export const sw: Dict = {
           },
           {
             q: "Kanuni ya kukagua na kufunga ni ipi?",
-            a: "Mtumaji hutaja kila kitu, idadi na thamani na kuongeza picha. Wakati wa kukichukua, kagueni kila kitu pamoja kisha mfunge kifurushi. Msafiri huongeza picha za makabidhiano na wote wawili huthibitisha tamko lilelile kwenye dashibodi. Kifurushi hakiwezi kuashiriwa kuchukuliwa hadi wote wathibitishe na utambulisho wa msafiri uthibitishwe. Kukataa kwa sababu ya usalama hakuna adhabu ya jukwaa.",
+            a: "Mtumaji hutaja kila kitu, idadi na thamani na kuthibitisha tamko. Wakati wa kukichukua, kagueni kila kitu pamoja kisha mfunge kifurushi. Kila mtu huweka tiki kwenye uthibitisho wa ukaguzi kwenye dashibodi. Picha za yaliyomo na makabidhiano ni za hiari. Kifurushi hakiwezi kuashiriwa kuchukuliwa hadi wote wathibitishe na utambulisho wa msafiri uthibitishwe. Kukataa kwa sababu ya usalama hakuna adhabu ya jukwaa.",
           },
           {
             q: "Usafirishaji unathibitishwaje?",

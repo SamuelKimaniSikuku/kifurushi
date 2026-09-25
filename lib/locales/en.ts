@@ -92,7 +92,7 @@ export const en = {
       },
       {
         title: "Agree & seal",
-        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with photos and both confirmations recorded in the dashboard.",
+        body: "You agree the carriage fee directly — cash, M-Pesa, bank transfer, your choice. The parcel is inspected and sealed together, with both confirmations recorded in the dashboard. Photos are optional.",
       },
       {
         title: "Deliver & confirm",
@@ -130,7 +130,7 @@ export const en = {
     handoverLabel: "Protected handover",
     handoverSteps: [
       { title: "Fee agreed: $45", body: "Paid directly, traveller keeps 100%" },
-      { title: "Handover & seal", body: "Photos shared in the match chat" },
+      { title: "Handover & seal", body: "Confirm inspection in the dashboard; photos optional" },
       { title: "In transit", body: "Journey updates for both sides" },
       { title: "Code 4 8 2 9 1 7", body: "Receiver confirms — record complete" },
     ],
@@ -330,7 +330,7 @@ export const en = {
           },
           {
             q: "What is the inspect-and-seal rule?",
-            a: "The sender declares each item, quantity and value and adds contents photos. At collection, open and inspect every item together, then seal the parcel. The traveller adds handover photos and both people confirm the same declaration in the dashboard. Pickup is blocked until both confirm and the traveller is ID verified. Refuse any parcel you cannot inspect; a safety refusal has no platform penalty.",
+            a: "The sender declares each item, quantity and value and confirms the declaration. At collection, open and inspect every item together, then seal the parcel. Each person ticks the inspection confirmation in the dashboard. Contents and handover photos are optional. Pickup is blocked until both confirm and the traveller is ID verified. Refuse any parcel you cannot inspect; a safety refusal has no platform penalty.",
           },
           {
             q: "How does the delivery get confirmed?",

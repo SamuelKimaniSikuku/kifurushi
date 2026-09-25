@@ -1,7 +1,7 @@
 # Parcel declarations and handover safety
 
 This release shows upcoming travellers without requiring dates, records private
-itemised contents declarations and photos, and requires both parties to confirm
+itemised contents declarations with optional photos, and requires both parties to confirm
 the same declaration before pickup. Traveller identity verification is checked
 again by the database at handover. These records document the process; they do
 not certify the legality of contents or replace airline/customs checks.
@@ -13,6 +13,12 @@ Supabase project before deploying the frontend. It adds three RLS-protected
 tables, a private `parcel-evidence` bucket and authenticated RPCs. Public listing
 queries never include item lists, values or evidence paths. No new secrets or
 environment variables are required.
+
+Apply `optional_parcel_photos` after the initial migration for the simplified
+flow. Contents and handover photos are optional; each person ticks one checkbox
+confirming the full inspection. Both confirmations, the contents declaration,
+traveller verification and the existing refusal safeguards remain required.
+Uploaded photos retain the same private access and validation rules.
 
 Existing parcels can add their first declaration from the expanded match in
 the dashboard. Every match still awaiting pickup must pass the new checks.
@@ -55,7 +61,8 @@ From the repository root, substitute your local test database name:
 psql -v ON_ERROR_STOP=1 -d kifurushi_safety_test \
   -f tests/safety/bootstrap.sql \
   -f tests/safety/inspection.test.sql \
-  -f tests/safety/refusal.test.sql
+  -f tests/safety/refusal.test.sql \
+  -f tests/safety/optional-photos.test.sql
 ```
 
 Coverage includes anonymous/unrelated-user denial, own-upload validation,

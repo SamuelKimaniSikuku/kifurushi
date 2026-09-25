@@ -17,7 +17,7 @@ select public.save_parcel(jsonb_build_object('fromCountry','FR','fromCity','Pari
 select test.ok((select count(*)=1 from public.parcel_declarations where parcel_id=:'parcel_id'),'atomic parcel and private declaration created');
 select test.ok((select declared_value_usd=40 from public.parcel_declarations where parcel_id=:'parcel_id'),'declared value is computed from line values');
 select test.denied(format('select public.declare_parcel(%L,%L,ARRAY[%L],true)',:'parcel_id','[{"description":"Shirt","quantity":0,"valueUsd":10}]','10000000-0000-4000-8000-000000000001/contents.jpg'),'valid quantities','invalid quantities rejected by database');
-select test.denied(format('select public.declare_parcel(%L,%L,ARRAY[]::text[],true)',:'parcel_id','[{"description":"Shirt","quantity":1,"valueUsd":10}]'),'evidence photos','missing contents photos rejected');
+select test.denied(format('select public.declare_parcel(%L,%L,null::text[],true)',:'parcel_id','[{"description":"Shirt","quantity":1,"valueUsd":10}]'),'evidence photos','null photo list rejected; use an empty array instead');
 select test.denied(format('select public.declare_parcel(%L,%L,ARRAY[%L],true)',:'parcel_id','[{"description":"Shirt","quantity":1,"valueUsd":10}]','10000000-0000-4000-8000-000000000001/missing.jpg'),'Upload each photo','nonexistent evidence rejected');
 select test.denied(format('select public.declare_parcel(%L,%L,ARRAY[%L],null)',:'parcel_id','[{"description":"Shirt","quantity":1,"valueUsd":10}]','10000000-0000-4000-8000-000000000001/contents.jpg'),'Confirm','null attestation rejected');
 insert into public.matches(id,trip_id,parcel_id,requester_id) values('50000000-0000-4000-8000-000000000005','40000000-0000-4000-8000-000000000004',:'parcel_id','10000000-0000-4000-8000-000000000001');

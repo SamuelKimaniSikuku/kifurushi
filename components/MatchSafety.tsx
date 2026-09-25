@@ -22,7 +22,7 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady }: {
   const [uploading, setUploading] = useState(false);
   const [draft, setDraft] = useState(emptyDeclaration);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [checks, setChecks] = useState({ opened: false, matches: false, sealed: false, noConcerns: false });
+  const [inspectionConfirmed, setInspectionConfirmed] = useState(false);
   const [refusing, setRefusing] = useState(false);
   const [reason, setReason] = useState<RefusalReason>("cannot_inspect");
   const [notes, setNotes] = useState("");
@@ -55,7 +55,7 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady }: {
       <p className="text-xs text-muted">{s.version} {declaration.version} · {new Date(declaration.declared_at).toLocaleDateString(lang)}</p>
       <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line"><th className="py-2 pr-3">{s.item}</th><th className="p-2">{s.quantity}</th><th className="py-2 pl-3 text-right">{s.value}</th></tr></thead><tbody>{declaration.items.map((item, i) => <tr key={i} className="border-b border-line"><td className="py-2 pr-3">{item.description}</td><td className="p-2">{item.quantity}</td><td className="py-2 pl-3 text-right">${Number(item.valueUsd).toFixed(2)}</td></tr>)}</tbody></table></div>
       <p className="text-sm font-semibold">{s.total}: ${Number(declaration.declared_value_usd).toFixed(2)}</p>
-      <EvidencePhotos paths={declaration.photo_paths} />
+      {declaration.photo_paths.length > 0 && <EvidencePhotos paths={declaration.photo_paths} />}
       <p className="text-xs leading-relaxed text-muted">{s.frozen}</p>
     </> : <>
       <p className="text-sm text-muted">{s.missing}</p>
@@ -75,8 +75,8 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady }: {
       {current.filter((i) => i.photo_paths.length > 0).map((i) => <EvidencePhotos key={i.user_id} handover paths={i.photo_paths} />)}
       {match.status === "escrow_paid" && (mine ? <p role="status" className="text-sm font-semibold text-forest">{ready ? s.bothConfirmed : `${s.confirmed} ${s.waitingOther}`}</p> : <>
         {traveler && <><p className="text-sm">{s.verify} <Link className="font-semibold text-forest underline" href="/verify">{s.verifyLink}</Link></p><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></>}
-        <fieldset disabled={busy || uploading} className="space-y-3">{(["opened", "matches", "sealed", "noConcerns"] as const).map((key) => <label key={key} className="flex items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={checks[key]} className="mt-1 h-5 w-5 shrink-0 accent-forest" onChange={(e) => setChecks({ ...checks, [key]: e.target.checked })} />{s[key]}</label>)}</fieldset>
-        <button type="button" className="btn-primary" disabled={busy || uploading || !Object.values(checks).every(Boolean) || (traveler && photos.length === 0)} onClick={() => act(() => confirmInspection(match.id, declaration.version, photos, checks))}>{s.confirm}</button>
+        <label className="flex items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={inspectionConfirmed} disabled={busy || uploading} className="mt-1 h-5 w-5 shrink-0 accent-forest" onChange={(e) => setInspectionConfirmed(e.target.checked)} />{s.inspectionAttest}</label>
+        <button type="button" className="btn-primary" disabled={busy || uploading || !inspectionConfirmed} onClick={() => act(() => confirmInspection(match.id, declaration.version, photos, { opened: inspectionConfirmed, matches: inspectionConfirmed, sealed: inspectionConfirmed, noConcerns: inspectionConfirmed }))}>{s.confirm}</button>
       </>)}
     </>}
     {traveler && prePickup && <div className="border-t border-line pt-4">

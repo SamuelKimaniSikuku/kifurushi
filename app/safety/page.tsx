@@ -61,7 +61,7 @@ export default function SafetyPage() {
         </p>
         <ol className="mt-5 space-y-3 text-sm text-muted">
           <li className="card p-4 leading-relaxed"><b className="text-ink">Terms agreed on-platform.</b> Fee, weight, contents and dates are confirmed in the match before handover — so there is a written record both sides accepted.</li>
-          <li className="card p-4 leading-relaxed"><b className="text-ink">A private contents and inspection record.</b> The sender lists each item, quantity and value and adds contents photos. At collection, both people inspect and seal the parcel together. The traveller adds handover photos and both confirm the same declaration in the dashboard before pickup can be recorded.</li>
+          <li className="card p-4 leading-relaxed"><b className="text-ink">A private contents and inspection record.</b> The sender lists each item, quantity and value and confirms the declaration. At collection, both people inspect and seal the parcel together, then each ticks the inspection confirmation in the dashboard before pickup can be recorded. Contents and handover photos are optional.</li>
           <li className="card p-4 leading-relaxed"><b className="text-ink">Coded delivery.</b> The receiver gets a one-time 6-digit code. Entering it at handover is the proof of delivery that completes the record and unlocks reviews.</li>
           <li className="card p-4 leading-relaxed"><b className="text-ink">Disputes.</b> If something goes wrong, email hello@kifurushiapp.com and we review the agreed terms, the match chat and the journey updates. Accounts at fault are banned, and the full record is available to the parties for any claim they pursue.</li>
         </ol>
@@ -74,7 +74,7 @@ export default function SafetyPage() {
         </h2>
         <ul className="mt-4 space-y-2 text-sm leading-relaxed text-muted">
           <li>• Travellers must pass government-ID + liveness selfie checks before their first carry.</li>
-          <li>• Senders confirm an item-by-item contents declaration, including quantities, values and photos. This declaration is not an identity or customs verification.</li>
+          <li>• Senders confirm an item-by-item contents declaration, including quantities and values. Photos are optional. This declaration is not an identity or customs verification.</li>
           <li>• Ratings are two-way and immutable. Accounts with confirmed misconduct are banned across all corridors, permanently.</li>
         </ul>
       </section>
@@ -87,8 +87,8 @@ export default function SafetyPage() {
         <p className="mt-4 text-sm leading-relaxed text-muted">
           The single most important rule: <b className="text-ink">the traveller inspects every item,
           open, in person, with the sender</b> — then both seal the parcel
-          together. Add photos to the private inspection record in your dashboard.
-          Each person must separately confirm that the parcel was opened, that
+          together. Photos are optional. Each person must tick the inspection
+          confirmation in the dashboard to confirm that the parcel was opened, that
           the contents match the declaration, that it was sealed together and
           that no safety concern remains. The traveller must be ID verified.
           Pickup and delivery shortcuts cannot bypass these checks.

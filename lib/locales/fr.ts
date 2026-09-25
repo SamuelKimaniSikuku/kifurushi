@@ -93,7 +93,7 @@ export const fr: Dict = {
       },
       {
         title: "Accord & scellage",
-        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, avec des photos et les deux confirmations enregistrées dans le tableau de bord.",
+        body: "Vous convenez du prix directement — espèces, M-Pesa, virement, à vous de choisir. Le colis est inspecté et scellé ensemble, avec les deux confirmations enregistrées dans le tableau de bord. Les photos sont facultatives.",
       },
       {
         title: "Livraison & confirmation",
@@ -132,7 +132,7 @@ export const fr: Dict = {
     handoverLabel: "Remise protégée",
     handoverSteps: [
       { title: "Prix convenu : 45 $", body: "Payé directement, le voyageur garde 100 %" },
-      { title: "Remise & scellage", body: "Photos partagées dans la messagerie" },
+      { title: "Remise & scellage", body: "Confirmez l’inspection dans le tableau de bord ; photos facultatives" },
       { title: "En transit", body: "Suivi du trajet pour les deux côtés" },
       { title: "Code 4 8 2 9 1 7", body: "Le destinataire confirme — dossier complet" },
     ],
@@ -332,7 +332,7 @@ export const fr: Dict = {
           },
           {
             q: "C'est quoi la règle d'inspection et de scellage ?",
-            a: "L'expéditeur déclare les articles, quantités et valeurs et ajoute des photos. À la collecte, inspectez chaque article ensemble, puis scellez le colis. Le voyageur ajoute des photos et chacun confirme la même déclaration dans le tableau de bord. La collecte est bloquée sans les deux confirmations et la vérification d'identité du voyageur. Un refus pour motif de sécurité n'entraîne aucune pénalité de plateforme.",
+            a: "L'expéditeur déclare les articles, quantités et valeurs et confirme la déclaration. À la collecte, inspectez chaque article ensemble, puis scellez le colis. Chacun coche la confirmation d’inspection dans le tableau de bord. Les photos du contenu et de la remise sont facultatives. La collecte est bloquée sans les deux confirmations et la vérification d'identité du voyageur. Un refus pour motif de sécurité n'entraîne aucune pénalité de plateforme.",
           },
           {
             q: "Comment la livraison est-elle confirmée ?",

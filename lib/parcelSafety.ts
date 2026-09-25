@@ -8,7 +8,7 @@ export const declarationItemSchema = z.object({
 
 export const declarationSchema = z.object({
   items: z.array(declarationItemSchema).min(1).max(30),
-  photoPaths: z.array(z.string().min(1).max(300)).min(1, "Add a photo of the contents").max(6),
+  photoPaths: z.array(z.string().min(1).max(300)).max(6),
   attested: z.literal(true, { message: "Confirm your contents declaration" }),
 }).refine((d) => d.items.reduce((total, item) => total + item.valueUsd, 0) <= 100000, {
   message: "Total declared value must not exceed $100,000", path: ["items"],

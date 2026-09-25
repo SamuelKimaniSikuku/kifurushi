@@ -33,6 +33,7 @@ create function storage.foldername(text) returns text[] language sql immutable a
 create table public.incidents(id uuid default gen_random_uuid(),kind text,severity text,source text,summary text,detail jsonb,user_id uuid);
 create or replace function public.is_active_member(uid uuid) returns boolean language sql stable as $$ select auth.uid() is not null $$;
 \ir ../../supabase/migrations/20260925092621_parcel_declarations_and_inspections.sql
+\ir ../../supabase/migrations/20260925094456_optional_parcel_photos.sql
 
 create schema test;
 grant usage on schema test to anon,authenticated;
