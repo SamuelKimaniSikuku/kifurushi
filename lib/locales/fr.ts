@@ -332,7 +332,7 @@ export const fr: Dict = {
           },
           {
             q: "C'est quoi la règle d'inspection et de scellage ?",
-            a: "L'expéditeur déclare les articles, quantités et valeurs et confirme la déclaration. À la collecte, inspectez chaque article ensemble, puis scellez le colis. Chacun coche la confirmation d’inspection dans le tableau de bord. Les photos du contenu et de la remise sont facultatives. La collecte est bloquée sans les deux confirmations et la vérification d'identité du voyageur. Un refus pour motif de sécurité n'entraîne aucune pénalité de plateforme.",
+            a: "L'expéditeur décrit brièvement le colis et confirme qu’il ne contient aucun objet interdit et peut être inspecté. Les quantités et valeurs ne sont pas obligatoires. À la collecte, inspectez chaque article ensemble, puis scellez le colis. Chacun coche la confirmation d’inspection dans le tableau de bord. Les photos du contenu et de la remise sont facultatives. La collecte est bloquée sans les deux confirmations et la vérification d'identité du voyageur. Un refus pour motif de sécurité n'entraîne aucune pénalité de plateforme.",
           },
           {
             q: "Comment la livraison est-elle confirmée ?",

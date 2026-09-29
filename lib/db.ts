@@ -11,7 +11,7 @@ import {
   Message,
 } from "./types";
 import { personSlug } from "./people";
-import { declarationSchema, type DeclarationDraft } from "./parcelSafety";
+import { briefDeclaration, declarationSchema, type DeclarationDraft } from "./parcelSafety";
 import { parcelSchema } from "./validation";
 
 // ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ export interface NewParcel {
 }
 
 export async function addParcel(p: NewParcel): Promise<string> {
-  const declaration = declarationSchema.parse(p.declaration);
+  const declaration = declarationSchema.parse(briefDeclaration(p.description, p.declaration));
   const parcel = { ...parcelSchema.parse(p), categories: p.categories };
   const { data, error } = await supabase.rpc("save_parcel", {
     p_parcel: parcel, p_items: declaration.items,
@@ -509,7 +509,7 @@ export async function updateTrip(id: string, t: NewTrip): Promise<void> {
 }
 
 export async function updateParcel(id: string, p: NewParcel): Promise<void> {
-  const declaration = declarationSchema.parse(p.declaration);
+  const declaration = declarationSchema.parse(briefDeclaration(p.description, p.declaration));
   const parcel = { ...parcelSchema.parse(p), categories: p.categories };
   const { error } = await supabase.rpc("save_parcel", {
     p_parcel_id: id, p_parcel: parcel, p_items: declaration.items,

@@ -7,7 +7,7 @@ require.extensions['.ts'] = (module, filename) => {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true,
   }}).outputText, filename);
 };
-const { declarationSchema, validateEvidenceFile } = require('../lib/parcelSafety.ts');
+const { briefDeclaration, declarationSchema, emptyDeclaration, validateEvidenceFile } = require('../lib/parcelSafety.ts');
 const { upcomingOnRoute, laterDepartures } = require('../lib/tripDiscovery.ts');
 const { safetyCopy } = require('../lib/locales/safety.ts');
 const valid = { items: [{ description: 'Cotton shirts', quantity: '2', valueUsd: '40' }], photoPaths: ['sender/contents.jpg'], attested: true };
@@ -16,7 +16,7 @@ test('declaration captures quantities and the value of goods separately from car
   assert.deepEqual(declarationSchema.parse(valid).items, [{ description: 'Cotton shirts', quantity: 2, valueUsd: 40 }]);
 });
 test('incomplete or unconfirmed contents cannot be posted', () => {
-  for (const draft of [{ ...valid, attested: false }, { ...valid, items: [] }, { ...valid, items: [{ description: 'Shirts', quantity: 0, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1.5, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: Infinity }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: '' }] }]) {
+  for (const draft of [{ ...valid, attested: false }, { ...valid, items: [] }, { ...valid, items: [{ description: 'Shirts', quantity: 0, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1.5, valueUsd: 40 }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: Infinity }] }, { ...valid, items: [{ description: 'Shirts', quantity: 1, valueUsd: -1 }] }]) {
     assert.equal(declarationSchema.safeParse(draft).success, false);
   }
 });
@@ -24,6 +24,21 @@ test('photos are optional but the contents confirmation is still required', () =
   assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: [] }).success, true);
   assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: [], attested: false }).success, false);
   assert.equal(declarationSchema.safeParse({ ...valid, photoPaths: Array(7).fill('sender/photo.jpg') }).success, false);
+});
+test('a short listing description is enough without repeated items, quantities, values or photos', () => {
+  const draft = briefDeclaration('  Clothes  ', { ...emptyDeclaration(), attested: true });
+  assert.deepEqual(declarationSchema.parse(draft), { items: [{ description: 'Clothes' }], photoPaths: [], attested: true });
+  assert.equal(declarationSchema.safeParse({ ...draft, attested: false }).success, false);
+  assert.equal(declarationSchema.safeParse(briefDeclaration('  ', draft)).success, false);
+  assert.equal(declarationSchema.safeParse(briefDeclaration('A'.repeat(401), draft)).success, false);
+  assert.equal(declarationSchema.safeParse(briefDeclaration('A'.repeat(240), draft)).success, true);
+});
+test('editing reuses the current description while preserving optional photos', () => {
+  const draft = briefDeclaration('Books', valid);
+  assert.deepEqual(draft.items, [{ description: 'Books' }]);
+  assert.deepEqual(draft.photoPaths, valid.photoPaths);
+  assert.equal(draft.attested, true);
+  assert.equal(valid.items[0].description, 'Cotton shirts');
 });
 test('evidence uploads reject documents, executable formats, empty files and oversize images', () => {
   for (const type of ['image/jpeg', 'image/png', 'image/webp']) assert.equal(validateEvidenceFile({ type, size: 100 }), true);

@@ -330,7 +330,7 @@ export const en = {
           },
           {
             q: "What is the inspect-and-seal rule?",
-            a: "The sender declares each item, quantity and value and confirms the declaration. At collection, open and inspect every item together, then seal the parcel. Each person ticks the inspection confirmation in the dashboard. Contents and handover photos are optional. Pickup is blocked until both confirm and the traveller is ID verified. Refuse any parcel you cannot inspect; a safety refusal has no platform penalty.",
+            a: "The sender briefly describes the parcel and confirms it contains no prohibited items and can be inspected. Item quantities and values are not required. At collection, open and inspect every item together, then seal the parcel. Each person ticks the inspection confirmation in the dashboard. Contents and handover photos are optional. Pickup is blocked until both confirm and the traveller is ID verified. Refuse any parcel you cannot inspect; a safety refusal has no platform penalty.",
           },
           {
             q: "How does the delivery get confirmed?",

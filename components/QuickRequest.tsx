@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Package, X } from "lucide-react";
 import { addParcel, requestMatch } from "@/lib/db";
 import ContentsDeclaration from "./ContentsDeclaration";
-import { declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
+import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
 import { safetyCopy } from "@/lib/locales/safety";
 import { CATEGORY_LABELS, ParcelCategory, Trip } from "@/lib/types";
 
@@ -35,9 +35,7 @@ export default function QuickRequest({
   const [weight, setWeight] = useState(String(Math.min(3, maxKg)));
   const [budget, setBudget] = useState(String(Math.round(trip.pricePerKg * 3)));
   const [description, setDescription] = useState("");
-  const [cats, setCats] = useState<ParcelCategory[]>(
-    trip.categoriesAccepted.slice(0, 1)
-  );
+  const [cats, setCats] = useState<ParcelCategory[]>([]);
   // Every category, the traveller's declared ones first. Their list is a
   // preference, not a wall — the chat exists precisely to ask "would you take
   // medicine too?" — so we don't hide options, we order and flag them.
@@ -72,13 +70,9 @@ export default function QuickRequest({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (busy || uploading) return;
-    if (!declarationSchema.safeParse(declaration).success) { setError(safetyCopy[lang].invalid); return; }
-    if (description.trim().length < 10) {
+    if (!declarationSchema.safeParse(briefDeclaration(description, declaration)).success) { setError(safetyCopy[lang].invalid); return; }
+    if (description.trim().length < 3) {
       setError(t.postParcel.insidePlaceholder);
-      return;
-    }
-    if (cats.length === 0) {
-      setError(t.postParcel.categoriesError);
       return;
     }
     if (!Number.isFinite(weightNum) || weightNum <= 0 || weightNum > maxKg) {
@@ -97,7 +91,7 @@ export default function QuickRequest({
         neededBy: trip.departDate,
         weightKg: parseFloat(weight),
         budgetUsd: parseFloat(budget),
-        categories: cats,
+        categories: cats.length ? cats : ["other"],
         description: description.trim(),
         declaration,
       });
@@ -188,6 +182,23 @@ export default function QuickRequest({
             </div>
           </div>
 
+
+
+          <div>
+            <label htmlFor="q-desc" className="field-label">
+              {t.postParcel.whatsInside}
+            </label>
+            <textarea
+              id="q-desc"
+              className="field min-h-[80px]"
+              placeholder={safetyCopy[lang].briefPlaceholder}
+              value={description}
+              onChange={(e) => { setDescription(e.target.value); setDeclaration((d) => briefDeclaration(e.target.value, { ...d, attested: false })); setError(""); }}
+              maxLength={400}
+            />
+          </div>
+
+          <ContentsDeclaration descriptionProvided value={declaration} onChange={(d) => { setDeclaration(d); setError(""); }} onBusy={setUploading} disabled={busy || uploading || !!createdParcelId}>
           <div>
             <span className="field-label">{t.postParcel.categoriesLabel}</span>
             <div className="flex flex-wrap gap-2">
@@ -217,22 +228,7 @@ export default function QuickRequest({
               </p>
             )}
           </div>
-
-          <div>
-            <label htmlFor="q-desc" className="field-label">
-              {t.postParcel.whatsInside}
-            </label>
-            <textarea
-              id="q-desc"
-              className="field min-h-[80px]"
-              placeholder={t.postParcel.insidePlaceholder}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={400}
-            />
-          </div>
-
-          <ContentsDeclaration value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={busy || uploading || !!createdParcelId} />
+          </ContentsDeclaration>
           </fieldset>
           {createdParcelId && <p className="text-sm text-muted">{safetyCopy[lang].savedRequest} <Link className="font-semibold text-forest underline" href="/dashboard">{t.nav.dashboard}</Link></p>}
 

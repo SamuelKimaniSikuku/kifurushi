@@ -53,8 +53,11 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady }: {
     {state.refusal && <p role="status" className="rounded-xl border border-danger/30 p-3 text-sm text-danger">{s.refused} {s[state.refusal.reason]}</p>}
     {declaration ? <>
       <p className="text-xs text-muted">{s.version} {declaration.version} · {new Date(declaration.declared_at).toLocaleDateString(lang)}</p>
-      <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line"><th className="py-2 pr-3">{s.item}</th><th className="p-2">{s.quantity}</th><th className="py-2 pl-3 text-right">{s.value}</th></tr></thead><tbody>{declaration.items.map((item, i) => <tr key={i} className="border-b border-line"><td className="py-2 pr-3">{item.description}</td><td className="p-2">{item.quantity}</td><td className="py-2 pl-3 text-right">${Number(item.valueUsd).toFixed(2)}</td></tr>)}</tbody></table></div>
-      <p className="text-sm font-semibold">{s.total}: ${Number(declaration.declared_value_usd).toFixed(2)}</p>
+      {declaration.items.every((item) => item.quantity == null && item.valueUsd == null) ? <p className="text-sm leading-relaxed">{declaration.items.map((item) => item.description).join("; ")}</p> : (
+      <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line"><th className="py-2 pr-3">{s.item}</th><th className="p-2">{s.quantity}</th><th className="py-2 pl-3 text-right">{s.value}</th></tr></thead><tbody>{declaration.items.map((item, i) => <tr key={i} className="border-b border-line"><td className="py-2 pr-3">{item.description}</td><td className="p-2">{item.quantity ?? "—"}</td><td className="py-2 pl-3 text-right">{item.valueUsd != null ? `$${Number(item.valueUsd).toFixed(2)}` : "—"}</td></tr>)}</tbody></table></div>
+      )}
+
+      {declaration.declared_value_usd != null && <p className="text-sm font-semibold">{s.total}: ${Number(declaration.declared_value_usd).toFixed(2)}</p>}
       {declaration.photo_paths.length > 0 && <EvidencePhotos paths={declaration.photo_paths} />}
       <p className="text-xs leading-relaxed text-muted">{s.frozen}</p>
     </> : <>
@@ -74,7 +77,7 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady }: {
       <ul className="space-y-1 text-sm">{(["sender", "traveler"] as const).map((role) => <li key={role}>{role === "sender" ? s.sender : s.traveller}: {current.some((i) => i.role === role) ? s.record : s.waiting}</li>)}</ul>
       {current.filter((i) => i.photo_paths.length > 0).map((i) => <EvidencePhotos key={i.user_id} handover paths={i.photo_paths} />)}
       {match.status === "escrow_paid" && (mine ? <p role="status" className="text-sm font-semibold text-forest">{ready ? s.bothConfirmed : `${s.confirmed} ${s.waitingOther}`}</p> : <>
-        {traveler && <><p className="text-sm">{s.verify} <Link className="font-semibold text-forest underline" href="/verify">{s.verifyLink}</Link></p><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></>}
+        {traveler && <><p className="text-sm">{s.verify} <Link className="font-semibold text-forest underline" href="/verify">{s.verifyLink}</Link></p><details className="rounded-xl border border-line p-3"><summary className="cursor-pointer text-sm font-semibold text-forest">{s.optionalPhotos}</summary><div className="mt-3"><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></div></details></>}
         <label className="flex items-start gap-3 text-sm leading-relaxed"><input type="checkbox" checked={inspectionConfirmed} disabled={busy || uploading} className="mt-1 h-5 w-5 shrink-0 accent-forest" onChange={(e) => setInspectionConfirmed(e.target.checked)} />{s.inspectionAttest}</label>
         <button type="button" className="btn-primary" disabled={busy || uploading || !inspectionConfirmed} onClick={() => act(() => confirmInspection(match.id, declaration.version, photos, { opened: inspectionConfirmed, matches: inspectionConfirmed, sealed: inspectionConfirmed, noConcerns: inspectionConfirmed }))}>{s.confirm}</button>
       </>)}

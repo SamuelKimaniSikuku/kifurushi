@@ -56,7 +56,7 @@ export const parcelSchema = z
     description: z
       .string()
       .trim()
-      .min(10, "Describe the parcel (at least 10 characters)")
+      .min(3, "Briefly describe the parcel (at least 3 characters)")
       .max(400, "Keep the description under 400 characters"),
     budgetUsd: z.coerce.number().min(1, "Minimum $1").max(2000, "Max $2,000"),
   })

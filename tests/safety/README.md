@@ -1,7 +1,7 @@
 # Parcel declarations and handover safety
 
 This release shows upcoming travellers without requiring dates, records private
-itemised contents declarations with optional photos, and requires both parties to confirm
+brief contents declarations with optional photos, and requires both parties to confirm
 the same declaration before pickup. Traveller identity verification is checked
 again by the database at handover. These records document the process; they do
 not certify the legality of contents or replace airline/customs checks.
@@ -19,6 +19,11 @@ flow. Contents and handover photos are optional; each person ticks one checkbox
 confirming the full inspection. Both confirmations, the contents declaration,
 traveller verification and the existing refusal safeguards remain required.
 Uploaded photos retain the same private access and validation rules.
+
+Apply `simplify_parcel_declarations` next for the short posting form. The listing
+description is reused as the confirmed contents; quantities and goods values
+are optional and omitted values stay NULL. Existing detailed declarations and
+version history are preserved. Categories and photos are under optional details.
 
 Existing parcels can add their first declaration from the expanded match in
 the dashboard. Every match still awaiting pickup must pass the new checks.
@@ -62,7 +67,8 @@ psql -v ON_ERROR_STOP=1 -d kifurushi_safety_test \
   -f tests/safety/bootstrap.sql \
   -f tests/safety/inspection.test.sql \
   -f tests/safety/refusal.test.sql \
-  -f tests/safety/optional-photos.test.sql
+  -f tests/safety/optional-photos.test.sql \
+  -f tests/safety/brief-declaration.test.sql
 ```
 
 Coverage includes anonymous/unrelated-user denial, own-upload validation,

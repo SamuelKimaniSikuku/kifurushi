@@ -332,7 +332,7 @@ export const sw: Dict = {
           },
           {
             q: "Kanuni ya kukagua na kufunga ni ipi?",
-            a: "Mtumaji hutaja kila kitu, idadi na thamani na kuthibitisha tamko. Wakati wa kukichukua, kagueni kila kitu pamoja kisha mfunge kifurushi. Kila mtu huweka tiki kwenye uthibitisho wa ukaguzi kwenye dashibodi. Picha za yaliyomo na makabidhiano ni za hiari. Kifurushi hakiwezi kuashiriwa kuchukuliwa hadi wote wathibitishe na utambulisho wa msafiri uthibitishwe. Kukataa kwa sababu ya usalama hakuna adhabu ya jukwaa.",
+            a: "Mtumaji anaeleza kifurushi kwa kifupi na kuthibitisha hakina vitu vilivyokatazwa na kinaweza kukaguliwa. Idadi na thamani si lazima. Wakati wa kukichukua, kagueni kila kitu pamoja kisha mfunge kifurushi. Kila mtu huweka tiki kwenye uthibitisho wa ukaguzi kwenye dashibodi. Picha za yaliyomo na makabidhiano ni za hiari. Kifurushi hakiwezi kuashiriwa kuchukuliwa hadi wote wathibitishe na utambulisho wa msafiri uthibitishwe. Kukataa kwa sababu ya usalama hakuna adhabu ya jukwaa.",
           },
           {
             q: "Usafirishaji unathibitishwaje?",

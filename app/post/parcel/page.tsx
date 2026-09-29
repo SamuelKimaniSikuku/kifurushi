@@ -4,31 +4,23 @@ import { readPostRoute } from "@/lib/routes";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowRight, Ban, Package } from "lucide-react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import CountrySelect from "@/components/CountrySelect";
 import {
   parcelSchema, zodErrors, touchedErrors, FieldErrors,
 } from "@/lib/validation";
-import CorridorHint from "@/components/CorridorHint";
-import { FittingTrips } from "@/components/PrePostMatches";
 import {
-  addParcel, CorridorFit, fetchParcelById, fitForParcel, hasDuplicateParcel, updateParcel,
+  addParcel, fetchParcelById, hasDuplicateParcel, updateParcel,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
 import { useLang, useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 import ContentsDeclaration from "@/components/ContentsDeclaration";
-import { declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
+import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
 import { fetchDeclaration } from "@/lib/safetyDb";
 import { safetyCopy } from "@/lib/locales/safety";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
-
-// What a courier typically charges per kg on Africa ↔ diaspora routes, and
-// the range travellers usually ask — powers the budget guidance below.
-const COURIER_RATE_PER_KG = 14;
-const TRAVELLER_RATE_LOW = 7;
-const TRAVELLER_RATE_HIGH = 12;
 
 const FIELD_ORDER = [
   "fromCountry",
@@ -72,7 +64,7 @@ function PostParcelForm() {
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
     neededBy: "", weightKg: "3", description: "", budgetUsd: "50",
   });
-  const [cats, setCats] = useState<ParcelCategory[]>(["gifts"]);
+  const [cats, setCats] = useState<ParcelCategory[]>([]);
   const [minDate, setMinDate] = useState("");
   // Set when the member already has an open parcel on this route and deadline;
   // the next submit is taken as "yes, it really is a second parcel".
@@ -97,38 +89,23 @@ function PostParcelForm() {
     setMinDate(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`);
   }, []);
 
-  // Editing an existing parcel: load it into the form.
+  // Load the editable parcel once per account/attempt, preserving optional photos.
+  const userId = session?.userId;
   useEffect(() => {
-    if (!editId || !session) return;
+    if (!editId || !userId) return;
     let active = true;
     setDeclarationLoading(true);
     setDeclarationLoadError(false);
-    fetchDeclaration(editId).then((d) => {
+    Promise.all([fetchParcelById(editId), fetchDeclaration(editId)]).then(([p, d]) => {
       if (!active) return;
-      if (d) setDeclaration({ items: d.items.map((item) => ({ description: item.description, quantity: String(item.quantity), valueUsd: String(item.valueUsd) })), photoPaths: d.photo_paths, attested: false });
+      if (!p) throw new Error("Parcel unavailable");
+      setForm({ fromCountry: p.fromCountry, fromCity: p.fromCity, toCountry: p.toCountry, toCity: p.toCity,
+        neededBy: p.neededBy, weightKg: String(p.weightKg), description: p.description, budgetUsd: String(p.budgetUsd) });
+      setCats(p.categories);
+      setDeclaration(briefDeclaration(p.description, { photoPaths: d?.photo_paths ?? [], items: [], attested: false }));
     }).catch(() => { if (active) setDeclarationLoadError(true); }).finally(() => { if (active) setDeclarationLoading(false); });
     return () => { active = false; };
-  }, [editId, session, declarationAttempt]);
-
-  useEffect(() => {
-    if (!editId) return;
-    fetchParcelById(editId)
-      .then((p) => {
-        if (!p) return;
-        setForm({
-          fromCountry: p.fromCountry,
-          fromCity: p.fromCity,
-          toCountry: p.toCountry,
-          toCity: p.toCity,
-          neededBy: p.neededBy,
-          weightKg: String(p.weightKg),
-          description: p.description,
-          budgetUsd: String(p.budgetUsd),
-        });
-        setCats(p.categories);
-      })
-      .catch(() => {});
-  }, [editId]);
+  }, [editId, userId, declarationAttempt]);
 
   // Keep the selected route when arriving from browsing or signing in.
   useEffect(() => {
@@ -151,13 +128,7 @@ function PostParcelForm() {
       focusFirstInvalid(errs);
       return;
     }
-    if (cats.length === 0) {
-      const errs = { cats: t.postParcel.categoriesError };
-      setErrors(errs);
-      focusFirstInvalid(errs);
-      return;
-    }
-    if (!declarationSchema.safeParse(declaration).success) {
+    if (!declarationSchema.safeParse(briefDeclaration(form.description, declaration)).success) {
       setErrors({ _submit: s.invalid });
       document.getElementById("parcel-declaration")?.scrollIntoView({ block: "center" });
       return;
@@ -171,9 +142,9 @@ function PostParcelForm() {
         return;
       }
       if (editId) {
-        await updateParcel(editId, { ...parsed.data, categories: cats, declaration });
+        await updateParcel(editId, { ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
       } else {
-        await addParcel({ ...parsed.data, categories: cats, declaration });
+        await addParcel({ ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
       }
       router.push("/parcels");
     } catch (e) {
@@ -182,76 +153,15 @@ function PostParcelForm() {
     }
   }
 
-  // Budget guidance: what travellers usually ask for this weight, and what a
-  // courier would charge, so the sender can judge their budget in context.
-  // Can anyone actually get there by the chosen deadline?
-  const [fit, setFit] = useState<CorridorFit | null>(null);
-  useEffect(() => {
-    const { fromCountry, toCountry, neededBy, weightKg } = form;
-    const kg = parseFloat(weightKg);
-    if (!fromCountry || !toCountry || !neededBy || !Number.isFinite(kg)) {
-      setFit(null);
-      return;
-    }
-    let live = true;
-    const timer = setTimeout(() => {
-      fitForParcel(fromCountry, toCountry, neededBy, kg)
-        .then((f) => live && setFit(f))
-        .catch(() => live && setFit(null));
-    }, 350);
-    return () => {
-      live = false;
-      clearTimeout(timer);
-    };
-  }, [form.fromCountry, form.toCountry, form.neededBy, form.weightKg, form]);
+  useEffect(() => { setDupWarning(false); }, [form.fromCountry, form.toCountry, form.neededBy]);
 
-  // A changed route or deadline is a different parcel — retract the warning.
-  useEffect(() => {
-    setDupWarning(false);
-  }, [form.fromCountry, form.toCountry, form.neededBy]);
+  // Clear stale submit errors as soon as the sender corrects the form/checkbox.
+  useEffect(() => { setErrors(touchedErrors(parcelSchema, form, touched)); }, [form, touched, declaration]);
 
-  // How much runway the chosen deadline leaves. Matching takes real time;
-  // a deadline inside a week deserves a gentle warning, not a surprise.
-  const daysToDeadline =
-    form.neededBy && minDate
-      ? Math.round((Date.parse(form.neededBy) - Date.parse(minDate)) / 86400000)
-      : null;
-  const tightDeadline =
-    daysToDeadline !== null && daysToDeadline >= 0 && daysToDeadline < 7;
-
-  const weightNum = parseFloat(form.weightKg);
-  const budgetNum = parseFloat(form.budgetUsd);
-  const rateGuide =
-    Number.isFinite(weightNum) && weightNum > 0
-      ? {
-          kg: weightNum,
-          low: Math.round(weightNum * TRAVELLER_RATE_LOW),
-          high: Math.round(weightNum * TRAVELLER_RATE_HIGH),
-        }
-      : null;
-  const comparison =
-    rateGuide && Number.isFinite(budgetNum) && budgetNum > 0
-      ? {
-          kg: weightNum,
-          budget: Math.round(budgetNum),
-          courier: Math.round(weightNum * COURIER_RATE_PER_KG),
-          savings: Math.round(weightNum * COURIER_RATE_PER_KG - budgetNum),
-        }
-      : null;
-
-
-  // Keep the visible errors honest as the member types: a message appears the
-  // moment a touched field is wrong, and disappears the moment it is right.
-  useEffect(() => {
-    setErrors((prev) => {
-      const live = touchedErrors(parcelSchema, form, touched);
-      const next: FieldErrors = { ...live };
-      if (prev._submit) next._submit = prev._submit;
-      return next;
-    });
-  }, [form, touched]);
-
-  const set = (k: string) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: string) => (v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    if (k === "description") setDeclaration((d) => briefDeclaration(v, { ...d, attested: false }));
+  };
 
   const touch = (k: string) => () => setTouched((t) => ({ ...t, [k]: true }));
   const cls = (k: string) => (errors[k] ? "field field-invalid" : "field");
@@ -266,13 +176,8 @@ function PostParcelForm() {
         {editId ? t.postParcel.editTitle : t.postParcel.title}
       </h1>
       <p className="mt-2 text-sm text-muted">
-        {t.postParcel.sub}
+        {s.postNote}
       </p>
-
-      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-forest bg-forest px-5 py-4 text-sm leading-relaxed text-white">
-        <Package className="mt-0.5 h-5 w-5 shrink-0 text-gold" strokeWidth={2} aria-hidden />
-        <p>{t.postParcel.roleBanner}</p>
-      </div>
 
       <form onSubmit={submit} className="card mt-6 p-6 sm:p-8" noValidate>
         {/* Location */}
@@ -344,9 +249,6 @@ function PostParcelForm() {
             {errors.neededBy && (
               <p id="neededBy-error" className="field-error">{errors.neededBy}</p>
             )}
-            {tightDeadline && !errors.neededBy && (
-              <p className="mt-1 text-xs text-warn">{t.postParcel.tightDeadline}</p>
-            )}
           </div>
           <div>
             <label htmlFor="weightKg" className="field-label">{t.postParcel.weight}</label>
@@ -385,50 +287,33 @@ function PostParcelForm() {
             {errors.budgetUsd && (
               <p id="budgetUsd-error" className="field-error">{errors.budgetUsd}</p>
             )}
-            {rateGuide && (
-              <p id="budgetUsd-hint" className="mt-1 text-xs text-muted">
-                {t.postParcel.budgetHint(rateGuide.low, rateGuide.high, rateGuide.kg)}
-              </p>
+          </div>
+        </div>
+
+        {/* Extras */}
+        <div className="mt-6 space-y-5 border-t border-line pt-5">
+
+
+          <div>
+            <label htmlFor="description" className="field-label">{t.postParcel.whatsInside}</label>
+            <textarea
+              id="description"
+              className={`${cls("description")} min-h-[90px]`}
+              value={form.description}
+              onChange={(e) => set("description")(e.target.value)}
+              onBlur={touch("description")}
+              placeholder={s.briefPlaceholder}
+              maxLength={400}
+              {...err("description")}
+            />
+            {errors.description && (
+              <p id="description-error" className="field-error">{errors.description}</p>
             )}
           </div>
         </div>
 
-        {/* Can any traveller on this route reach it by the chosen deadline? */}
-        <CorridorHint
-          fit={fit}
-          mode="parcel"
-          onUseSuggested={(d) => set("neededBy")(d)}
-        />
-
-        {/* Better than posting and waiting: the travellers who could take it
-            right now, requestable on the spot. */}
-        <FittingTrips
-          fromCountry={form.fromCountry}
-          toCountry={form.toCountry}
-          neededBy={form.neededBy}
-          weightKg={form.weightKg}
-        />
-
-        {/* Live budget vs courier comparison */}
-        {comparison && (
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
-            <span className="font-semibold text-forest">
-              {t.postParcel.courierBand(comparison.courier, comparison.kg)}
-            </span>
-            {comparison.savings > 0 ? (
-              <span className="text-muted">
-                {t.postParcel.saveNote(comparison.budget, comparison.savings)}
-              </span>
-            ) : (
-              <span className="text-muted">
-                {t.postParcel.aboveNote}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Extras */}
-        <div className="mt-6 space-y-5 border-t border-line pt-5">
+        <div id="parcel-declaration" className="mt-6">
+          <ContentsDeclaration descriptionProvided value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={submitting || uploading || declarationLoading || declarationLoadError}>
           <div>
             <span id="cats-label" className="field-label">{t.postParcel.categoriesLabel}</span>
             <div
@@ -463,37 +348,8 @@ function PostParcelForm() {
               <p id="cats-error" className="field-error">{errors.cats}</p>
             )}
           </div>
-
-          <div>
-            <label htmlFor="description" className="field-label">{t.postParcel.whatsInside}</label>
-            <textarea
-              id="description"
-              className={`${cls("description")} min-h-[90px]`}
-              value={form.description}
-              onChange={(e) => set("description")(e.target.value)}
-              onBlur={touch("description")}
-              placeholder={t.postParcel.insidePlaceholder}
-              {...err("description")}
-            />
-            {errors.description && (
-              <p id="description-error" className="field-error">{errors.description}</p>
-            )}
-          </div>
-        </div>
-
-        <div id="parcel-declaration" className="mt-6">
-          <ContentsDeclaration value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={submitting || uploading || declarationLoading || declarationLoadError} />
+          </ContentsDeclaration>
           {declarationLoadError && <div className="mt-3"><p role="alert" className="field-error">{s.loadError}</p><button type="button" className="btn-ghost mt-2" onClick={() => setDeclarationAttempt((n) => n + 1)}>{s.retry}</button></div>}
-          {editId && <p className="mt-2 text-xs text-muted">{s.frozen}</p>}
-        </div>
-
-        <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-sand-deep px-4 py-3 text-xs leading-relaxed text-muted">
-          <Ban size={18} strokeWidth={2} aria-hidden="true" className="mt-0.5 shrink-0 text-danger" />
-          <p>
-            {t.postParcel.prohibitedNote}{" "}
-            <a href="/safety#prohibited" className="font-semibold underline">{t.postParcel.prohibitedLink}</a>.{" "}
-            {t.postParcel.prohibitedNote2}
-          </p>
         </div>
 
         {dupWarning && (
