@@ -13,6 +13,7 @@ function AuthForm() {
   const router = useRouter();
   const params = useSearchParams();
   const safeNext = safeReturnPath(params.get("next"));
+  const postingParcel = /^\/post\/parcel\/?(?:[?#]|$)/.test(safeNext);
   const requestedMode = params.get("mode");
   const [mode, setMode] = useState<"signin" | "signup">(requestedMode === "signin" ? "signin" : "signup");
   const [showPassword, setShowPassword] = useState(false);
@@ -271,7 +272,7 @@ function AuthForm() {
 
   return (
     <div className="mx-auto grid max-w-5xl items-start gap-8 px-4 py-10 md:grid-cols-2 md:gap-14 md:py-14">
-      <aside className="rounded-3xl bg-forest-deep p-6 text-white md:sticky md:top-24 md:p-9">
+      <aside className={`${postingParcel ? "hidden md:block " : ""}rounded-3xl bg-forest-deep p-6 text-white md:sticky md:top-24 md:p-9`}>
         <div className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-gold"><Gift size={18} aria-hidden />{x.launch}</div>
         <h2 className="text-2xl font-bold leading-tight md:text-4xl">{x.authNote}</h2>
         <p className="mt-4 text-base leading-relaxed text-white/80">{x.authBody}</p>
@@ -283,10 +284,10 @@ function AuthForm() {
       </aside>
       <div className="min-w-0">
       <h1 className="font-display text-3xl font-bold tracking-tight text-forest">
-        {mode === "signup" ? t.auth.joinTitle : t.auth.welcomeBack}
+        {postingParcel ? x.parcelAuthTitle : mode === "signup" ? t.auth.joinTitle : t.auth.welcomeBack}
       </h1>
       <p className="mt-2 text-base text-muted">
-        {t.auth.subtitle}
+        {postingParcel ? x.parcelAuthBody : t.auth.subtitle}
       </p>
 
       <form onSubmit={submit} className="card mt-6 space-y-5 p-5 sm:p-7" noValidate aria-busy={submitting}>

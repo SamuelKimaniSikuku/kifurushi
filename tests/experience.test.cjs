@@ -11,7 +11,7 @@ require.extensions['.ts'] = (module, filename) => {
   }});
   module._compile(outputText, filename);
 };
-const { browseHref, readRouteFilters, postHref, readPostRoute, safeReturnPath } = require('../lib/routes.ts');
+const { browseHref, readRouteFilters, postHref, readPostRoute, readParcelPrefill, safeReturnPath } = require('../lib/routes.ts');
 const { signInSchema, signUpSchema } = require('../lib/validation.ts');
 
 test('route shortcuts round-trip with country direction, date and sort intact', () => {
@@ -34,6 +34,26 @@ test('posting retains country choices without inventing arrival dates or cities'
   assert.equal(url.searchParams.has('neededBy'), false);
   assert.deepEqual(readPostRoute(new URLSearchParams('toCountry=KE')), { toCountry: 'KE', toCity: '' });
   assert.deepEqual(readPostRoute(new URLSearchParams('fromCountry=XX&fromCity=Bad')), {});
+});
+
+test('parcel posting carries the selected route and date through the sign-in handoff', () => {
+  const href = postHref('parcel', { from: 'FR', to: 'KE', date: '2026-12-05' });
+  const auth = new URL(`/auth?next=${encodeURIComponent(href)}`, 'https://www.kifurushiapp.com');
+  const destination = new URL(safeReturnPath(auth.searchParams.get('next')), auth.origin);
+  assert.equal(destination.pathname, '/post/parcel');
+  assert.deepEqual(readParcelPrefill(destination.searchParams), {
+    fromCountry: 'FR', fromCity: '', toCountry: 'KE', toCity: '', neededBy: '2026-12-05',
+  });
+});
+
+test('parcel date prefill rejects invalid dates and never changes trip posting', () => {
+  for (const date of ['', '2026-02-30', '2026-13-01', 'tomorrow']) {
+    const href = postHref('parcel', { from: '', to: 'KE', date });
+    assert.equal(new URL(href, 'https://www.kifurushiapp.com').searchParams.has('neededBy'), false);
+    assert.deepEqual(readParcelPrefill(new URLSearchParams({ neededBy: date })), {});
+  }
+  assert.deepEqual(readParcelPrefill(new URLSearchParams('neededBy=2028-02-29')), { neededBy: '2028-02-29' });
+  assert.equal(postHref('trip', { from: 'FR', to: 'KE', date: '2026-12-05' }), '/post/trip?fromCountry=FR&toCountry=KE');
 });
 
 test('sign-in returns to the complete chosen route, including an encoded city', () => {
