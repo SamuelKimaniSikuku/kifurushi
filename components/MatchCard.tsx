@@ -5,17 +5,17 @@ import {
   ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Plane, Send, Star,
 } from "lucide-react";
 import {
-  STATUS_LABELS, STATUS_ORDER, TransitUpdate, Review, MatchStatus, Message,
+  STATUS_LABELS, STATUS_ORDER, TransitUpdate, MatchStatus, Message,
 } from "@/lib/types";
 import {
   MatchDetail, deliverNow, fetchMatchWhatsapp, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
-  fetchTransitUpdates, addTransitUpdate, fetchMatchReviews, addReview,
+  fetchTransitUpdates, addTransitUpdate,
   fetchMessages, sendMessage,
 } from "@/lib/db";
-import { transitUpdateSchema, reviewSchema, messageSchema } from "@/lib/validation";
-import { useT } from "@/lib/i18n";
-import Stars from "@/components/ui/Stars";
+import { transitUpdateSchema, messageSchema } from "@/lib/validation";
+import { useLang, useT } from "@/lib/i18n";
+import { reviewCopy } from "@/lib/locales/reviews";
 import MatchSafety from "@/components/MatchSafety";
 
 const CHAT_POLL_MS = 5000;
@@ -231,17 +231,13 @@ export default function MatchCard({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const t = useT();
+  const { lang } = useLang();
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState("");
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
-  const [comment, setComment] = useState("");
-  const [reviewError, setReviewError] = useState("");
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const [code, setCode] = useState<string | null>(null); // sender: freshly minted
@@ -296,9 +292,6 @@ export default function MatchCard({
   useEffect(() => {
     if (inTransit || received) {
       fetchTransitUpdates(match.id).then(setUpdates).catch(() => {});
-    }
-    if (done) {
-      fetchMatchReviews(match.id).then(setReviews).catch(() => {});
     }
   }, [match.id, match.status, inTransit, received, done]);
 
@@ -369,26 +362,6 @@ export default function MatchCard({
     }
   }
 
-  async function submitReview(e: React.FormEvent) {
-    e.preventDefault();
-    const parsed = reviewSchema.safeParse({ rating, comment });
-    if (!parsed.success) {
-      setReviewError(parsed.error.issues[0]?.message ?? "Invalid review");
-      return;
-    }
-    if (!match.counterpartyId) {
-      setReviewError("Could not identify your match partner.");
-      return;
-    }
-    try {
-      await addReview(match.id, match.counterpartyId, parsed.data.rating, parsed.data.comment);
-      setReviews(await fetchMatchReviews(match.id));
-      setReviewError("");
-    } catch {
-      setReviewError("Could not submit the review — please try again.");
-    }
-  }
-
   async function mintCode() {
     if (busy) return;
     setBusy(true);
@@ -427,9 +400,6 @@ export default function MatchCard({
     }
   }
 
-  const myReview = reviews.find((r) => r.authorId === myUserId);
-  const theirReview = reviews.find((r) => r.authorId !== myUserId);
-
   return (
     <div className="card p-5">
       <button
@@ -465,6 +435,11 @@ export default function MatchCard({
           />
         </span>
       </button>
+
+      {done && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
+        <Star size={17} className="fill-gold text-gold-deep" aria-hidden />
+        {reviewCopy[lang].reviewLink}
+      </a>}
 
       {open && (
       <>
@@ -921,79 +896,6 @@ export default function MatchCard({
         </div>
       )}
 
-      {/* Reviews: two-way, once the code has released the delivery */}
-      {done && (
-        <div className="mt-5 rounded-xl bg-sand p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
-            <Star className="h-4 w-4 shrink-0 fill-gold text-gold" strokeWidth={2} aria-hidden />
-            Rate this delivery
-          </div>
-
-          {theirReview && (
-            <div className="mt-3">
-              <Stars rating={theirReview.rating} />
-              {theirReview.comment && (
-                <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink">
-                  “{theirReview.comment}”
-                </blockquote>
-              )}
-              <p className="mt-2 text-xs text-faint">
-                By {theirReview.authorName} · reviews are public and can&apos;t be edited.
-              </p>
-            </div>
-          )}
-
-          {myReview ? (
-            <div className="mt-3">
-              <Stars rating={myReview.rating} />
-              {myReview.comment && (
-                <blockquote className="mt-2 border-l-2 border-line-strong pl-3 text-sm text-ink">
-                  “{myReview.comment}”
-                </blockquote>
-              )}
-              <p className="mt-2 text-xs text-faint">
-                Your review · public and can&apos;t be edited.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={submitReview} className="mt-3 space-y-3">
-              <div role="group" aria-label="Rating" className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-label={`${n} star${n > 1 ? "s" : ""}`}
-                    aria-pressed={rating >= n}
-                    onClick={() => setRating(n)}
-                    onMouseEnter={() => setHover(n)}
-                    onMouseLeave={() => setHover(0)}
-                    className="grid h-10 w-10 place-items-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
-                  >
-                    <Star
-                      className={`h-7 w-7 ${
-                        n <= (hover || rating) ? "fill-gold text-gold-deep" : "text-line-strong"
-                      }`}
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  </button>
-                ))}
-              </div>
-              <textarea
-                aria-label="Review comment"
-                aria-invalid={reviewError ? true : undefined}
-                className={`field min-h-[70px] ${reviewError ? "field-invalid" : ""}`}
-                placeholder="How was the delivery? Your review is public and helps the next sender."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={300}
-              />
-              {reviewError && <p className="field-error">{reviewError}</p>}
-              <button type="submit" className="btn-accent min-h-[44px]">Submit review</button>
-            </form>
-          )}
-        </div>
-      )}
       </>
       )}
     </div>

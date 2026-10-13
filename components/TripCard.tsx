@@ -6,6 +6,7 @@ import { Trip, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
+import { reviewCopy } from "@/lib/locales/reviews";
 import Avatar from "@/components/ui/Avatar";
 import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -67,8 +68,8 @@ export default function TripCard({
                 </span>
               )}
             </div>
-            {trip.tripsCompleted > 0 ? (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+            {trip.travelerRating !== null ? (
+              <Link href={`${personHref(trip.travelerName)}#reviews`} className="mt-0.5 flex items-center gap-1 text-xs text-muted hover:underline">
                 <Star
                   size={13}
                   strokeWidth={2}
@@ -76,13 +77,12 @@ export default function TripCard({
                   aria-hidden
                 />
                 <span className="font-semibold text-ink">
-                  {trip.travelerRating.toFixed(1)}
+                  {reviewCopy[lang].ratingLabel(trip.travelerRating.toFixed(1))}
                 </span>
-                <span>({trip.tripsCompleted})</span>
-              </div>
+              </Link>
             ) : (
               <div className="mt-0.5 text-xs text-muted">
-                {t.experience.newTraveller}
+                {trip.tripsCompleted > 0 ? reviewCopy[lang].noReviews : t.experience.newTraveller}
               </div>
             )}
           </div>

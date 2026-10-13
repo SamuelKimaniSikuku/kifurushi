@@ -12,7 +12,7 @@ import {
 } from "./types";
 import { personSlug } from "./people";
 import { briefDeclaration, declarationSchema, type DeclarationDraft } from "./parcelSafety";
-import { parcelSchema } from "./validation";
+import { parcelSchema, reviewSchema } from "./validation";
 
 // ---------------------------------------------------------------------------
 // Row mappers. Profile joins power the display fields (name, badge, rating).
@@ -22,7 +22,7 @@ interface ProfileRow {
   id: string;
   full_name: string;
   id_verified: boolean;
-  rating: number;
+  rating: number | null;
   deliveries_completed: number;
 }
 
@@ -69,7 +69,7 @@ function mapTrip(row: TripRow): Trip {
     travelerId: row.traveler_id,
     travelerName: p?.full_name ?? "Member",
     travelerVerified: p?.id_verified ?? false,
-    travelerRating: Number(p?.rating ?? 5),
+    travelerRating: p?.rating == null ? null : Number(p.rating),
     tripsCompleted: p?.deliveries_completed ?? 0,
     fromCountry: row.from_country,
     fromCity: row.from_city,
@@ -93,6 +93,7 @@ function mapParcel(row: ParcelRow): ParcelRequest {
     senderId: row.sender_id,
     senderName: p?.full_name ?? "Member",
     senderVerified: p?.id_verified ?? false,
+    senderRating: p?.rating == null ? null : Number(p.rating),
     fromCountry: row.from_country,
     fromCity: row.from_city,
     toCountry: row.to_country,
@@ -1022,6 +1023,17 @@ function mapReview(r: ReviewRow): Review {
   };
 }
 
+export async function fetchReviewsForMatches(matchIds: string[]): Promise<Review[]> {
+  if (matchIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(REVIEW_SELECT)
+    .in("match_id", matchIds)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as unknown as ReviewRow[]).map(mapReview);
+}
+
 export async function fetchMatchReviews(matchId: string): Promise<Review[]> {
   const { data, error } = await supabase
     .from("reviews")
@@ -1037,18 +1049,26 @@ export async function addReview(
   subjectId: string,
   rating: number,
   comment: string
-): Promise<void> {
+): Promise<Review> {
+  const parsed = reviewSchema.parse({ rating, comment });
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error("Not signed in");
-  const { error } = await supabase.from("reviews").insert({
+  const { data, error } = await supabase.from("reviews").insert({
     match_id: matchId,
     author_id: uid,
     subject_id: subjectId,
-    rating,
-    comment: comment || null,
-  });
+    rating: parsed.rating,
+    comment: parsed.comment || null,
+  }).select(REVIEW_SELECT).single();
+  // Another tab may already have submitted it. Show the saved review without
+  // replacing it or making the user repeatedly retry an immutable review.
+  if (error?.code === "23505") {
+    const existing = (await fetchMatchReviews(matchId)).find((r) => r.authorId === uid);
+    if (existing) return existing;
+  }
   if (error) throw error;
+  return mapReview(data as unknown as ReviewRow);
 }
 
 // ---------------------------------------------------------------------------
@@ -1095,7 +1115,7 @@ export async function fetchPersonProfile(slug: string): Promise<PersonProfile | 
     slug,
     name: profile?.full_name ?? newestTrip?.travelerName ?? theirParcels[0]!.senderName,
     verified: profile?.id_verified ?? false,
-    rating: newestTrip ? Number(profile?.rating ?? 5) : null,
+    rating: profile?.rating == null ? null : Number(profile.rating),
     deliveries: profile?.deliveries_completed ?? 0,
     upcomingTrips: theirTrips,
     openParcels: theirParcels,

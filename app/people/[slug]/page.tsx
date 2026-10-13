@@ -16,6 +16,8 @@ import TripCard from "@/components/TripCard";
 import ParcelCard from "@/components/ParcelCard";
 import Avatar from "@/components/ui/Avatar";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
+import { useLang } from "@/lib/i18n";
+import { reviewCopy } from "@/lib/locales/reviews";
 import Stars from "@/components/ui/Stars";
 import EmptyState from "@/components/ui/EmptyState";
 import Toast from "@/components/ui/Toast";
@@ -52,6 +54,8 @@ export default function PersonProfilePage({
   params: { slug: string };
 }) {
   const router = useRouter();
+  const { lang } = useLang();
+  const s = reviewCopy[lang];
   const gate = useContactGate();
   const [person, setPerson] = useState<PersonProfile | null>(null);
   const [ready, setReady] = useState(false);
@@ -168,15 +172,13 @@ export default function PersonProfilePage({
                   </span>
                   <span>
                     ·{" "}
-                    {person.deliveries === 1
-                      ? "1 delivery"
-                      : `${person.deliveries} deliveries`}
+                    {s.reviewCount(person.reviews.length)}
                   </span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
                   <Package size={15} strokeWidth={2} className="shrink-0" aria-hidden />
-                  Sends parcels · has not carried yet
+                  {s.noReviews}
                 </span>
               )}
 
@@ -267,7 +269,7 @@ export default function PersonProfilePage({
         </div>
       )}
 
-      <section className="mt-10">
+      <section id="reviews" className="mt-10 scroll-mt-24">
         <h2 className="flex items-center gap-2 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">
           <MessageSquareQuote
             size={22}
@@ -314,7 +316,7 @@ export default function PersonProfilePage({
           <div className="mt-4">
             <EmptyState
               title="No reviews yet"
-              body={`Nobody has completed a delivery with ${person.name} on Kifurushi yet. Ratings shown above come from their delivery history.`}
+              body={`Nobody has shared feedback about ${person.name} yet. Reviews can be posted after a completed delivery.`}
             />
           </div>
         )}

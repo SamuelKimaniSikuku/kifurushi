@@ -28,7 +28,7 @@ export interface Trip {
   travelerId: string;
   travelerName: string;
   travelerVerified: boolean;
-  travelerRating: number; // 0–5
+  travelerRating: number | null; // null until a review is received
   tripsCompleted: number;
   fromCountry: string; // ISO code
   fromCity: string;
@@ -49,6 +49,7 @@ export interface ParcelRequest {
   senderId: string;
   senderName: string;
   senderVerified: boolean;
+  senderRating: number | null;
   fromCountry: string;
   fromCity: string;
   toCountry: string;

@@ -8,14 +8,16 @@ const SIZES = {
 export default function Stars({
   rating,
   size = "md",
+  label,
 }: {
   rating: number;
+  label?: string;
   size?: "sm" | "md";
 }) {
   return (
     <div
       role="img"
-      aria-label={`${rating} out of 5 stars`}
+      aria-label={label ?? `${rating} out of 5 stars`}
       className="flex items-center gap-0.5"
     >
       {[1, 2, 3, 4, 5].map((n) => (

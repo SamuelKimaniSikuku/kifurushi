@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BellRing, Calendar, Check, Pencil, Scale } from "lucide-react";
+import { ArrowRight, BellRing, Calendar, Check, Pencil, Scale, Star } from "lucide-react";
 import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
+import { reviewCopy } from "@/lib/locales/reviews";
 import Avatar from "@/components/ui/Avatar";
 import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -55,6 +56,10 @@ export default function ParcelCard({
                 {t.experience.unverified}
               </span>
             )}
+            {parcel.senderRating !== null && <Link href={`${personHref(parcel.senderName)}#reviews`} className="flex basis-full items-center gap-1 text-xs text-muted hover:underline">
+              <Star size={13} className="fill-gold text-gold-deep" aria-hidden />
+              {reviewCopy[lang].ratingLabel(parcel.senderRating.toFixed(1))}
+            </Link>}
           </div>
         </div>
 

@@ -15,6 +15,7 @@ import {
   MoneyTotals, VerificationState,
 } from "@/lib/db";
 import MatchCard from "@/components/MatchCard";
+import RatingsFeedback from "@/components/RatingsFeedback";
 import WhatsappSettings from "@/components/WhatsappSettings";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { useT } from "@/lib/i18n";
@@ -199,6 +200,8 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      <RatingsFeedback key={session.userId} matches={matches} myUserId={session.userId} />
 
       {money && (money.carriedCount > 0 || money.sentCount > 0) && (
         <div className="card mt-4 p-5">
