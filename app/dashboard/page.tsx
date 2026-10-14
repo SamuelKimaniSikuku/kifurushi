@@ -18,7 +18,9 @@ import MatchCard from "@/components/MatchCard";
 import RatingsFeedback from "@/components/RatingsFeedback";
 import WhatsappSettings from "@/components/WhatsappSettings";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { signInHref } from "@/lib/routes";
+import { reviewCopy } from "@/lib/locales/reviews";
 
 function DashboardSkeleton() {
   return (
@@ -46,6 +48,8 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const router = useRouter();
   const t = useT();
+  const { lang } = useLang();
+  const reviewText = reviewCopy[lang];
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matches, setMatches] = useState<MatchDetail[]>([]);
@@ -55,20 +59,24 @@ export default function DashboardPage() {
   const [reviewer, setReviewer] = useState(false);
   const [money, setMoney] = useState<MoneyTotals | null>(null);
   const [ready, setReady] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let mounted = true;
+    setLoadError(false);
+    setReady(false);
     (async () => {
       const s = await fetchSession();
       if (!mounted) return;
       if (!s) {
-        router.replace("/auth?next=/dashboard");
+        router.replace(signInHref(`/dashboard${window.location.search}${window.location.hash}`));
         return;
       }
       setSession(s);
       const [m, ms, v, admin, totals] = await Promise.all([
-        fetchMyMatches().catch(() => []),
-        fetchMembership(),
+        fetchMyMatches(),
+        fetchMembership().catch(() => null),
         fetchVerification().catch(() => null),
         isAdmin().catch(() => false),
         fetchMoneyTotals().catch(() => null),
@@ -80,11 +88,28 @@ export default function DashboardPage() {
       setReviewer(admin);
       setMoney(totals);
       setReady(true);
-    })();
+    })().catch(() => { if (mounted) setLoadError(true); });
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, loadAttempt]);
+
+  useEffect(() => {
+    if (!ready || loadError) return;
+    // The section does not exist until the dashboard finishes loading.
+    const section = window.location.hash.slice(1);
+    if (section === "ratings" || section === "deliveries") {
+      document.getElementById(section)?.scrollIntoView({ block: "start" });
+    }
+  }, [ready, loadError]);
+
+  if (loadError) return <div className="mx-auto max-w-4xl px-4 py-10">
+    <section id="ratings" className="card p-6">
+      <h1 className="font-display text-2xl font-bold text-forest">{reviewText.title}</h1>
+      <p role="alert" className="mt-3 text-sm text-danger">{reviewText.dashboardError}</p>
+      <button type="button" className="btn-primary mt-4" onClick={() => setLoadAttempt((n) => n + 1)}>{reviewText.retry}</button>
+    </section>
+  </div>;
 
   if (!ready || !session) return <DashboardSkeleton />;
 
@@ -267,7 +292,7 @@ export default function DashboardPage() {
 
       <WhatsappSettings />
 
-      <h2 className="mt-10 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
+      <h2 id="deliveries" className="mt-10 scroll-mt-24 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
 
       {matches.length === 0 ? (
         <div className="card mt-4 flex flex-col items-center px-6 py-12 text-center">
@@ -297,7 +322,7 @@ export default function DashboardPage() {
                 !["released", "declined", "cancelled"].includes(m.status)
               }
               onChanged={() =>
-                fetchMyMatches().then(setMatches).catch(() => {})
+                fetchMyMatches().then(setMatches).catch(() => setLoadError(true))
               }
             />
           ))}

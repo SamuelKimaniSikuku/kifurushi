@@ -11,7 +11,7 @@ require.extensions['.ts'] = (module, filename) => {
   }});
   module._compile(outputText, filename);
 };
-const { browseHref, readRouteFilters, postHref, readPostRoute, safeReturnPath } = require('../lib/routes.ts');
+const { browseHref, readRouteFilters, postHref, readPostRoute, safeReturnPath, signInHref } = require('../lib/routes.ts');
 const { signInSchema, signUpSchema } = require('../lib/validation.ts');
 
 test('route shortcuts round-trip with country direction, date and sort intact', () => {
@@ -68,4 +68,11 @@ test('registration keeps the existing password requirements', () => {
   for (const password of ['Short1', 'alllowercase123', 'ALLUPPERCASE123', 'NoNumberHere']) {
     assert.equal(signUpSchema.safeParse({ ...details, password }).success, false);
   }
+});
+
+test('shared review links use sign-in and keep the ratings section through authentication', () => {
+  const auth = new URL(signInHref('/dashboard#ratings'), 'https://www.kifurushiapp.com');
+  assert.equal(auth.searchParams.get('mode'), 'signin');
+  assert.equal(safeReturnPath(auth.searchParams.get('next')), '/dashboard#ratings');
+  assert.equal(new URL(signInHref('//example.com'), auth.origin).searchParams.get('next'), '/dashboard');
 });

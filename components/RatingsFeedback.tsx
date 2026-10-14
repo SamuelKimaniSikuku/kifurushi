@@ -11,6 +11,7 @@ import DeliveryReview from "./DeliveryReview";
 export default function RatingsFeedback({ matches, myUserId }: { matches: MatchDetail[]; myUserId: string }) {
   const { lang } = useLang();
   const s = reviewCopy[lang];
+  const active = matches.some((match) => !["released", "cancelled", "declined"].includes(match.status));
   const completed = matches.filter((match) => match.status === "released");
   const matchKey = completed.map((match) => match.id).sort().join(",");
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -37,7 +38,8 @@ export default function RatingsFeedback({ matches, myUserId }: { matches: MatchD
       </h2>
       {!error && loadedKey === matchKey && pendingCount > 0 && <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-semibold text-forest">{s.waiting(pendingCount)}</span>}
     </div>
-    <p className="mt-2 text-sm text-muted">{completed.length ? s.intro : s.empty}</p>
+    <p className="mt-2 text-sm text-muted">{completed.length ? s.intro : active ? s.deliveryHelp : s.missingDelivery}</p>
+    {completed.length === 0 && active && <a href="#deliveries" className="btn-ghost mt-3">{s.viewDeliveries}</a>}
     {completed.length > 0 && (error ? <div className="mt-4">
       <p role="alert" className="text-sm text-danger">{s.loadError}</p>
       <button type="button" className="btn-ghost mt-2" onClick={() => setAttempt((n) => n + 1)}>{s.retry}</button>

@@ -58,3 +58,8 @@ export function safeReturnPath(value: string | null): string {
     return `${url.pathname}${url.search}${url.hash}`;
   } catch { return "/dashboard"; }
 }
+
+/** Keep the requested section when an existing member signs in. */
+export function signInHref(returnTo: string) {
+  return `/auth?mode=signin&next=${encodeURIComponent(safeReturnPath(returnTo))}`;
+}
