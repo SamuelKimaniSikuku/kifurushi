@@ -52,6 +52,12 @@ can edit the open parcel from the pending match; unknown weight and insufficient
 capacity still prevent acceptance. Accepted weights remain locked and all
 inspection, refusal, ownership, route and date checks are unchanged.
 
+Apply `negotiable_weight_estimates` before the app update to retain positive
+estimates below 0.1 kg or above 46 kg. Requests do not enforce a luggage limit.
+Parcel weight and calculated trip capacity retain decimal precision so light
+envelopes reserve their actual weight when accepted. The remaining-space column
+is regenerated from the existing space and bookings, with no booking changes.
+
 The two existing listing email functions also display unknown weight correctly;
 deploy `new-listing-alerts` and `listing-nudges` with their existing hook-secret
 authentication configuration. Deploy the database and functions before the app.

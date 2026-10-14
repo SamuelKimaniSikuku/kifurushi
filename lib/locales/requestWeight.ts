@@ -2,8 +2,8 @@ import type { Lang } from "../i18n";
 
 const en = {
   label: "Estimated weight (kg, optional)",
-  help: "Not sure? Leave blank or enter 0. Agree the weight with the traveller in chat.",
-  invalid: "Enter 0.1–46 kg, or leave blank to agree the weight later.",
+  help: "Enter an estimate, or leave blank if unsure. Weight won’t stop your request. Agree the final weight in chat.",
+  invalid: "Enter a positive weight, or leave blank to agree the weight later.",
   toAgree: "Weight to agree",
   overCapacity: "You can still send this request. Discuss the available space and agree the weight before acceptance.",
   pending: "Agree the weight in Messages, then the sender can update the parcel before the request is accepted.",
@@ -16,8 +16,8 @@ export const requestWeightCopy: Record<Lang, Copy> = {
   en,
   fr: {
     label: "Poids estimé (kg, facultatif)",
-    help: "Vous ne savez pas ? Laissez vide ou indiquez 0. Convenez du poids avec le voyageur dans la discussion.",
-    invalid: "Indiquez entre 0,1 et 46 kg, ou laissez vide pour convenir du poids plus tard.",
+    help: "Indiquez une estimation ou laissez vide en cas de doute. Le poids ne bloque pas votre demande. Convenez du poids final dans la discussion.",
+    invalid: "Indiquez un poids positif ou laissez vide pour convenir du poids plus tard.",
     toAgree: "Poids à convenir",
     overCapacity: "Vous pouvez quand même envoyer cette demande. Discutez de la place disponible et convenez du poids avant l’acceptation.",
     pending: "Convenez du poids dans Messages, puis l’expéditeur peut modifier le colis avant l’acceptation de la demande.",
@@ -26,8 +26,8 @@ export const requestWeightCopy: Record<Lang, Copy> = {
   },
   sw: {
     label: "Makadirio ya uzito (kg, hiari)",
-    help: "Huna uhakika? Acha wazi au weka 0. Kubalianeni uzito na msafiri kwenye gumzo.",
-    invalid: "Weka kilo 0.1–46, au acha wazi ili mkubaliane uzito baadaye.",
+    help: "Weka makadirio au acha wazi ikiwa huna uhakika. Uzito hautazuia ombi lako. Kubalianeni uzito wa mwisho kwenye gumzo.",
+    invalid: "Weka uzito zaidi ya sifuri au acha wazi ili mkubaliane uzito baadaye.",
     toAgree: "Uzito wa kukubaliana",
     overCapacity: "Bado unaweza kutuma ombi hili. Jadilianeni nafasi iliyopo na mkubaliane uzito kabla ya kukubali ombi.",
     pending: "Kubalianeni uzito kwenye Ujumbe, kisha mtumaji asasishe kifurushi kabla ya ombi kukubaliwa.",

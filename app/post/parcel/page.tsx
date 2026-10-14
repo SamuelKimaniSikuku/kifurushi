@@ -257,8 +257,7 @@ function PostParcelForm() {
               id="weightKg"
               type="number"
               min={0}
-              max={46}
-              step={0.1}
+              step="any"
               inputMode="decimal"
               className={cls("weightKg")}
               value={form.weightKg}

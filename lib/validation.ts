@@ -45,6 +45,8 @@ export const tripSchema = z
     path: ["toCountry"],
   });
 
+// Preserve any positive estimate, including light envelopes or amounts above
+// the advertised space. Capacity is checked when a match is accepted.
 // Zero or an empty field means the sender will agree the weight in chat.
 export const requestWeightSchema = z.preprocess(
   (value) => {
@@ -52,7 +54,7 @@ export const requestWeightSchema = z.preprocess(
     if ((typeof value === "number" || typeof value === "string") && Number(value) === 0) return null;
     return value;
   },
-  z.coerce.number().min(0.1, "Enter at least 0.1 kg, or leave blank to agree later").max(46, "Max 46 kg").nullable()
+  z.coerce.number().positive("Enter a positive weight, or leave blank to agree later").nullable()
 );
 
 export const parcelSchema = z

@@ -49,14 +49,6 @@ export default function QuickRequest({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  // Keep the suggested budget in step with the weight and their rate.
-  useEffect(() => {
-    const w = parseFloat(weight);
-    if (Number.isFinite(w) && w > 0) {
-      setBudget(String(Math.max(1, Math.round(w * trip.pricePerKg))));
-    }
-  }, [weight, trip.pricePerKg]);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && !busy && !uploading && onClose();
     document.addEventListener("keydown", onKey);
@@ -154,8 +146,7 @@ export default function QuickRequest({
                 id="q-weight"
                 type="number"
                 min={0}
-                max={46}
-                step={0.1}
+                step="any"
                 inputMode="decimal"
                 className="field"
                 value={weight}
@@ -180,7 +171,7 @@ export default function QuickRequest({
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
               />
-              {estimate > 0 && (
+              {Number.isFinite(estimate) && estimate > 0 && (
                 <p className="mt-1 text-xs text-muted">
                   {t.browse.quickEstimate(estimate)}
                 </p>

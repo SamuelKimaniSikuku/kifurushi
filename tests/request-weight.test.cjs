@@ -10,11 +10,11 @@ const { requestWeightSchema, parcelSchema } = require('../lib/validation.ts');
 test('unknown and zero weights are stored as unknown, never guessed',()=>{
  for(const weight of ['', '  ', 0, '0', '0.0', null, undefined]) assert.equal(requestWeightSchema.parse(weight),null);
 });
-test('valid estimates are retained even above a traveller’s advertised 9 kg',()=>{
- for(const weight of [0.1,1,9,12,46]) assert.equal(requestWeightSchema.parse(String(weight)),weight);
+test('positive estimates are retained below 0.1 kg and above advertised space or the old 46 kg limit',()=>{
+ for(const weight of [0.001,0.01,0.075,0.1,1,9,12,46,47,1000]) assert.equal(requestWeightSchema.parse(String(weight)),weight);
 });
-test('negative, malformed and out-of-range estimates do not become unknown',()=>{
- for(const weight of [-1,'abc',NaN,Infinity,47,0.01]) assert.equal(requestWeightSchema.safeParse(weight).success,false);
+test('negative and malformed estimates do not become unknown',()=>{
+ for(const weight of [-1,'abc',NaN,Infinity]) assert.equal(requestWeightSchema.safeParse(weight).success,false);
 });
 test('envelope with 0 kg and $5 passes parcel validation as an unknown-weight request',()=>{
  const result=parcelSchema.parse({fromCountry:'KE',fromCity:'Nairobi',toCountry:'FR',toCity:'Paris',neededBy:'2099-10-17',weightKg:'0',budgetUsd:'5',description:'A document in a small envelope containing my birth certificate'});
