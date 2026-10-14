@@ -1,6 +1,6 @@
 "use client";
 
-import { readPostRoute } from "@/lib/routes";
+import { readPostRoute, safeReturnPath } from "@/lib/routes";
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -13,6 +13,7 @@ import {
   addParcel, fetchParcelById, hasDuplicateParcel, updateParcel,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
+import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { useLang, useT } from "@/lib/i18n";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 import ContentsDeclaration from "@/components/ContentsDeclaration";
@@ -100,7 +101,7 @@ function PostParcelForm() {
       if (!active) return;
       if (!p) throw new Error("Parcel unavailable");
       setForm({ fromCountry: p.fromCountry, fromCity: p.fromCity, toCountry: p.toCountry, toCity: p.toCity,
-        neededBy: p.neededBy, weightKg: String(p.weightKg), description: p.description, budgetUsd: String(p.budgetUsd) });
+        neededBy: p.neededBy, weightKg: p.weightKg == null ? "" : String(p.weightKg), description: p.description, budgetUsd: String(p.budgetUsd) });
       setCats(p.categories);
       setDeclaration(briefDeclaration(p.description, { photoPaths: d?.photo_paths ?? [], items: [], attested: false }));
     }).catch(() => { if (active) setDeclarationLoadError(true); }).finally(() => { if (active) setDeclarationLoading(false); });
@@ -146,7 +147,7 @@ function PostParcelForm() {
       } else {
         await addParcel({ ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
       }
-      router.push("/parcels");
+      router.push(editId && params.get("next") ? safeReturnPath(params.get("next")) : "/parcels");
     } catch (e) {
       setErrors({ _submit: e && typeof e === "object" && "message" in e ? String(e.message) : t.postParcel.submitError });
       setSubmitting(false);
@@ -251,11 +252,11 @@ function PostParcelForm() {
             )}
           </div>
           <div>
-            <label htmlFor="weightKg" className="field-label">{t.postParcel.weight}</label>
+            <label htmlFor="weightKg" className="field-label">{requestWeightCopy[lang].label}</label>
             <input
               id="weightKg"
               type="number"
-              min={0.1}
+              min={0}
               max={46}
               step={0.1}
               inputMode="decimal"
@@ -265,6 +266,7 @@ function PostParcelForm() {
               onBlur={touch("weightKg")}
               {...err("weightKg")}
             />
+            <p className="mt-1 text-xs text-muted">{requestWeightCopy[lang].help}</p>
             {errors.weightKg && (
               <p id="weightKg-error" className="field-error">{errors.weightKg}</p>
             )}

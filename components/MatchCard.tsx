@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Plane, Send, Star,
@@ -232,6 +234,8 @@ export default function MatchCard({
   const [open, setOpen] = useState(defaultOpen);
   const t = useT();
   const { lang } = useLang();
+  const weightText = requestWeightCopy[lang];
+  const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
@@ -497,6 +501,14 @@ export default function MatchCard({
       {/* Role-aware actions */}
       {!done && !ended && (
         <div className="mt-4 space-y-3">
+          {match.status === "requested" && <div className="rounded-xl bg-sand p-3 text-sm">
+            <p className="font-semibold">{match.parcelWeightKg == null ? weightText.toAgree : `${match.parcelWeightKg} kg`}</p>
+            {weightNeedsAgreement && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
+            <div className="mt-2 flex flex-wrap gap-3">
+              {!isTraveler && <Link href={`/post/parcel?edit=${match.parcelId}&next=%2Fdashboard%23deliveries`} className="font-semibold text-forest underline">{weightText.edit}</Link>}
+              <button type="button" disabled={busy} onClick={onChanged} className="text-forest underline">{weightText.refresh}</button>
+            </div>
+          </div>}
           {match.status === "requested" &&
             (canRespond ? (
               <div>
@@ -510,9 +522,9 @@ export default function MatchCard({
                 <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"
-                  disabled={busy}
+                  disabled={busy || weightNeedsAgreement}
                   onClick={() =>
-                    act(() => respondMatch(match.id, true), "Could not accept — try again.")
+                    act(() => respondMatch(match.id, true), weightText.acceptError)
                   }
                 >
                   Accept request

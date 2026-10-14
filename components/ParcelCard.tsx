@@ -6,6 +6,7 @@ import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
+import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { reviewCopy } from "@/lib/locales/reviews";
 import Avatar from "@/components/ui/Avatar";
 import ShareListing from "@/components/ShareListing";
@@ -89,7 +90,7 @@ export default function ParcelCard({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <span className="flex items-center gap-1.5">
           <Scale size={14} strokeWidth={2} className="shrink-0" aria-hidden />
-          {parcel.weightKg} kg
+          {parcel.weightKg == null ? requestWeightCopy[lang].toAgree : `${parcel.weightKg} kg`}
         </span>
         <span className="flex items-center gap-1.5">
           <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />

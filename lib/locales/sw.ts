@@ -425,7 +425,7 @@ export const sw: Dict = {
         : `Vifurushi ${n} tayari vinasubiri kwenye njia hii`,
     parcelsNote:
       "Weka safari yako kisha uweze kujitolea kuvibeba mara moja.",
-    parcelMeta: (kg: number, budget: number) => `kg ${kg} · bajeti $${budget}`,
+    parcelMeta: (kg: number | null, budget: number) => `${kg == null ? "Uzito wa kukubaliana" : `kg ${kg}`} · bajeti $${budget}`,
     neededBy: (date: string) => `kinahitajika kabla ya ${date}`,
   },
   browse: {

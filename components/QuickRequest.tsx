@@ -8,6 +8,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Package, X } from "lucide-react";
+import { requestWeightSchema } from "@/lib/validation";
+import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { addParcel, requestMatch } from "@/lib/db";
 import ContentsDeclaration from "./ContentsDeclaration";
 import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
@@ -31,8 +33,8 @@ export default function QuickRequest({
   const [declaration, setDeclaration] = useState(emptyDeclaration);
   const [uploading, setUploading] = useState(false);
   const [createdParcelId, setCreatedParcelId] = useState<string | null>(null);
-  const maxKg = Math.max(0.1, trip.remainingKg);
-  const [weight, setWeight] = useState(String(Math.min(3, maxKg)));
+  const w = requestWeightCopy[lang];
+  const [weight, setWeight] = useState("");
   const [budget, setBudget] = useState(String(Math.round(trip.pricePerKg * 3)));
   const [description, setDescription] = useState("");
   const [cats, setCats] = useState<ParcelCategory[]>([]);
@@ -51,7 +53,7 @@ export default function QuickRequest({
   useEffect(() => {
     const w = parseFloat(weight);
     if (Number.isFinite(w) && w > 0) {
-      setBudget(String(Math.round(w * trip.pricePerKg)));
+      setBudget(String(Math.max(1, Math.round(w * trip.pricePerKg))));
     }
   }, [weight, trip.pricePerKg]);
 
@@ -75,8 +77,9 @@ export default function QuickRequest({
       setError(t.postParcel.insidePlaceholder);
       return;
     }
-    if (!Number.isFinite(weightNum) || weightNum <= 0 || weightNum > maxKg) {
-      setError(t.browse.tooHeavy(maxKg));
+    const parsedWeight = requestWeightSchema.safeParse(weight);
+    if (!parsedWeight.success) {
+      setError(w.invalid);
       return;
     }
     setBusy(true);
@@ -89,7 +92,7 @@ export default function QuickRequest({
         toCountry: trip.toCountry,
         toCity: trip.toCity,
         neededBy: trip.departDate,
-        weightKg: parseFloat(weight),
+        weightKg: parsedWeight.data,
         budgetUsd: parseFloat(budget),
         categories: cats.length ? cats : ["other"],
         description: description.trim(),
@@ -145,19 +148,22 @@ export default function QuickRequest({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="q-weight" className="field-label">
-                {t.postParcel.weight} · {maxKg} kg free
+                {w.label}
               </label>
               <input
                 id="q-weight"
                 type="number"
-                min={0.1}
-                max={maxKg}
+                min={0}
+                max={46}
                 step={0.1}
                 inputMode="decimal"
                 className="field"
                 value={weight}
-                onChange={(e) => setWeight(e.target.value)}
+                onChange={(e) => { setWeight(e.target.value); setError(""); }}
+                aria-describedby="q-weight-help"
               />
+              <p id="q-weight-help" className="mt-1 text-xs text-muted">{w.help}</p>
+              {weightNum > trip.remainingKg && <p className="mt-2 text-xs text-muted">{w.overCapacity}</p>}
             </div>
             <div>
               <label htmlFor="q-budget" className="field-label">

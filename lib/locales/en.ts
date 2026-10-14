@@ -422,7 +422,7 @@ export const en = {
         : `${n} parcels are already waiting on this route`,
     parcelsNote:
       "Post your trip and you can offer to carry them straight after.",
-    parcelMeta: (kg: number, budget: number) => `${kg} kg · budget $${budget}`,
+    parcelMeta: (kg: number | null, budget: number) => `${kg == null ? "Weight to agree" : `${kg} kg`} · budget $${budget}`,
     neededBy: (date: string) => `needed by ${date}`,
   },
   browse: {

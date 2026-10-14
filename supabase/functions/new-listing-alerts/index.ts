@@ -19,7 +19,7 @@ const T: Record<
   {
     parcelSubject: (from: string, to: string) => string;
     parcelBody: (c: {
-      sender: string; from: string; to: string; kg: number;
+      sender: string; from: string; to: string; kg: number | null;
       budget: number; needed: string; tripDate: string;
     }) => string;
     tripSubject: (from: string, to: string) => string;
@@ -36,12 +36,12 @@ const T: Record<
     parcelSubject: (from, to) => `New parcel on your route: ${from} → ${to} 📦`,
     parcelBody: (c) =>
       `<b>${c.sender}</b> just posted a parcel on <b>${c.from} → ${c.to}</b>: ` +
-      `${c.kg} kg, budget $${c.budget}, needed by ${c.needed}. ` +
+      `${c.kg == null ? "Weight to agree" : `${c.kg} kg`}, budget $${c.budget}, needed by ${c.needed}. ` +
       `Your trip on ${c.tripDate} fits — offer to carry it before someone else does.`,
     tripSubject: (from, to) => `A traveller just posted your route: ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> is flying <b>${c.from} → ${c.to}</b> on ${c.depart} ` +
-      `with ${c.kg} kg free at $${c.price}/kg. Your open parcel fits — request them now.`,
+      `with ${c.kg} kg free at $${c.price}/kg. Ask about your parcel and agree the weight before acceptance.`,
     seeParcels: "See the parcel",
     seeTravellers: "Request this traveller",
     footer: "You get this because you have an open listing on this route.",
@@ -50,12 +50,12 @@ const T: Record<
     parcelSubject: (from, to) => `Nouveau colis sur votre itinéraire : ${from} → ${to} 📦`,
     parcelBody: (c) =>
       `<b>${c.sender}</b> vient de publier un colis sur <b>${c.from} → ${c.to}</b> : ` +
-      `${c.kg} kg, budget ${c.budget} $, requis avant le ${c.needed}. ` +
+      `${c.kg == null ? "Poids à convenir" : `${c.kg} kg`}, budget ${c.budget} $, requis avant le ${c.needed}. ` +
       `Votre voyage du ${c.tripDate} correspond — proposez de le transporter avant quelqu'un d'autre.`,
     tripSubject: (from, to) => `Un voyageur vient de publier votre itinéraire : ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> part de <b>${c.from} → ${c.to}</b> le ${c.depart} ` +
-      `avec ${c.kg} kg libres à ${c.price} $/kg. Votre colis correspond — sollicitez-le maintenant.`,
+      `avec ${c.kg} kg libres à ${c.price} $/kg. Discutez de votre colis et convenez du poids avant l’acceptation.`,
     seeParcels: "Voir le colis",
     seeTravellers: "Solliciter ce voyageur",
     footer: "Vous recevez ceci car vous avez une annonce ouverte sur cet itinéraire.",
@@ -64,12 +64,12 @@ const T: Record<
     parcelSubject: (from, to) => `Kifurushi kipya kwenye njia yako: ${from} → ${to} 📦`,
     parcelBody: (c) =>
       `<b>${c.sender}</b> ametangaza kifurushi kwenye <b>${c.from} → ${c.to}</b>: ` +
-      `kg ${c.kg}, bajeti $${c.budget}, kinahitajika kabla ya ${c.needed}. ` +
+      `${c.kg == null ? "Uzito wa kukubaliana" : `kg ${c.kg}`}, bajeti $${c.budget}, kinahitajika kabla ya ${c.needed}. ` +
       `Safari yako ya ${c.tripDate} inafaa — jitolee kukibeba kabla ya mtu mwingine.`,
     tripSubject: (from, to) => `Msafiri ametangaza njia yako: ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> anasafiri <b>${c.from} → ${c.to}</b> tarehe ${c.depart} ` +
-      `akiwa na kg ${c.kg} wazi kwa $${c.price}/kg. Kifurushi chako kinafaa — mwombe sasa.`,
+      `akiwa na kg ${c.kg} wazi kwa $${c.price}/kg. Uliza kuhusu kifurushi chako na mkubaliane uzito kabla ya kukubali.`,
     seeParcels: "Ona kifurushi",
     seeTravellers: "Omba msafiri huyu",
     footer: "Unapata hii kwa sababu una tangazo wazi kwenye njia hii.",
@@ -176,7 +176,7 @@ Deno.serve(async (req) => {
       .eq("to_country", p.to_country)
       .gte("depart_date", today)
       .lte("depart_date", p.needed_by)
-      .gte("remaining_kg", p.weight_kg)
+      .gte("remaining_kg", p.weight_kg ?? 0.1)
       .neq("traveler_id", p.sender_id)
       .order("depart_date", { ascending: true })
       .limit(MAX_RECIPIENTS);
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
             sender: senderName,
             from: p.from_city,
             to: p.to_city,
-            kg: Number(p.weight_kg),
+            kg: p.weight_kg == null ? null : Number(p.weight_kg),
             budget: Math.round(Number(p.budget_usd)),
             needed: day(p.needed_by, r.lang),
             tripDate: day(tripDate, r.lang),
@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       .eq("from_country", t.from_country)
       .eq("to_country", t.to_country)
       .gte("needed_by", t.depart_date)
-      .lte("weight_kg", t.remaining_kg)
+      .or(`weight_kg.is.null,weight_kg.lte.${Number(t.remaining_kg)}`)
       .neq("sender_id", t.traveler_id)
       .limit(MAX_RECIPIENTS);
 

@@ -27,9 +27,9 @@ const T: Record<
     tripGone: (city: string) => string;
     tripGoneBody: (waiting: number) => string;
     pendingAsk: (name: string) => string;
-    pendingAskBody: (c: { name: string; days: number; kg: number; budget: number; city: string }) => string;
+    pendingAskBody: (c: { name: string; days: number; kg: number | null; budget: number; city: string }) => string;
     pendingOffer: (name: string) => string;
-    pendingOfferBody: (c: { name: string; days: number; kg: number; city: string }) => string;
+    pendingOfferBody: (c: { name: string; days: number; kg: number | null; city: string }) => string;
     respondNow: string;
     footerPending: string;
     trialSoon: (date: string) => string;
@@ -73,10 +73,10 @@ const T: Record<
         : ` Next time, posting as early as you can makes the difference — most matches need a few days to form, and we now alert every fitting sender the moment you post.`),
     pendingAsk: (name) => `${name} is still waiting for your answer 📦`,
     pendingAskBody: (c) =>
-      `<b>${c.name}</b> asked you ${c.days} days ago to carry their ${c.kg} kg parcel to ${c.city} for $${c.budget}, and hasn't heard back. Accept, decline, or ask them a question in the chat — even a quick no lets them find another traveller in time.`,
+      `<b>${c.name}</b> asked you ${c.days} days ago to carry their parcel (${c.kg == null ? "weight to agree" : `${c.kg} kg`}) to ${c.city} for $${c.budget}, and hasn't heard back. Accept, decline, or ask them a question in the chat — even a quick no lets them find another traveller in time.`,
     pendingOffer: (name) => `${name} is still waiting for your answer ✈️`,
     pendingOfferBody: (c) =>
-      `<b>${c.name}</b> offered ${c.days} days ago to carry your ${c.kg} kg parcel to ${c.city}, and hasn't heard back. Accept, decline, or ask them a question in the chat — travellers book their space out fast.`,
+      `<b>${c.name}</b> offered ${c.days} days ago to carry your parcel (${c.kg == null ? "weight to agree" : `${c.kg} kg`}) to ${c.city}, and hasn't heard back. Accept, decline, or ask them a question in the chat — travellers book their space out fast.`,
     respondNow: "Reply now",
     footerPending: "You get this because a match request on Kifurushi is waiting for your answer.",
     trialSoon: (date) => `Your free month on Kifurushi ends ${date}`,
@@ -120,10 +120,10 @@ const T: Record<
         : ` La prochaine fois, publier le plus tôt possible fait la différence — la plupart des mises en relation prennent quelques jours, et nous alertons désormais chaque expéditeur compatible dès la publication.`),
     pendingAsk: (name) => `${name} attend toujours votre réponse 📦`,
     pendingAskBody: (c) =>
-      `<b>${c.name}</b> vous a demandé il y a ${c.days} jours de transporter son colis de ${c.kg} kg vers ${c.city} pour ${c.budget} $, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — même un non rapide lui laisse le temps de trouver un autre voyageur.`,
+      `<b>${c.name}</b> vous a demandé il y a ${c.days} jours de transporter son colis (${c.kg == null ? "poids à convenir" : `${c.kg} kg`}) vers ${c.city} pour ${c.budget} $, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — même un non rapide lui laisse le temps de trouver un autre voyageur.`,
     pendingOffer: (name) => `${name} attend toujours votre réponse ✈️`,
     pendingOfferBody: (c) =>
-      `<b>${c.name}</b> a proposé il y a ${c.days} jours de transporter votre colis de ${c.kg} kg vers ${c.city}, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — l'espace des voyageurs part vite.`,
+      `<b>${c.name}</b> a proposé il y a ${c.days} jours de transporter votre colis (${c.kg == null ? "poids à convenir" : `${c.kg} kg`}) vers ${c.city}, sans réponse depuis. Acceptez, refusez, ou posez une question dans le chat — l'espace des voyageurs part vite.`,
     respondNow: "Répondre maintenant",
     footerPending: "Vous recevez ceci car une demande de mise en relation sur Kifurushi attend votre réponse.",
     trialSoon: (date) => `Votre mois gratuit sur Kifurushi se termine le ${date}`,
@@ -165,10 +165,10 @@ const T: Record<
         : ` Wakati ujao, kuweka tangazo mapema uwezavyo ndiko kunakoleta tofauti — match nyingi huchukua siku kadhaa, na sasa tunawaarifu watumaji wanaofaa mara tangazo linapowekwa.`),
     pendingAsk: (name) => `${name} bado anasubiri jibu lako 📦`,
     pendingAskBody: (c) =>
-      `<b>${c.name}</b> alikuomba siku ${c.days} zilizopita ubebe kifurushi chake cha kg ${c.kg} kwenda ${c.city} kwa $${c.budget}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — hata "hapana" ya haraka inampa muda wa kutafuta msafiri mwingine.`,
+      `<b>${c.name}</b> alikuomba siku ${c.days} zilizopita ubebe kifurushi chake (${c.kg == null ? "uzito wa kukubaliana" : `kg ${c.kg}`}) kwenda ${c.city} kwa $${c.budget}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — hata "hapana" ya haraka inampa muda wa kutafuta msafiri mwingine.`,
     pendingOffer: (name) => `${name} bado anasubiri jibu lako ✈️`,
     pendingOfferBody: (c) =>
-      `<b>${c.name}</b> alijitolea siku ${c.days} zilizopita kubeba kifurushi chako cha kg ${c.kg} kwenda ${c.city}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — nafasi za wasafiri huchukuliwa haraka.`,
+      `<b>${c.name}</b> alijitolea siku ${c.days} zilizopita kubeba kifurushi chako (${c.kg == null ? "uzito wa kukubaliana" : `kg ${c.kg}`}) kwenda ${c.city}, na hajapata jibu. Kubali, kataa, au muulize swali kwenye chat — nafasi za wasafiri huchukuliwa haraka.`,
     respondNow: "Jibu sasa",
     footerPending: "Unapata hii kwa sababu ombi la match kwenye Kifurushi linasubiri jibu lako.",
     trialSoon: (date) => `Mwezi wako wa bure kwenye Kifurushi unaisha ${date}`,
@@ -473,7 +473,7 @@ Deno.serve(async (req) => {
       traveler_id: string; to_city: string; depart_date: string;
     } | null;
     const parcel = m.parcel as unknown as {
-      sender_id: string; weight_kg: number; budget_usd: number; needed_by: string;
+      sender_id: string; weight_kg: number | null; budget_usd: number; needed_by: string;
     } | null;
     if (!trip || !parcel) continue;
 
@@ -507,7 +507,7 @@ Deno.serve(async (req) => {
     const ctx = {
       name,
       days,
-      kg: Number(parcel.weight_kg),
+      kg: parcel.weight_kg == null ? null : Number(parcel.weight_kg),
       budget: Math.round(Number(parcel.budget_usd)),
       city: trip.to_city,
     };

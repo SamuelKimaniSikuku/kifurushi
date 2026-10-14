@@ -45,6 +45,16 @@ export const tripSchema = z
     path: ["toCountry"],
   });
 
+// Zero or an empty field means the sender will agree the weight in chat.
+export const requestWeightSchema = z.preprocess(
+  (value) => {
+    if (value == null || (typeof value === "string" && value.trim() === "")) return null;
+    if ((typeof value === "number" || typeof value === "string") && Number(value) === 0) return null;
+    return value;
+  },
+  z.coerce.number().min(0.1, "Enter at least 0.1 kg, or leave blank to agree later").max(46, "Max 46 kg").nullable()
+);
+
 export const parcelSchema = z
   .object({
     fromCountry: countryCode,
@@ -52,7 +62,7 @@ export const parcelSchema = z
     toCountry: countryCode,
     toCity: city,
     neededBy: futureDate,
-    weightKg: z.coerce.number().min(0.1, "Minimum 0.1 kg").max(46, "Max 46 kg"),
+    weightKg: requestWeightSchema,
     description: z
       .string()
       .trim()

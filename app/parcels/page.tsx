@@ -66,8 +66,8 @@ function ParcelsContent() {
     try {
       if (!(await gate())) return;
       // An offer joins one of MY trips to this parcel — same route only.
-      // Offer one of my trips only if it fits: same corridor, departing
-      // before the parcel is needed, with room for its weight.
+      // Start the conversation on a compatible route and date.
+      // The parties agree the weight before accepting.
       const mine = await fetchMyOpenTrips();
       const today = new Date().toISOString().slice(0, 10);
       const sameRoute = mine.find(
@@ -75,8 +75,7 @@ function ParcelsContent() {
           tr.fromCountry === parcel.fromCountry &&
           tr.toCountry === parcel.toCountry &&
           tr.date >= today &&
-          tr.date <= parcel.neededBy &&
-          tr.kg >= parcel.weightKg
+          tr.date <= parcel.neededBy
       );
       if (!sameRoute) {
         setToast(t.browse.noFittingTrip);

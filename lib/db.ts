@@ -52,7 +52,7 @@ interface ParcelRow {
   to_country: string;
   to_city: string;
   needed_by: string;
-  weight_kg: number;
+  weight_kg: number | null;
   categories: string[] | null;
   description: string;
   budget_usd: number;
@@ -99,7 +99,7 @@ function mapParcel(row: ParcelRow): ParcelRequest {
     toCountry: row.to_country,
     toCity: row.to_city,
     neededBy: row.needed_by,
-    weightKg: Number(row.weight_kg),
+    weightKg: row.weight_kg == null ? null : Number(row.weight_kg),
     categories: (row.categories ?? []) as ParcelCategory[],
     description: row.description,
     budgetUsd: Number(row.budget_usd),
@@ -398,7 +398,7 @@ export interface NewParcel {
   toCountry: string;
   toCity: string;
   neededBy: string;
-  weightKg: number;
+  weightKg: number | null;
   categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
@@ -532,7 +532,7 @@ export interface MyListing {
   /** parcels: needed_by · trips: depart_date */
   date: string;
   /** parcels: weight_kg · trips: remaining_kg */
-  kg: number;
+  kg: number | null;
 }
 
 function mapListing(
@@ -541,7 +541,7 @@ function mapListing(
     from_country: string;
     to_country: string;
     date: string;
-    kg: number;
+    kg: number | null;
   }[]
 ) {
   return rows.map((r) => ({
@@ -549,7 +549,7 @@ function mapListing(
     fromCountry: r.from_country,
     toCountry: r.to_country,
     date: r.date,
-    kg: Number(r.kg),
+    kg: r.kg == null ? null : Number(r.kg),
   }));
 }
 
@@ -599,6 +599,8 @@ export interface MatchDetail {
   counterpartyName: string;
   route: string; // e.g. "London → Lagos"
   hasCode: boolean;
+  parcelWeightKg: number | null;
+  remainingKg: number | null;
 }
 
 export async function fetchMyMatches(): Promise<MatchDetail[]> {
@@ -610,9 +612,9 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
     .from("matches")
     .select(
       `id, trip_id, parcel_id, requester_id, status, updated_at, code_hash,
-       trip:trips!matches_trip_id_fkey(from_city, to_city, traveler_id,
+       trip:trips!matches_trip_id_fkey(from_city, to_city, traveler_id, remaining_kg,
          profile:profiles!trips_traveler_id_fkey(id, full_name)),
-       parcel:parcels!matches_parcel_id_fkey(sender_id,
+       parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg,
          profile:profiles!parcels_sender_id_fkey(id, full_name))`
     )
     .order("updated_at", { ascending: false });
@@ -630,10 +632,12 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
       from_city: string;
       to_city: string;
       traveler_id: string;
+      remaining_kg: number;
       profile: { id: string; full_name: string } | null;
     } | null;
     parcel: {
       sender_id: string;
+      weight_kg: number | null;
       profile: { id: string; full_name: string } | null;
     } | null;
   }
@@ -656,6 +660,8 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
       counterpartyName: counterProfile?.full_name ?? "your match partner",
       route: trip ? `${trip.from_city} → ${trip.to_city}` : "Delivery",
       hasCode: !!row.code_hash,
+      parcelWeightKg: parcel?.weight_kg == null ? null : Number(parcel.weight_kg),
+      remainingKg: trip?.remaining_kg == null ? null : Number(trip.remaining_kg),
     };
   });
 

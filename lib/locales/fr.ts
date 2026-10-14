@@ -425,7 +425,7 @@ export const fr: Dict = {
         : `${n} colis attendent déjà sur cet itinéraire`,
     parcelsNote:
       "Publiez votre voyage et vous pourrez proposer de les transporter juste après.",
-    parcelMeta: (kg: number, budget: number) => `${kg} kg · budget ${budget} $`,
+    parcelMeta: (kg: number | null, budget: number) => `${kg == null ? "Poids à convenir" : `${kg} kg`} · budget ${budget} $`,
     neededBy: (date: string) => `requis avant le ${date}`,
   },
   browse: {

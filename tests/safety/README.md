@@ -45,6 +45,17 @@ reopen the parcel in a separate statement, recording the resolution in the
 incident. Neither the sender nor traveller can clear a hold. Evidence is
 append-only for clients; support handles retention and orphan-upload cleanup.
 
+Apply `optional_request_weight` for requests with unknown or negotiable weight.
+Blank or zero entered in the app is stored as NULL and displayed as “Weight to
+agree”. Requests above the available kilos can open a conversation. The sender
+can edit the open parcel from the pending match; unknown weight and insufficient
+capacity still prevent acceptance. Accepted weights remain locked and all
+inspection, refusal, ownership, route and date checks are unchanged.
+
+The two existing listing email functions also display unknown weight correctly;
+deploy `new-listing-alerts` and `listing-nudges` with their existing hook-secret
+authentication configuration. Deploy the database and functions before the app.
+
 ## Verification
 
 Run application validation and discovery tests with:
@@ -68,7 +79,8 @@ psql -v ON_ERROR_STOP=1 -d kifurushi_safety_test \
   -f tests/safety/inspection.test.sql \
   -f tests/safety/refusal.test.sql \
   -f tests/safety/optional-photos.test.sql \
-  -f tests/safety/brief-declaration.test.sql
+  -f tests/safety/brief-declaration.test.sql \
+  -f tests/safety/request-weight.test.sql
 ```
 
 Coverage includes anonymous/unrelated-user denial, own-upload validation,

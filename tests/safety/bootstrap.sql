@@ -35,6 +35,7 @@ create or replace function public.is_active_member(uid uuid) returns boolean lan
 \ir ../../supabase/migrations/20260925092621_parcel_declarations_and_inspections.sql
 \ir ../../supabase/migrations/20260925094456_optional_parcel_photos.sql
 \ir ../../supabase/migrations/20260929075944_simplify_parcel_declarations.sql
+\ir ../../supabase/migrations/20261014163059_optional_request_weight.sql
 
 create schema test;
 grant usage on schema test to anon,authenticated;

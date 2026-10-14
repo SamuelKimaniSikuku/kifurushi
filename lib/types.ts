@@ -55,7 +55,7 @@ export interface ParcelRequest {
   toCountry: string;
   toCity: string;
   neededBy: string; // ISO date
-  weightKg: number;
+  weightKg: number | null; // null until the sender and traveller agree
   categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
