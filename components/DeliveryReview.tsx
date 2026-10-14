@@ -72,7 +72,7 @@ export default function DeliveryReview({ match, myReview, theirReview, onSubmit 
         {myReview.comment && <p className="whitespace-pre-wrap break-words text-sm">{myReview.comment}</p>}
       </div> : !match.counterpartyId ? <p role="alert" className="mt-3 text-sm text-danger">{s.missingPartner}</p> : <form onSubmit={submit} className="mt-4 space-y-3" noValidate>
         <fieldset disabled={saving} aria-describedby={`${id}-score`}>
-          <legend className="text-sm font-semibold">{s.rating}</legend>
+          <legend className="text-sm font-semibold">{s.rating(match.counterpartyName)}</legend>
           <div className="mt-1 flex gap-1">
             {[1, 2, 3, 4, 5].map((n) => <label key={n} className="relative grid h-11 w-11 cursor-pointer place-items-center">
               <input ref={n === 1 ? firstStar : undefined} type="radio" name={`${id}-rating`} value={n}
@@ -85,7 +85,7 @@ export default function DeliveryReview({ match, myReview, theirReview, onSubmit 
           <p id={`${id}-score`} className="min-h-5 text-xs text-muted" aria-live="polite">{rating ? s.scores[rating - 1] : s.choose}</p>
         </fieldset>
         <div>
-          <label htmlFor={`${id}-comment`} className="field-label">{s.feedback}</label>
+          <label htmlFor={`${id}-comment`} className="field-label">{s.feedback(match.counterpartyName)}</label>
           <textarea id={`${id}-comment`} className="field min-h-[80px]" value={comment} maxLength={300} disabled={saving}
             placeholder={isRatingSender ? s.senderHint : s.travellerHint}
             aria-describedby={`${id}-privacy ${id}-count`}

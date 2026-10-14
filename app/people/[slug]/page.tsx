@@ -277,12 +277,11 @@ export default function PersonProfilePage({
             className="shrink-0 text-clay"
             aria-hidden
           />
-          Reviews
+          <span className="min-w-0 break-words">{s.profileTitle(person.name)}</span>
         </h2>
-        <p className="mt-1 text-sm text-muted">
-          Written by the people on the other end of a completed delivery.
-          Reviews are public and can&apos;t be edited.
-        </p>
+        <p className="mt-1 text-sm text-muted">{s.profileIntro}</p>
+        <p className="mt-2 text-sm text-muted">{s.platformRole}</p>
+        <p className="mt-2 text-sm text-muted">{s.reputation}</p>
 
         {person.reviews.length > 0 ? (
           <ul className="mt-4 space-y-4">

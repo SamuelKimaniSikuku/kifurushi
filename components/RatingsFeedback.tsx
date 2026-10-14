@@ -38,7 +38,12 @@ export default function RatingsFeedback({ matches, myUserId }: { matches: MatchD
       </h2>
       {!error && loadedKey === matchKey && pendingCount > 0 && <span className="rounded-full bg-success-bg px-3 py-1 text-xs font-semibold text-forest">{s.waiting(pendingCount)}</span>}
     </div>
-    <p className="mt-2 text-sm text-muted">{completed.length ? s.intro : active ? s.deliveryHelp : s.missingDelivery}</p>
+    <p className="mt-2 text-sm text-muted">{s.intro}</p>
+    <div className="mt-3 rounded-xl bg-sand p-3 text-sm text-muted">
+      <p>{s.platformRole}</p>
+      <p className="mt-2">{s.reputation}</p>
+    </div>
+    {completed.length === 0 && <p className="mt-3 text-sm text-muted">{active ? s.deliveryHelp : s.missingDelivery}</p>}
     {completed.length === 0 && active && <a href="#deliveries" className="btn-ghost mt-3">{s.viewDeliveries}</a>}
     {completed.length > 0 && (error ? <div className="mt-4">
       <p role="alert" className="text-sm text-danger">{s.loadError}</p>
