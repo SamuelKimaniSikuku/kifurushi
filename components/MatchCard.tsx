@@ -4,10 +4,10 @@ import Link from "next/link";
 import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Plane, Send, Star,
+  ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Send, Star,
 } from "lucide-react";
 import {
-  STATUS_LABELS, STATUS_ORDER, TransitUpdate, MatchStatus, Message,
+  TransitUpdate, MatchStatus, Message,
 } from "@/lib/types";
 import {
   MatchDetail, deliverNow, fetchMatchWhatsapp, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
@@ -18,6 +18,7 @@ import {
 import { transitUpdateSchema, messageSchema } from "@/lib/validation";
 import { useLang, useT } from "@/lib/i18n";
 import { reviewCopy } from "@/lib/locales/reviews";
+import { deliveryCopy } from "@/lib/locales/delivery";
 import MatchSafety from "@/components/MatchSafety";
 
 const CHAT_POLL_MS = 5000;
@@ -97,7 +98,7 @@ function ChatPanel({
   }
 
   return (
-    <div className="mt-5 rounded-xl bg-sand p-4">
+    <div id={`messages-${matchId}`} className="mt-5 scroll-mt-24 rounded-xl bg-sand p-4">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -235,6 +236,7 @@ export default function MatchCard({
   const t = useT();
   const { lang } = useLang();
   const weightText = requestWeightCopy[lang];
+  const d = deliveryCopy[lang];
   const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -254,7 +256,7 @@ export default function MatchCard({
   const canRespond = match.requesterId !== myUserId;
   const done = match.status === "released";
   const ended = TERMINAL_NEGATIVE.includes(match.status);
-  const idx = STATUS_ORDER.indexOf(match.status);
+  const stepIndex = ["requested", "accepted"].includes(match.status) ? 0 : match.status === "escrow_paid" ? 1 : 2;
   const inTransit = match.status === "picked_up" || match.status === "in_transit";
   const received = match.status === "delivered" || done;
   const cancellable = ["requested", "accepted", "escrow_paid"].includes(match.status);
@@ -262,7 +264,6 @@ export default function MatchCard({
     (Date.now() - new Date(match.updatedAt).getTime()) / 86400000
   );
   const [waNumber, setWaNumber] = useState<string | null>(null);
-  const [confirmingTerms, setConfirmingTerms] = useState(false);
   const [inspectionReady, setInspectionReady] = useState(false);
 
   // The counterparty's opted-in WhatsApp number — the RPC answers only after
@@ -285,9 +286,7 @@ export default function MatchCard({
   }, [match.id, match.status]);
   const senderCodeWindow =
     !isTraveler &&
-    ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered"].includes(
-      match.status
-    );
+    ["picked_up", "in_transit", "delivered"].includes(match.status);
 
   const title = isTraveler
     ? `${match.route} — carrying for ${match.counterpartyName}`
@@ -430,7 +429,7 @@ export default function MatchCard({
                   : "bg-warn-bg text-warn"
             }`}
           >
-            {STATUS_LABELS[match.status]}
+            {d.status[match.status]}
           </span>
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
@@ -448,41 +447,12 @@ export default function MatchCard({
       {open && (
       <>
 
-      {/* Progress bar — happy path only */}
-      {idx >= 0 && (
-        <>
-          <div className="mt-4 flex items-center gap-1">
-            {STATUS_ORDER.map((s, i) => (
-              <div key={s} className="flex-1">
-                <div className={`h-1.5 rounded-full ${i <= idx ? "bg-forest" : "bg-sand-deep"}`} />
-                <div
-                  className={`mt-1.5 hidden text-[10px] uppercase tracking-wide sm:block ${
-                    i <= idx ? "font-semibold text-forest" : "text-faint"
-                  }`}
-                >
-                  {STATUS_LABELS[s]}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-muted sm:hidden">
-            {STATUS_LABELS[match.status]}
-          </p>
-        </>
-      )}
-
-      {!waNumber &&
-        !ended &&
-        ["accepted", "escrow_paid"].includes(match.status) && (
-          <p className="mt-4 text-xs text-muted">
-            Prefer WhatsApp for the handover?{" "}
-            <a href="#whatsapp" className="font-semibold text-forest underline">
-              Add your number
-            </a>{" "}
-            (optional) — only your matched partner sees it, and only after
-            acceptance.
-          </p>
-        )}
+      {!ended && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
+        {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
+          <div className={`h-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-sand-deep"}`} />
+          <p className={`mt-1 text-xs ${i <= stepIndex ? "font-medium text-forest" : "text-muted"}`}>{i + 1}. {step}</p>
+        </li>)}
+      </ol>}
 
       {waNumber && !ended && (
         <a
@@ -496,7 +466,7 @@ export default function MatchCard({
         </a>
       )}
 
-      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} />
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setChatOpen(true)} />
 
       {/* Role-aware actions */}
       {!done && !ended && (
@@ -550,107 +520,27 @@ export default function MatchCard({
               </p>
             ))}
 
-          {match.status === "accepted" && (
-            <>
-              <p className="text-sm text-muted">
-                Agree the carriage fee and handover details with{" "}
-                {match.counterpartyName} — then confirm below. Payment is between
-                the two of you; Kifurushi never takes a cut. You&apos;ll get an
-                email whenever {match.counterpartyName.split(" ")[0]} replies in
-                Messages or the delivery moves — no need to keep checking.
-              </p>
-              {!confirmingTerms ? (
-                <button
-                  className="btn-primary min-h-[44px]"
-                  disabled={busy}
-                  onClick={() => setConfirmingTerms(true)}
-                >
-                  Terms agreed
-                </button>
-              ) : (
-                <div className="rounded-xl border border-forest/25 bg-sand p-4">
-                  <p className="text-sm text-ink">
-                    Have you agreed the fee <b>and how it&apos;ll be paid</b>{" "}
-                    (cash, M-Pesa, transfer) in Messages? Having it written
-                    there protects you both — Kifurushi never handles the
-                    money.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button
-                      className="btn-primary min-h-[44px]"
-                      disabled={busy}
-                      onClick={() =>
-                        act(() => advanceMatch(match.id), "Could not update — try again.")
-                      }
-                    >
-                      Yes — terms agreed
-                    </button>
-                    <button
-                      className="btn-ghost min-h-[44px]"
-                      disabled={busy}
-                      onClick={() => setConfirmingTerms(false)}
-                    >
-                      Not yet
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          {match.status === "accepted" && <>
+            <p className="text-sm text-muted">{d.termsIntro(match.counterpartyName)}</p>
+            <button className="btn-primary min-h-11" disabled={busy}
+              onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>
+              {d.confirmTerms}
+            </button>
+          </>}
 
-          {match.status === "escrow_paid" &&
-            (isTraveler ? (
-              <>
-                <p className="text-sm text-muted">
-                  Complete the inspection above together. Both people must confirm
-                  before the traveller can mark the parcel picked up.
-                </p>
-                <button
-                  className="btn-primary min-h-[44px]"
-                  disabled={busy || !inspectionReady}
-                  onClick={() =>
-                    act(() => advanceMatch(match.id), "Could not update — try again.")
-                  }
-                >
-                  Mark sealed &amp; picked up
-                </button>
-              </>
-            ) : (
-              <p className="text-sm text-muted">
-                Waiting for {match.counterpartyName} to collect and seal the
-                parcel — we&apos;ll email you the moment it happens.
-              </p>
-            ))}
-
-          {(match.status === "picked_up" || match.status === "in_transit") &&
-            !isTraveler && (
-              <p className="text-sm text-muted">
-                Your parcel is with {match.counterpartyName.split(" ")[0]}. We&apos;ll
-                email you at every step until it&apos;s delivered.
-              </p>
-            )}
-
-          {match.status === "picked_up" && isTraveler && (
-            <button
-              className="btn-primary min-h-[44px]"
-              disabled={busy}
-              onClick={() =>
-                act(() => advanceMatch(match.id), "Could not update — try again.")
-              }
-            >
-              Mark in transit
+          {match.status === "escrow_paid" && isTraveler && inspectionReady && (
+            <button className="btn-primary min-h-11" disabled={busy}
+              onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>
+              {d.collect}
             </button>
           )}
 
-          {match.status === "in_transit" && isTraveler && (
-            <button
-              className="btn-primary min-h-[44px]"
-              disabled={busy}
-              onClick={() =>
-                act(() => advanceMatch(match.id), "Could not update — try again.")
-              }
-            >
-              Mark delivered
+          {inTransit && !isTraveler && <p className="text-sm text-muted">{d.withTraveller(match.counterpartyName)}</p>}
+
+          {inTransit && isTraveler && (
+            <button className="btn-primary min-h-11" disabled={busy}
+              onClick={() => act(() => deliverNow(match.id), "Could not update — try again.")}>
+              {d.delivered}
             </button>
           )}
 
@@ -661,7 +551,7 @@ export default function MatchCard({
                   Ask the receiver for their 6-digit delivery code to complete the
                   handover.
                 </p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <input
                     aria-label="Delivery code"
                     inputMode="numeric"
@@ -682,52 +572,22 @@ export default function MatchCard({
               </form>
             ) : (
               <p className="text-sm text-muted">
-                {match.counterpartyName} has marked the parcel delivered. The
-                receiver confirms the handover with the delivery code below.
+                {d.withTraveller(match.counterpartyName)}
               </p>
             ))}
 
-          {/* Sender shortcut: confirm the delivery without going through
-              the code. For casual handovers between people who already know
-              each other — the code stays available for those who want it. */}
-          {!isTraveler &&
-            ["picked_up", "in_transit", "delivered"].includes(
-              match.status
-            ) && (
-              <div className="rounded-xl border border-forest/25 bg-sand p-4">
-                <div className="flex items-center gap-2 text-sm font-semibold text-forest">
-                  <PackageCheck className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                  Know each other? You can skip the code.
-                </div>
-                <p className="mt-1 text-xs text-muted">
-                  The code exists to protect strangers. If your recipient is
-                  family or a friend and they&apos;ve told you the parcel
-                  arrived, close it out here — that completes the delivery and
-                  unlocks reviews for both of you. Only press it once it has
-                  actually arrived.
-                </p>
-                <button
-                  className="btn-primary mt-3 min-h-[44px]"
-                  disabled={busy}
-                  onClick={() =>
-                    act(
-                      () => senderConfirmDelivery(match.id),
-                      "Could not confirm — try again."
-                    )
-                  }
-                >
-                  Yes — mark delivered
-                </button>
-              </div>
-            )}
+          {!isTraveler && (inTransit || match.status === "delivered") && <div>
+            <p className="text-sm text-muted">{d.receivedHelp}</p>
+            <button className="btn-primary mt-3 min-h-11" disabled={busy}
+              onClick={() => act(() => senderConfirmDelivery(match.id), "Could not confirm — try again.")}>
+              <PackageCheck className="h-4 w-4 shrink-0" aria-hidden />{d.confirmArrived}
+            </button>
+          </div>}
 
           {/* Sender: the one-time delivery code */}
           {senderCodeWindow && (
-            <div className="rounded-xl bg-sand p-4">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
-                <KeyRound className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                Meeting a stranger? Use the code
-              </div>
+            <details className="rounded-xl bg-sand p-3">
+              <summary className="cursor-pointer text-sm font-medium text-forest">{d.code}</summary>
               {code ? (
                 <div className="mt-2">
                   <div className="flex items-center gap-3">
@@ -768,39 +628,19 @@ export default function MatchCard({
                   </button>
                 </div>
               )}
+            </details>
+          )}
+
+          {(cancellable || (isTraveler && match.status === "picked_up")) && <details className="text-sm">
+            <summary className="cursor-pointer py-2 text-muted">{d.more}</summary>
+            <div className="mt-1 flex flex-wrap gap-3">
+              {!waNumber && cancellable && match.status !== "requested" && <a href="#whatsapp" className="inline-flex min-h-11 items-center text-forest underline">{d.addWhatsapp}</a>}
+              {isTraveler && match.status === "picked_up" && <button className="btn-ghost min-h-11" disabled={busy}
+                onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>Mark in transit</button>}
+              {cancellable && <button className="btn-ghost min-h-11 text-xs" disabled={busy}
+                onClick={() => act(() => cancelMatch(match.id), "Could not cancel — try again.")}>Cancel this match</button>}
             </div>
-          )}
-
-          {cancellable && (
-            <button
-              className="btn-ghost min-h-[44px] text-xs"
-              disabled={busy}
-              onClick={() =>
-                act(() => cancelMatch(match.id), "Could not cancel — try again.")
-              }
-            >
-              Cancel this match
-            </button>
-          )}
-
-          {/* Real handovers outrun the ladder: a same-day delivery has no
-              separate picked-up and in-transit moments worth clicking
-              through. The traveller can jump straight to the code — which
-              stays the only thing that completes the delivery. */}
-          {isTraveler &&
-            ["picked_up", "in_transit"].includes(
-              match.status
-            ) && (
-              <button
-                className="btn-ghost min-h-[44px]"
-                disabled={busy}
-                onClick={() =>
-                  act(() => deliverNow(match.id), "Could not skip ahead — try again.")
-                }
-              >
-                Delivered already? Go straight to the code
-              </button>
-            )}
+          </details>}
 
           {actionError && <p role="alert" className="field-error">{actionError}</p>}
         </div>
@@ -855,11 +695,8 @@ export default function MatchCard({
 
       {/* Journey updates: visible from pickup onward */}
       {(inTransit || (received && updates.length > 0)) && (
-        <div className="mt-5 rounded-xl bg-sand p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-forest">
-            <Plane className="h-4 w-4 shrink-0 text-forest" strokeWidth={2} aria-hidden />
-            Journey updates
-          </div>
+        <details className="mt-4 rounded-xl bg-sand p-3">
+          <summary className="cursor-pointer text-sm font-medium text-forest">{d.updates}{updates.length > 0 && ` (${updates.length})`}</summary>
           {updates.length > 0 ? (
             <ul className="mt-3 space-y-3 border-l border-line pl-4">
               {updates.map((u) => (
@@ -905,7 +742,7 @@ export default function MatchCard({
             </form>
           )}
           {noteError && <p className="field-error">{noteError}</p>}
-        </div>
+        </details>
       )}
 
       </>
