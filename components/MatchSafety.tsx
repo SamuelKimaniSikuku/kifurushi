@@ -20,6 +20,7 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmingInspection, setConfirmingInspection] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [draft, setDraft] = useState(emptyDeclaration);
   const [photos, setPhotos] = useState<string[]>([]);
@@ -84,10 +85,19 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
       </> : <div className="space-y-3">
         <h4 className="text-sm font-semibold text-forest">{d.check}</h4>
         <p id={`inspection-help-${match.id}`} className="text-sm text-muted">{d.checkInstructions}</p>
-        <button type="button" className="btn-primary" aria-describedby={`inspection-help-${match.id}`} disabled={busy || uploading}
-          onClick={() => act(() => confirmInspection(match.id, declaration.version, photos, { opened: true, matches: true, sealed: true, noConcerns: true }))}>
-          {busy ? d.confirming : d.confirmCheck}
-        </button>
+        <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl bg-sand/50 p-3 text-sm leading-relaxed">
+          <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-forest" checked={confirmingInspection}
+            aria-describedby={`inspection-help-${match.id}`} disabled={busy || uploading}
+            onChange={async (event) => {
+              if (!event.target.checked || busy || uploading) return;
+              setConfirmingInspection(true);
+              try {
+                await act(() => confirmInspection(match.id, declaration.version, photos, { opened: true, matches: true, sealed: true, noConcerns: true }));
+              } finally { setConfirmingInspection(false); }
+            }} />
+          <span>{d.confirmCheck}</span>
+        </label>
+        {confirmingInspection && <p role="status" className="text-sm text-muted">{d.confirming}</p>}
         {traveler && <details className="text-sm"><summary className="cursor-pointer py-2 text-forest">{d.checkHelp}</summary><div className="mt-2 space-y-3"><p className="text-muted">{s.verify} <Link className="font-medium text-forest underline" href="/verify">{s.verifyLink}</Link></p><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></div></details>}
       </div>}
     </>}
