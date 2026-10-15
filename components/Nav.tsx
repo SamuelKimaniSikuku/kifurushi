@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Globe, Menu, Package, Plane, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
 import { fetchAttention } from "@/lib/db";
+import { ATTENTION_CHANGED } from "@/lib/attentionEvents";
 import { useLang, useT, LANG_LABELS, LANG_FLAGS, type Lang } from "@/lib/i18n";
 
 function LanguageSwitcher({ compact }: { compact?: boolean }) {
@@ -126,28 +127,32 @@ export default function Nav() {
   const [waiting, setWaiting] = useState(0);
   const mobileButton = useRef<HTMLButtonElement>(null);
   const t = useT();
+  const userId = session?.userId;
 
-  // Badge on the dashboard button: how many matches need this member's
-  // action right now. Refreshed on navigation and every minute.
+  // Update immediately after a delivery action and when returning to the app.
   useEffect(() => {
-    if (!session) {
-      setWaiting(0);
-      return;
-    }
+    setWaiting(0);
+    if (!userId) return;
     let live = true;
-    const load = () =>
-      fetchAttention()
-        .then((a) => {
-          if (live) setWaiting(a.total);
-        })
-        .catch(() => {});
-    load();
+    let request = 0;
+    const load = async () => {
+      const current = ++request;
+      try {
+        const attention = await fetchAttention();
+        if (live && current === request) setWaiting(attention.total);
+      } catch { /* Keep the last successful count on a temporary read failure. */ }
+    };
+    void load();
     const timer = setInterval(load, 60000);
+    window.addEventListener(ATTENTION_CHANGED, load);
+    window.addEventListener("focus", load);
     return () => {
       live = false;
       clearInterval(timer);
+      window.removeEventListener(ATTENTION_CHANGED, load);
+      window.removeEventListener("focus", load);
     };
-  }, [session, pathname]);
+  }, [userId, pathname]);
 
   // Grouped by object, not by role: everything about trips in one menu,
   // everything about parcels in the other. Each item carries a first-person
@@ -243,7 +248,7 @@ export default function Nav() {
         <div className="hidden shrink-0 items-center gap-2 xl:flex">
           <LanguageSwitcher />
           {session ? (
-            <Link href="/dashboard" className="btn-primary relative whitespace-nowrap">
+            <Link href={waiting > 0 ? "/dashboard#deliveries" : "/dashboard"} title={waiting > 0 ? t.nav.needsAttention(waiting) : undefined} className="btn-primary relative whitespace-nowrap">
               {t.nav.dashboard}
               {waiting > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-clay px-1 text-[11px] font-bold text-white ring-2 ring-white">
@@ -333,7 +338,8 @@ export default function Nav() {
             <LanguageSwitcher compact />
           </div>
           <Link
-            href={session ? "/dashboard" : "/auth?mode=signin"}
+            href={session ? (waiting > 0 ? "/dashboard#deliveries" : "/dashboard") : "/auth?mode=signin"}
+            title={session && waiting > 0 ? t.nav.needsAttention(waiting) : undefined}
             className="btn-primary w-full"
           >
             {session ? t.nav.dashboard : t.nav.signIn}

@@ -20,6 +20,7 @@ import WhatsappSettings from "@/components/WhatsappSettings";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { useLang, useT } from "@/lib/i18n";
 import { signInHref } from "@/lib/routes";
+import { notifyAttentionChanged } from "@/lib/attentionEvents";
 import { reviewCopy } from "@/lib/locales/reviews";
 
 function DashboardSkeleton() {
@@ -321,9 +322,10 @@ export default function DashboardPage() {
               defaultOpen={
                 !["released", "declined", "cancelled"].includes(m.status)
               }
-              onChanged={() =>
-                fetchMyMatches().then(setMatches).catch(() => setLoadError(true))
-              }
+              onChanged={() => {
+                notifyAttentionChanged();
+                void fetchMyMatches().then(setMatches).catch(() => setLoadError(true));
+              }}
             />
           ))}
         </div>

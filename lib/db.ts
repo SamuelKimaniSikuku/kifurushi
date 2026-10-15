@@ -690,31 +690,39 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
   return details;
 }
 
-/**
- * Does this match need something from me right now? Mirrors the action
- * buttons MatchCard renders, so the badge never over-promises.
- */
-export function needsMyAction(m: MatchDetail, myUserId: string): boolean {
+interface InspectionAttention {
+  hasDeclaration: boolean;
+  mine: boolean;
+  both: boolean;
+  refused: boolean;
+}
+
+/** Count a delivery only when this member has a next step, not while waiting. */
+export function needsMyAction(m: MatchDetail, myUserId: string, inspection?: InspectionAttention): boolean {
   const isTraveler = m.role === "traveler";
   switch (m.status) {
     case "requested":
-      // Whoever did not make the request is the one who answers it.
       return m.requesterId !== myUserId;
     case "accepted":
-      return true; // either side confirms the agreed terms
+      return true;
     case "escrow_paid":
+      if (!inspection || inspection.refused) return false;
+      if (!inspection.hasDeclaration) return !isTraveler;
+      // Both people do their own check. Once mine is recorded, only the
+      // traveller has another action, and only after both checks are done.
+      return !inspection.mine || (isTraveler && inspection.both);
     case "picked_up":
     case "in_transit":
-      return isTraveler; // traveller moves the parcel along
+      return isTraveler;
     case "delivered":
-      return true; // traveller enters the code, sender shares it
+      return !isTraveler || m.hasCode;
     default:
       return false;
   }
 }
 
 export interface Attention {
-  /** Matches waiting on me — drives the dashboard badge. */
+  /** Deliveries needing my action, separate from unread chat messages. */
   total: number;
   /** Pending requests received, keyed by my own listing. */
   byTrip: Record<string, number>;
@@ -724,14 +732,42 @@ export interface Attention {
 export async function fetchAttention(): Promise<Attention> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
-  const empty: Attention = { total: 0, byTrip: {}, byParcel: {} };
-  if (!uid) return empty;
-
-  const matches = await fetchMyMatches().catch(() => [] as MatchDetail[]);
   const out: Attention = { total: 0, byTrip: {}, byParcel: {} };
+  if (!uid) return out;
+
+  // Let failures reach the caller; a failed read must not clear real alerts.
+  const matches = await fetchMyMatches();
+  const checking = matches.filter((m) => m.status === "escrow_paid");
+  const safety = new Map<string, InspectionAttention>();
+  if (checking.length > 0) {
+    const matchIds = checking.map((m) => m.id);
+    const parcelIds = [...new Set(checking.map((m) => m.parcelId))];
+    const [declarations, inspections, refusals] = await Promise.all([
+      supabase.from("parcel_declarations").select("parcel_id, version").in("parcel_id", parcelIds),
+      supabase.from("match_inspections").select("match_id, user_id, role, declaration_version").in("match_id", matchIds),
+      supabase.from("match_safety_refusals").select("match_id").in("match_id", matchIds),
+    ]);
+    if (declarations.error) throw declarations.error;
+    if (inspections.error) throw inspections.error;
+    if (refusals.error) throw refusals.error;
+    const versions = new Map<string, number>();
+    for (const declaration of declarations.data ?? []) {
+      versions.set(declaration.parcel_id, Math.max(versions.get(declaration.parcel_id) ?? 0, declaration.version));
+    }
+    const refused = new Set((refusals.data ?? []).map((row) => row.match_id));
+    for (const match of checking) {
+      const version = versions.get(match.parcelId);
+      const current = (inspections.data ?? []).filter((row) => row.match_id === match.id && row.declaration_version === version);
+      safety.set(match.id, {
+        hasDeclaration: version != null,
+        mine: current.some((row) => row.user_id === uid),
+        both: current.some((row) => row.role === "sender") && current.some((row) => row.role === "traveler"),
+        refused: refused.has(match.id),
+      });
+    }
+  }
   for (const m of matches) {
-    if (needsMyAction(m, uid)) out.total += 1;
-    // Someone else asked about one of my listings and hasn't been answered.
+    if (needsMyAction(m, uid, safety.get(m.id))) out.total += 1;
     if (m.status === "requested" && m.requesterId !== uid) {
       if (m.role === "traveler") {
         out.byTrip[m.tripId] = (out.byTrip[m.tripId] ?? 0) + 1;
