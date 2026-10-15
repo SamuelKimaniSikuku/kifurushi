@@ -52,20 +52,18 @@ function ChatPanel({
   myUserId,
   counterpartyName,
   messages,
-  unread,
-  open,
-  setOpen,
+  visible,
   onSent,
 }: {
   matchId: string;
   myUserId: string;
   counterpartyName: string;
   messages: Message[];
-  unread: number;
-  open: boolean;
-  setOpen: (v: boolean) => void;
+  visible: boolean;
   onSent: () => void;
 }) {
+  const { lang } = useLang();
+  const d = deliveryCopy[lang];
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -74,7 +72,7 @@ function ChatPanel({
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length, open]);
+  }, [messages.length, visible]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -98,123 +96,64 @@ function ChatPanel({
   }
 
   return (
-    <div id={`messages-${matchId}`} className="mt-5 scroll-mt-24 rounded-xl bg-sand p-4">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded text-xs font-semibold uppercase tracking-[0.18em] text-forest focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
+    <div id={`messages-${matchId}`} className="scroll-mt-24">
+      <div
+        ref={scrollRef}
+        className="max-h-64 space-y-2 overflow-y-auto rounded-xl bg-sand/50 p-3"
+        aria-live="polite"
       >
-        <span className="relative shrink-0">
-          <MessageSquare className="h-4 w-4" strokeWidth={2} aria-hidden />
-          {unread > 0 && (
-            <span
-              aria-hidden
-              className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-clay ring-2 ring-sand"
-            />
-          )}
-        </span>
-        Messages
-        {messages.length > 0 && (
-          <span className="normal-case tracking-normal text-muted">
-            ({messages.length})
-          </span>
-        )}
-        {unread > 0 && (
-          <span className="ml-1 inline-flex min-w-[20px] items-center justify-center rounded-full bg-clay px-1.5 py-0.5 text-[11px] font-bold normal-case tracking-normal text-white">
-            {unread > 9 ? "9+" : unread}
-            <span className="sr-only"> unread messages</span>
-          </span>
-        )}
-        <ChevronDown
-          className={`ml-auto h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-          strokeWidth={2}
-          aria-hidden
-        />
-      </button>
-
-      {/* Collapsed is not blank: the last line of the conversation stays
-          visible, so you can see your message landed without opening the
-          panel — and an empty chat says so instead of looking broken. */}
-      {!open && (
-        <p className="mt-2 truncate text-left text-xs text-muted">
-          {messages.length === 0
-            ? "No messages yet — you can chat before anyone accepts."
-            : (() => {
-                const last = messages[messages.length - 1];
-                const who =
-                  last.senderId === myUserId
-                    ? "You"
-                    : counterpartyName.split(" ")[0];
-                return `${who}: ${last.body}`;
-              })()}
-        </p>
-      )}
-
-      {open && (
-        <>
-          <div
-            ref={scrollRef}
-            className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1"
-            aria-live="polite"
-          >
-            {messages.length === 0 ? (
-              <p className="text-xs text-faint">
-                No messages yet — agree the handover details with{" "}
-                {counterpartyName} here.
-              </p>
-            ) : (
-              messages.map((m) => {
-                const mine = m.senderId === myUserId;
-                return (
-                  <div
-                    key={m.id}
-                    className={`flex ${mine ? "justify-end" : "justify-start"}`}
+        {messages.length === 0 ? (
+          <p className="py-4 text-center text-sm text-muted">{d.emptyChat}</p>
+        ) : (
+          messages.map((m) => {
+            const mine = m.senderId === myUserId;
+            return (
+              <div
+                key={m.id}
+                className={`flex ${mine ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
+                    mine
+                      ? "rounded-br-md bg-forest text-white"
+                      : "rounded-bl-md bg-white text-ink"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{m.body}</p>
+                  <p
+                    className={`mt-0.5 text-[10px] ${mine ? "text-white/60" : "text-faint"}`}
                   >
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
-                        mine
-                          ? "rounded-br-md bg-forest text-white"
-                          : "rounded-bl-md bg-white text-ink"
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap break-words">{m.body}</p>
-                      <p
-                        className={`mt-0.5 text-[10px] ${mine ? "text-white/60" : "text-faint"}`}
-                      >
-                        {new Date(m.createdAt).toLocaleString(undefined, {
-                          day: "numeric", month: "short",
-                          hour: "2-digit", minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                    {new Date(m.createdAt).toLocaleString(undefined, {
+                      day: "numeric", month: "short",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
 
-          <form onSubmit={submit} className="mt-3 flex gap-2">
-            <input
-              aria-label={`Message ${counterpartyName}`}
-              className={`field flex-1 ${error ? "field-invalid" : ""}`}
-              placeholder={`Message ${counterpartyName}…`}
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              maxLength={2000}
-            />
-            <button
-              type="submit"
-              className="btn-primary min-h-[44px] shrink-0"
-              disabled={sending}
-            >
-              <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-              Send
-            </button>
-          </form>
-          {error && <p className="field-error">{error}</p>}
-        </>
-      )}
+      <form onSubmit={submit} className="mt-3 flex gap-2">
+        <input
+          aria-label={`Message ${counterpartyName}`}
+          className={`field min-w-0 flex-1 ${error ? "field-invalid" : ""}`}
+          placeholder={d.messagePlaceholder}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          maxLength={2000}
+        />
+        <button
+          type="submit"
+          className="btn-primary min-h-[44px] shrink-0"
+          disabled={sending}
+        >
+          <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          {d.send}
+        </button>
+      </form>
+      {error && <p className="field-error">{error}</p>}
     </div>
   );
 }
@@ -238,7 +177,9 @@ export default function MatchCard({
   const weightText = requestWeightCopy[lang];
   const d = deliveryCopy[lang];
   const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [view, setView] = useState<"messages" | "details">("messages");
+  const chatPanelRef = useRef<HTMLDivElement>(null);
+  const [chatInView, setChatInView] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
@@ -305,17 +246,34 @@ export default function MatchCard({
   }, [match.id]);
 
   const chatVisible = match.status !== "declined" && match.status !== "cancelled";
+  const chatOpen = chatVisible && view === "messages";
+  const activeView = chatVisible ? view : "details";
+
+  // Opening the dashboard is not the same as reading every conversation.
+  useEffect(() => {
+    const panel = chatPanelRef.current;
+    if (!open || !chatOpen || !panel) { setChatInView(false); return; }
+    let intersects = false;
+    const update = () => setChatInView(intersects && document.visibilityState === "visible");
+    const observer = new IntersectionObserver(([entry]) => {
+      intersects = entry.isIntersecting && entry.intersectionRatio >= 0.25;
+      update();
+    }, { threshold: 0.25 });
+    observer.observe(panel);
+    document.addEventListener("visibilitychange", update);
+    return () => { observer.disconnect(); document.removeEventListener("visibilitychange", update); };
+  }, [open, chatOpen]);
 
   useEffect(() => {
     if (!chatVisible) return;
     reloadMessages();
-    const reading = open && chatOpen;
+    const reading = open && chatOpen && chatInView;
     const t = setInterval(
       reloadMessages,
       reading ? CHAT_POLL_MS : CHAT_IDLE_POLL_MS
     );
     return () => clearInterval(t);
-  }, [chatVisible, open, chatOpen, reloadMessages]);
+  }, [chatVisible, open, chatOpen, chatInView, reloadMessages]);
 
   const unread = messages.filter(
     (m) => m.senderId !== myUserId && m.createdAt > lastRead
@@ -323,13 +281,13 @@ export default function MatchCard({
 
   // Having the conversation on screen clears the badge.
   useEffect(() => {
-    if (!open || !chatOpen || messages.length === 0) return;
+    if (!open || !chatOpen || !chatInView || messages.length === 0) return;
     const newest = messages[messages.length - 1].createdAt;
     if (newest > lastRead) {
       setLastRead(newest);
       writeMarker(match.id, newest);
     }
-  }, [open, chatOpen, messages, lastRead, match.id]);
+  }, [open, chatOpen, chatInView, messages, lastRead, match.id]);
 
   const act = useCallback(
     async (fn: () => Promise<unknown>, fallbackMessage: string) => {
@@ -404,14 +362,18 @@ export default function MatchCard({
   }
 
   return (
-    <div className="card p-5">
+    <div className="card p-4 sm:p-5">
       <button
         type="button"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
+        aria-label={title}
         className="flex w-full flex-wrap items-center justify-between gap-2 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf"
       >
-        <div className="font-semibold text-base">{title}</div>
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-semibold">{match.route}</span>
+          <span className="mt-1 block break-words text-sm text-muted">{isTraveler ? d.sender : d.traveller}: {match.counterpartyName}</span>
+        </span>
         <span className="flex items-center gap-2">
           {!open && unread > 0 && (
             <span className="inline-flex items-center gap-1 rounded-full bg-clay px-2.5 py-1 text-[11px] font-bold text-white">
@@ -454,23 +416,14 @@ export default function MatchCard({
         </li>)}
       </ol>}
 
-      {waNumber && !ended && (
-        <a
-          href={`https://wa.me/${waNumber.replace("+", "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-success-bg px-4 py-2 text-sm font-semibold text-success transition hover:brightness-95"
-        >
-          <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          {t.browse.chatWhatsApp(match.counterpartyName.split(" ")[0])}
-        </a>
-      )}
-
-      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setChatOpen(true)} />
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setView("messages")}>
+      {({ inspection, parcelDetails }) => <>
+      {(inspection || (!done && !ended)) && <div className="mt-4 space-y-3 rounded-xl bg-sand/60 p-4">
+      {inspection}
 
       {/* Role-aware actions */}
       {!done && !ended && (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           {match.status === "requested" && <div className="rounded-xl bg-sand p-3 text-sm">
             <p className="font-semibold">{match.parcelWeightKg == null ? weightText.toAgree : `${match.parcelWeightKg} kg`}</p>
             {weightNeedsAgreement && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
@@ -521,7 +474,7 @@ export default function MatchCard({
             ))}
 
           {match.status === "accepted" && <>
-            <p className="text-sm text-muted">{d.termsIntro(match.counterpartyName)}</p>
+            <p className="text-sm text-muted">{d.termsIntro}</p>
             <button className="btn-primary min-h-11" disabled={busy}
               onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>
               {d.confirmTerms}
@@ -584,6 +537,92 @@ export default function MatchCard({
             </button>
           </div>}
 
+          {actionError && <p role="alert" className="field-error">{actionError}</p>}
+        </div>
+      )}
+
+      </div>}
+
+      {ended && (
+        <div className="mt-3">
+          <p className="text-sm text-muted">
+            {match.status === "declined" &&
+              (canRespond
+                ? "You declined this request."
+                : `${match.counterpartyName} declined this request.`)}
+            {match.status === "cancelled" && "This match was cancelled."}
+            {match.status === "disputed" &&
+              "This delivery is disputed — support has the full record."}
+          </p>
+          {/* A decline is a no, not a never: slips happen, and minds change
+              after a chat. One live request per pair is still enforced, so
+              this can't be used to pester someone who hasn't answered. */}
+          {match.status === "declined" && !canRespond && (
+            <button
+              className="btn-ghost mt-2 min-h-[44px]"
+              disabled={busy}
+              onClick={() =>
+                act(async () => {
+                  await requestMatch(match.tripId, match.parcelId);
+                }, "Could not send the request again — try again.")
+              }
+            >
+              {t.browse.requestAgain}
+            </button>
+          )}
+          {actionError && (
+            <p role="alert" className="field-error mt-2">{actionError}</p>
+          )}
+        </div>
+      )}
+
+      {chatVisible && <div role="tablist" aria-label={d.sections} className="mt-5 flex gap-5 border-b border-line">
+        {(["messages", "details"] as const).map((tab) => <button
+          key={tab} id={`${tab}-tab-${match.id}`} type="button" role="tab"
+          aria-selected={activeView === tab} aria-controls={`${tab}-panel-${match.id}`}
+          tabIndex={activeView === tab ? 0 : -1}
+          onClick={() => setView(tab)}
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? "messages" : event.key === "End" ? "details" : tab === "messages" ? "details" : "messages";
+            setView(next);
+            document.getElementById(`${next}-tab-${match.id}`)?.focus();
+          }}
+          className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-1 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf ${activeView === tab ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}
+        >
+          {tab === "messages" ? d.messages : d.details}
+          {tab === "messages" && unread > 0 && <span className="rounded-full bg-clay px-1.5 py-0.5 text-xs text-white">{unread > 9 ? "9+" : unread}<span className="sr-only"> unread messages</span></span>}
+        </button>)}
+      </div>}
+      {chatVisible && <div ref={chatPanelRef} id={`messages-panel-${match.id}`} role="tabpanel" aria-labelledby={`messages-tab-${match.id}`} hidden={activeView !== "messages"} tabIndex={0} className="pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf">
+      {waNumber && !ended && (
+        <a
+          href={`https://wa.me/${waNumber.replace("+", "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-success underline"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          WhatsApp
+        </a>
+      )}
+
+      {/* Match-scoped chat — everywhere except dead matches */}
+      {chatVisible && (
+        <ChatPanel
+          matchId={match.id}
+          myUserId={myUserId}
+          counterpartyName={match.counterpartyName}
+          messages={messages}
+          visible={chatOpen}
+          onSent={reloadMessages}
+        />
+      )}
+
+      </div>}
+      <div id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className="space-y-4 pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf">
+        {parcelDetails}
           {/* Sender: the one-time delivery code */}
           {senderCodeWindow && (
             <details className="rounded-xl bg-sand p-3">
@@ -631,8 +670,8 @@ export default function MatchCard({
             </details>
           )}
 
-          {(cancellable || (isTraveler && match.status === "picked_up")) && <details className="text-sm">
-            <summary className="cursor-pointer py-2 text-muted">{d.more}</summary>
+          {(cancellable || (isTraveler && match.status === "picked_up")) && <section className="border-t border-line pt-3 text-sm">
+            <h3 className="font-semibold text-forest">{d.more}</h3>
             <div className="mt-1 flex flex-wrap gap-3">
               {!waNumber && cancellable && match.status !== "requested" && <a href="#whatsapp" className="inline-flex min-h-11 items-center text-forest underline">{d.addWhatsapp}</a>}
               {isTraveler && match.status === "picked_up" && <button className="btn-ghost min-h-11" disabled={busy}
@@ -640,58 +679,7 @@ export default function MatchCard({
               {cancellable && <button className="btn-ghost min-h-11 text-xs" disabled={busy}
                 onClick={() => act(() => cancelMatch(match.id), "Could not cancel — try again.")}>Cancel this match</button>}
             </div>
-          </details>}
-
-          {actionError && <p role="alert" className="field-error">{actionError}</p>}
-        </div>
-      )}
-
-      {ended && (
-        <div className="mt-3">
-          <p className="text-sm text-muted">
-            {match.status === "declined" &&
-              (canRespond
-                ? "You declined this request."
-                : `${match.counterpartyName} declined this request.`)}
-            {match.status === "cancelled" && "This match was cancelled."}
-            {match.status === "disputed" &&
-              "This delivery is disputed — support has the full record."}
-          </p>
-          {/* A decline is a no, not a never: slips happen, and minds change
-              after a chat. One live request per pair is still enforced, so
-              this can't be used to pester someone who hasn't answered. */}
-          {match.status === "declined" && !canRespond && (
-            <button
-              className="btn-ghost mt-2 min-h-[44px]"
-              disabled={busy}
-              onClick={() =>
-                act(async () => {
-                  await requestMatch(match.tripId, match.parcelId);
-                }, "Could not send the request again — try again.")
-              }
-            >
-              {t.browse.requestAgain}
-            </button>
-          )}
-          {actionError && (
-            <p role="alert" className="field-error mt-2">{actionError}</p>
-          )}
-        </div>
-      )}
-
-      {/* Match-scoped chat — everywhere except dead matches */}
-      {chatVisible && (
-        <ChatPanel
-          matchId={match.id}
-          myUserId={myUserId}
-          counterpartyName={match.counterpartyName}
-          messages={messages}
-          unread={unread}
-          open={chatOpen}
-          setOpen={setChatOpen}
-          onSent={reloadMessages}
-        />
-      )}
+          </section>}
 
       {/* Journey updates: visible from pickup onward */}
       {(inTransit || (received && updates.length > 0)) && (
@@ -744,6 +732,9 @@ export default function MatchCard({
           {noteError && <p className="field-error">{noteError}</p>}
         </details>
       )}
+      </div>
+      </>}
+      </MatchSafety>
 
       </>
       )}
