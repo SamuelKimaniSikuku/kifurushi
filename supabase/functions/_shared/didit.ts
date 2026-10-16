@@ -15,35 +15,64 @@ export async function fetchDecision(
     headers: { "x-api-key": key() },
   });
   if (!res.ok) {
-    console.error("didit decision fetch failed", res.status, await res.text());
+    console.error("didit decision fetch failed", res.status);
     return null;
   }
   return await res.json();
 }
 
-/**
- * The session id of an already-approved session wearing the same face, if
- * Didit flagged one. Didit reports this as a LIVENESS warning rather than a
- * failure, because on its own a repeat face is not proof of anything — it's
- * only meaningful once you check whose account the other session belongs to.
- */
-export function duplicateOfSession(
-  decision: Record<string, unknown> | null
-): string | null {
-  if (!decision) return null;
-  for (const feature of ["liveness", "face_match", "id_verification"]) {
-    const block = decision[feature] as { warnings?: unknown[] } | undefined;
-    for (const w of block?.warnings ?? []) {
-      const warn = w as {
-        risk?: string;
-        additional_data?: { duplicated_session_id?: string };
+/** Read both v2 feature blocks and v3 feature arrays. Unknown duplicate
+ * shapes fail closed for review instead of silently approving an account. */
+export function identitySignals(decision: Record<string, unknown>) {
+  const sessions = new Set<string>();
+  let duplicate = false;
+  function walk(value: unknown, depth = 0) {
+    if (!value || typeof value !== "object" || depth > 12) return;
+    if (Array.isArray(value)) { value.forEach(v => walk(v, depth + 1)); return; }
+    const obj = value as Record<string, unknown>;
+    const code = `${obj.risk ?? ""} ${obj.code ?? ""}`;
+    if (/DUPLICAT.*(FACE|DOCUMENT|ID)|(?:FACE|DOCUMENT).*DUPLICAT/i.test(code)) {
+      duplicate = true;
+      const collect = (v: unknown) => {
+        if (typeof v === "string" && v.length > 0 && v.length < 200) sessions.add(v);
+        else if (Array.isArray(v)) v.forEach(collect);
       };
-      if (warn.risk === "DUPLICATED_FACE") {
-        return warn.additional_data?.duplicated_session_id ?? null;
-      }
+      const extra = obj.additional_data as Record<string, unknown> | undefined;
+      collect(extra?.duplicated_session_id);
+      collect(extra?.duplicated_session_ids);
     }
+    Object.values(obj).forEach(v => walk(v, depth + 1));
   }
-  return null;
+  walk(decision);
+  const ids = Array.isArray(decision.id_verifications) ? decision.id_verifications : [decision.id_verification];
+  const id = ids.find(v => v && typeof v === "object") as Record<string, unknown> | undefined;
+  const normalize = (v: unknown) => typeof v === "string" ? v.toUpperCase().replace(/[\s-]/g, "") : "";
+  const issuer = normalize(id?.issuing_state);
+  const type = normalize(id?.document_type);
+  const number = normalize(id?.document_number);
+  // Only the database stores a salted fingerprint. The original number is
+  // neither stored in Kifurushi tables nor written to our logs.
+  const document = issuer && type && number ? JSON.stringify([issuer, type, number]) : null;
+  return { sessions: [...sessions], duplicate, document };
+}
+
+export const identityStatus: Record<string, "verified" | "rejected" | "in_review"> = {
+  Approved: "verified", Declined: "rejected", Expired: "rejected",
+  "Kyc Expired": "rejected", Abandoned: "rejected", "In Review": "in_review",
+};
+
+export async function applyIdentityDecision(
+  admin: { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string } | null }> },
+  session: string, status: string, decision: Record<string, unknown>, actor: string | null = null, note = ""
+): Promise<{ status: string; reason: string | null }> {
+  const signals = identitySignals(decision);
+  const { data, error } = await admin.rpc("apply_identity_decision", {
+    p_session: session, p_status: status, p_duplicate_sessions: signals.sessions,
+    p_duplicate_flag: signals.duplicate, p_document: signals.document,
+    p_actor: actor, p_note: note,
+  });
+  if (error) throw new Error(error.message);
+  return data as { status: string; reason: string | null };
 }
 
 /**

@@ -1261,7 +1261,11 @@ export async function decideVerification(
   const { data, error } = await supabase.functions.invoke("verification-review", {
     body: { action: "decide", id, decision, note },
   });
-  if (error) throw error;
+  if (error) {
+    const response = (error as { context?: Response }).context;
+    const body = response instanceof Response ? await response.json().catch(() => null) : null;
+    throw new Error(body?.error ?? "Could not record the decision. Please refresh.");
+  }
   const res = data as { mirroredToDidit?: boolean; detail?: string; error?: string };
   if (res?.error) throw new Error(res.error);
   return { mirroredToDidit: !!res?.mirroredToDidit, detail: res?.detail };

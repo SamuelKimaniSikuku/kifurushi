@@ -291,6 +291,8 @@ export default function DashboardPage() {
         </Link>
       )}
 
+      {reviewer && <Link href="/admin/reports" className="card mt-3 block p-4 text-sm font-semibold text-forest">Delivery reports →</Link>}
+
       <WhatsappSettings />
 
       <h2 id="deliveries" className="mt-10 scroll-mt-24 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>

@@ -1,4 +1,5 @@
 "use client";
+import AdminSecurity from "@/components/AdminSecurity";
 
 // The review queue. Everything Didit escalated and our own rules couldn't
 // settle lands here. The whole point is that a decision takes seconds: the
@@ -28,7 +29,7 @@ function since(iso: string | null): string {
   return months === 1 ? "1 month ago" : `${months} months ago`;
 }
 
-export default function ReviewQueuePage() {
+function ReviewQueuePage() {
   const router = useRouter();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [items, setItems] = useState<ReviewItem[] | null>(null);
@@ -71,9 +72,9 @@ export default function ReviewQueuePage() {
           ? `${item.name} ${decision === "approve" ? "verified" : "declined"}.`
           : `${item.name} ${decision === "approve" ? "verified" : "declined"} here, but Didit rejected the update — its record still says In Review.`
       );
-    } catch {
+    } catch (error) {
       setToastTone("error");
-      setToast("Could not record that decision — it may already be resolved.");
+      setToast(error instanceof Error ? error.message : "Could not record that decision — please refresh.");
       await load();
     } finally {
       setBusyId("");
@@ -101,8 +102,8 @@ export default function ReviewQueuePage() {
         Verification review
       </h1>
       <p className="mt-1 text-sm text-muted">
-        Sessions Didit couldn&apos;t settle on its own. Duplicate accounts are
-        already declined automatically — what&apos;s left needs a judgement.
+        Review identity checks carefully. Possible duplicates stay on hold until
+        the identity conflict is resolved; approval cannot bypass that check.
       </p>
 
       {items === null ? (
@@ -200,3 +201,5 @@ export default function ReviewQueuePage() {
     </div>
   );
 }
+
+export default function Page() { return <AdminSecurity><ReviewQueuePage /></AdminSecurity>; }

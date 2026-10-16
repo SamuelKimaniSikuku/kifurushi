@@ -123,8 +123,7 @@ export default function VerifyPage() {
         </h1>
         <p className="mt-2 text-sm text-muted">
           Something on your ID needs a human eye — often an unusual document
-          number, or a face our partner has seen on another account. A reviewer
-          at Didit is looking at it now, which takes longer than the automatic
+          number, or a face our partner has seen on another account. Kifurushi support may need to review it, which takes longer than the automatic
           check. You don&apos;t need to do anything: come back to this page and
           the result will be here.
         </p>
@@ -198,7 +197,7 @@ export default function VerifyPage() {
         Get verified
       </h1>
       <p className="mt-1 text-sm text-muted">
-        Required before your first carry — takes about two minutes.
+        Required for senders and travellers before the first handover — takes about two minutes.
       </p>
 
       {/* Step indicator */}
@@ -255,8 +254,7 @@ export default function VerifyPage() {
               />
               {errors.phone && <p id="phone-error" className="field-error">{errors.phone}</p>}
               <p id="phone-hint" className="mt-1 text-xs text-muted">
-                We&apos;ll text a code to this number. It&apos;s shared with your match
-                only after both sides confirm.
+                This is a private contact number for support. Adding it here does not verify phone ownership.
               </p>
             </div>
             <button

@@ -10,7 +10,7 @@
 // against the caller's own JWT — never against anything in the request body.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { fetchDecision, updateSessionStatus } from "../_shared/didit.ts";
+import { applyIdentityDecision, fetchDecision, updateSessionStatus } from "../_shared/didit.ts";
 
 const ALLOWED_ORIGINS = [
   "https://www.kifurushiapp.com",
@@ -60,6 +60,11 @@ Deno.serve(async (req) => {
     .eq("user_id", uid)
     .maybeSingle();
   if (!isAdmin) return json({ error: "Not allowed" }, 403);
+  // getUser above verified the bearer token before we read its signed AAL claim.
+  let aal = "";
+  try { const segment = authHeader.replace("Bearer ", "").split(".")[1]; aal = JSON.parse(atob(segment.replace(/-/g, "+").replace(/_/g, "/"))).aal; } catch { /* denied below */ }
+  if (aal !== "aal2") return json({ error: "Confirm your administrator authenticator code." }, 403);
+
 
   let body: { action?: string; id?: string; decision?: string; note?: string };
   try {
@@ -72,7 +77,7 @@ Deno.serve(async (req) => {
   if (body.action === "list") {
     const { data: rows, error } = await admin
       .from("verifications")
-      .select("id, user_id, provider_ref, id_type, status, created_at")
+      .select("id, user_id, provider_ref, id_type, status, created_at, decline_reason")
       .eq("status", "in_review")
       .order("created_at", { ascending: true })
       .limit(50);
@@ -102,6 +107,8 @@ Deno.serve(async (req) => {
           fetchDecision(r.provider_ref ?? ""),
         ]);
         const warnings: string[] = [];
+        if (r.decline_reason === "possible_duplicate") warnings.push("Possible duplicate identity. Compare provider records and help the person recover their original account. Approval stays blocked until the conflict is resolved.");
+        if (r.decline_reason === "account_restricted") warnings.push("This account has a booking restriction. Review the related delivery case before approving identity verification.");
         for (const feature of ["id_verification", "liveness", "face_match"]) {
           const block = (decision ?? {})[feature] as
             | { warnings?: { short_description?: string }[] }
@@ -143,26 +150,20 @@ Deno.serve(async (req) => {
       return json({ error: `Already ${row.status}` }, 409);
     }
 
-    // Resolve by session, not by row: duplicate rows for one session must all
-    // land on the same answer, or the leftovers reappear in the queue.
-    const target = admin
-      .from("verifications")
-      .update({
-        status: approve ? "verified" : "rejected",
-        decline_reason: approve ? null : body.note?.slice(0, 200) || "manual_review",
-        resolved_at: new Date().toISOString(),
-      });
-    const { error: uErr } = row.provider_ref
-      ? await target.eq("provider_ref", row.provider_ref)
-      : await target.eq("id", row.id);
-    if (uErr) return json({ error: uErr.message }, 500);
-
-    if (approve) {
-      const { error: pErr } = await admin
-        .from("profiles")
-        .update({ id_verified: true })
-        .eq("id", row.user_id);
-      if (pErr) return json({ error: pErr.message }, 500);
+    if (!row.provider_ref) return json({ error: "Missing provider session" }, 409);
+    try {
+      const decision = await fetchDecision(row.provider_ref);
+      if (!decision) return json({ error: "Provider unavailable. Try again before approving." }, 503);
+      if (approve && !["Approved", "In Review"].includes(String(decision.status))) {
+        return json({ error: "Resolve this session at the identity provider before approving." }, 409);
+      }
+      const outcome = await applyIdentityDecision(admin, row.provider_ref,
+        approve ? "verified" : "rejected", decision, uid, body.note ?? "manual_review");
+      if (approve && outcome.status !== "verified") {
+        return json({ error: "Possible duplicate or restricted account. Resolve the identity conflict with support before approving." }, 409);
+      }
+    } catch {
+      return json({ error: "Could not record the decision. Refresh and try again." }, 409);
     }
 
     // Mirror it at Didit. A failure here doesn't undo our decision, but the

@@ -1,0 +1,11 @@
+const {test,beforeEach}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const Module=require('node:module');const ts=require('typescript');
+let calls=[],confirmed={phone:'+254700000001',verified:true},failure=null;
+const client={auth:{updateUser:async a=>{calls.push(['send',a]);return{error:failure}},verifyOtp:async a=>{calls.push(['verify',a]);return{error:failure}}},rpc:async(n,a)=>{calls.push([n,a]);return{data:confirmed,error:failure}}};
+const file=require('node:path').resolve('lib/trust.ts'),m=new Module(file);m.require=(name)=>{if(name==='./supabase')return{supabase:client};return require(name)};m._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,file);
+const {sendPhoneCode,confirmPhoneCode}=m.exports;
+beforeEach(()=>{calls=[];confirmed={phone:'+254700000001',verified:true};failure=null;});
+test('phone ownership verification updates existing account, never creates a second account',async()=>{await sendPhoneCode('+254 700-000-001');assert.deepEqual(calls,[['send',{phone:'+254700000001'}]]);});
+test('invalid phone format never reaches SMS service',async()=>{await assert.rejects(sendPhoneCode('0700000001'));assert.equal(calls.length,0);});
+test('code verifies a phone change and then checks the server-owned confirmation',async()=>{const r=await confirmPhoneCode('+254700000001','123456');assert.equal(r.verified,true);assert.deepEqual(calls[0],['verify',{phone:'+254700000001',token:'123456',type:'phone_change'}]);assert.equal(calls[1][0],'my_phone_verification');});
+test('a different confirmed number cannot grant a badge to an unverified contact',async()=>{confirmed.phone='+254700000002';await assert.rejects(confirmPhoneCode('+254700000001','123456'));});
+test('SMS and wrong-code failures stay failures',async()=>{failure=new Error('rate limited');await assert.rejects(sendPhoneCode('+254700000001'),/rate limited/);await assert.rejects(confirmPhoneCode('+254700000001','000000'),/rate limited/);assert.equal(calls.length,2);});

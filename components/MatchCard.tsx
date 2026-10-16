@@ -19,6 +19,7 @@ import { transitUpdateSchema, messageSchema } from "@/lib/validation";
 import { useLang, useT } from "@/lib/i18n";
 import { reviewCopy } from "@/lib/locales/reviews";
 import { deliveryCopy } from "@/lib/locales/delivery";
+import DeliveryProblem from "@/components/DeliveryProblem";
 import MatchSafety from "@/components/MatchSafety";
 
 const CHAT_POLL_MS = 5000;
@@ -172,6 +173,7 @@ export default function MatchCard({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const [reportHold, setReportHold] = useState(false);
   const t = useT();
   const { lang } = useLang();
   const weightText = requestWeightCopy[lang];
@@ -481,7 +483,7 @@ export default function MatchCard({
             </button>
           </>}
 
-          {match.status === "escrow_paid" && isTraveler && inspectionReady && (
+          {match.status === "escrow_paid" && isTraveler && inspectionReady && !reportHold && (
             <button className="btn-primary min-h-11" disabled={busy}
               onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>
               {d.collect}
@@ -490,14 +492,14 @@ export default function MatchCard({
 
           {inTransit && !isTraveler && <p className="text-sm text-muted">{d.withTraveller(match.counterpartyName)}</p>}
 
-          {inTransit && isTraveler && (
+          {inTransit && isTraveler && !reportHold && (
             <button className="btn-primary min-h-11" disabled={busy}
               onClick={() => act(() => deliverNow(match.id), "Could not update — try again.")}>
               {d.delivered}
             </button>
           )}
 
-          {match.status === "delivered" &&
+          {match.status === "delivered" && !reportHold &&
             (isTraveler ? (
               <form onSubmit={submitCode} className="space-y-2">
                 <p className="text-sm text-muted">
@@ -529,7 +531,7 @@ export default function MatchCard({
               </p>
             ))}
 
-          {!isTraveler && (inTransit || match.status === "delivered") && <div>
+          {!isTraveler && !reportHold && (inTransit || match.status === "delivered") && <div>
             <p className="text-sm text-muted">{d.receivedHelp}</p>
             <button className="btn-primary mt-3 min-h-11" disabled={busy}
               onClick={() => act(() => senderConfirmDelivery(match.id), "Could not confirm — try again.")}>
@@ -575,6 +577,8 @@ export default function MatchCard({
           )}
         </div>
       )}
+
+      <DeliveryProblem matchId={match.id} handover={match.status === "escrow_paid"} onHold={setReportHold} />
 
       {chatVisible && <div role="tablist" aria-label={d.sections} className="mt-5 flex gap-5 border-b border-line">
         {(["messages", "details"] as const).map((tab) => <button
@@ -712,7 +716,7 @@ export default function MatchCard({
             </p>
           )}
 
-          {inTransit && isTraveler && (
+          {inTransit && isTraveler && !reportHold && (
             <form onSubmit={postUpdate} className="mt-3 flex gap-2">
               <input
                 aria-label="Journey update"

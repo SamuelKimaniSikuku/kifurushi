@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { Check, MessageCircle } from "lucide-react";
 import { fetchMyWhatsapp, saveMyWhatsapp } from "@/lib/db";
+import PhoneVerification from "@/components/PhoneVerification";
 import { useT } from "@/lib/i18n";
 
 const E164 = /^\+[1-9][0-9]{6,14}$/;
@@ -121,6 +122,7 @@ export default function WhatsappSettings() {
           </button>
         )}
       </div>
+      {savedNumber && <PhoneVerification key={savedNumber} phone={savedNumber} />}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const EFFECTIVE_DATE = "25 September 2026";
+const EFFECTIVE_DATE = "16 October 2026";
 
 function Section({
   n,
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         <p className="text-sm font-semibold leading-relaxed">
           The short version: we keep the least we can. Your ID document and
           selfie are never stored by Kifurushi — they go straight to our
-          identity partner and we keep only the pass or fail. Your phone number
+          identity partner. We keep verification results, references and a protected document fingerprint to detect repeat accounts. Your phone number
           is never shown to other members. We do not sell your data, we do not
           advertise, and we do not track you across other websites.
         </p>
@@ -117,11 +117,11 @@ export default function PrivacyPage() {
               />
               <Row
                 what="Phone number"
-                why="Kept private. It is never displayed to other members and is only used for identity checks and, where relevant, contact about a delivery."
+                why="Kept private for support and phone verification where available. A WhatsApp number you choose to share is visible only to your accepted match partner."
                 basis="Performance of a contract"
               />
               <Row
-                what="Identity verification outcome (pass or fail, document type)"
+                what="Identity verification outcome, session references and a protected document fingerprint"
                 why="So members can see who is verified before trusting someone with a parcel."
                 basis="Explicit consent (Article 9(2)(a))"
               />
@@ -154,16 +154,11 @@ export default function PrivacyPage() {
         <ul className="ml-4 list-disc space-y-2">
           <li>
             <b>It happens only if you ask for it.</b> We rely on your explicit
-            consent, given by the tick box on the verification page. Verifying
-            is optional — you can browse, post and receive parcels without it,
-            though travellers are expected to verify before a first carry and
-            other members may decline to deal with an unverified account.
+            consent, given by the tick box on the verification page. You can browse and post before verification. Both sender and traveller must verify before handing over a parcel. Contact support if you cannot complete the check.
           </li>
           <li>
             <b>Your images never reach Kifurushi.</b> The photographs go from
-            your device to Didit. We receive only the result — approved,
-            declined or under review — the document type, and a session
-            reference. We could not produce your ID photo if we wanted to.
+            your device to Didit. We process the provider’s decision, duplicate-account signals and document details to check identity. We retain the outcome, document type, session reference and a keyed document fingerprint, not the raw document number or ID/selfie images.
           </li>
           <li>
             <b>You can withdraw consent at any time</b> by emailing us. We will
@@ -202,10 +197,14 @@ export default function PrivacyPage() {
           link.
         </p>
         <p className="font-semibold">
-          Your email address, phone number and payment details are never shown
-          to other members.
+          Your email address and payment details are never shown to other members. WhatsApp sharing is optional and limited to accepted match partners.
         </p>
       </Section>
+
+      <div className="mt-6 space-y-3 text-sm leading-relaxed">
+        <p>When a parcel is collected, we preserve the account and contact details, contents and handover records. A delivery report also preserves relevant messages and booking records so later changes do not remove the evidence. Reports and investigation records are private to authorised support; the reporter can see their own case status and response.</p>
+        <p>Duplicate-account warnings are reviewed before a final decision. Contact hello@kifurushiapp.com to recover an existing account or challenge a restriction. Fraud-prevention and case records are subject to the retention and access rules below.</p>
+      </div>
 
       <Section n={5} title="Who else processes your data">
         <p>
@@ -270,8 +269,7 @@ export default function PrivacyPage() {
             delivery is disputed.
           </li>
           <li>
-            <b>Verification results</b> — kept while your account exists, then
-            deleted with it.
+            <b>Verification results</b> — kept while your account exists. Protected identity fingerprints, handover evidence, case records and restriction records are reviewed when an account closes or a case is resolved; any continued retention must be necessary for fraud prevention or an outstanding claim. Contact us to request a review or deletion.
           </li>
           <li>
             <b>Payment and invoice records</b> — ten years, which French
