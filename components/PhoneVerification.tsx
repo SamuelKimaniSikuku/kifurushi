@@ -19,9 +19,8 @@ export default function PhoneVerification({ phone }: { phone: string }) {
  useEffect(()=>{if(!retryAt)return; const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[retryAt]);
  async function send(){setBusy(true);setError("");try{await sendPhoneCode(phone);setSent(true);setRetryAt(Date.now()+60000);setNow(Date.now());}catch{setError(t.error);}finally{setBusy(false);}}
  async function confirm(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");try{await confirmPhoneCode(phone,code);setVerified(true);setSent(false);}catch{setError(t.error);}finally{setBusy(false);}}
- if(!ready)return null;
+ if(!ready || (!enabled && !verified))return null;
  return <div className="mt-3 text-xs text-muted"><p className={verified?"font-semibold text-success":""}>{verified?t.verified:t.unverified}</p>
- {!verified&&!enabled&&<p className="mt-1">{t.setup}</p>}
  {!verified&&enabled&&!sent&&<button type="button" className="min-h-11 font-semibold text-forest underline" disabled={busy} onClick={send}>{t.verify}</button>}
  {!verified&&sent&&<form className="mt-2 space-y-2" onSubmit={confirm}><p role="status">{t.sent}</p><label className="block">{t.code}<input className="field mt-1 max-w-48" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,""))} minLength={6} maxLength={10} required disabled={busy}/></label><div className="flex flex-wrap gap-2"><button className="btn-primary min-h-11" disabled={busy}>{t.confirm}</button><button type="button" className="btn-ghost min-h-11" disabled={busy||now<retryAt} onClick={send}>{t.send}{now<retryAt?` (${Math.ceil((retryAt-now)/1000)})`:""}</button><button type="button" className="btn-ghost min-h-11" disabled={busy} onClick={()=>setSent(false)}>{t.change}</button></div></form>}
  {error&&<p role="alert" className="field-error">{error}</p>}</div>;

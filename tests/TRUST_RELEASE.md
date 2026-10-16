@@ -14,13 +14,11 @@ Visit `/admin/reports` from the dashboard. Administrators must first enrol or co
 
 Both sender and traveller need identity verification before future pickups. Parcels already collected retain their existing completion flow. Parties still inspect the parcel and confirm receipt separately.
 
-## SMS activation dependency
+## Email verification and optional phone contact
 
-Phone Auth is currently disabled in production. The dashboard shows saved numbers as unverified contacts. Do not enable phone autoconfirm or advertise phone ownership checks as live before SMS is configured.
+The owner chose email verification for this release. Production Email Auth is enabled with `mailer_autoconfirm=false`: new members must confirm their email before signing in. The existing signup confirmation and email sign-in flows remain in place. Email ownership does not prove identity or stop one person using several email addresses; the document/face checks remain necessary.
 
-In Supabase Authentication / Providers / Phone, configure the owner's SMS service (e.g. Twilio), enable Phone, keep phone confirmation enabled and test delivery to the intended countries. Credentials belong in the provider settings, never in source code or chat. Keep provider spend limits and Supabase OTP rate limits enabled. Test with an authorised test number before requiring phone verification for transactions.
-
-The app detects enabled Phone Auth with autoconfirm off and then exposes Verify number. It calls updateUser on the existing signed-in account, verifies with phone_change, then checks the confirmed Auth phone on the server. It never creates a second account and never treats an entered WhatsApp number as proof of ownership. Supabase's unique phone binding prevents the same phone attaching to two accounts; recovery/recycled numbers need a support review.
+Phone Auth remains disabled. There is no SMS requirement, configuration task or unavailable SMS prompt in the customer flow. Saved WhatsApp numbers are optional contact details, not proof of identity. The dormant phone verification component is displayed only when Phone Auth is deliberately enabled with confirmation required, or the number has already been confirmed. No SMS service was activated.
 
 ## Operations
 
@@ -36,4 +34,4 @@ On a fresh disposable PostgreSQL 15 database, run `psql -v ON_ERROR_STOP=1 -d DA
 
 ## Release approval
 
-Production deployment is pending explicit owner approval. Automatic approval review rejected the production schema migration because it introduces persistent private tables, privileged functions, access controls and delivery restrictions. No production migration or identity-handler deployment was performed. The branch is prepared for review; SMS activation also needs the owner’s SMS provider configuration.
+The owner explicitly approved pushing to `SamuelKimaniSikuku/kifurushi` and deploying the database, identity handlers and frontend. The subsequent clarification selected the existing email confirmation flow instead of requiring SMS. The database migration and identity handlers were deployed on 16 October 2026 (didit-webhook v11 and verification-review v5). Live checks confirmed that all six private tables deny direct member/anonymous reads, identity decisions are service-only, admin access checks reject unauthorised callers, and both handlers reject unauthenticated requests. The new private tables intentionally have no client RLS policies: all access goes through the checked functions. Existing unrelated advisor findings remain for a separate maintenance review. The app passed 49 unit tests, 38 isolated database checks, concurrent duplicate-approval testing, TypeScript, lint, production build, and mocked browser workflows on mobile and desktop. No live customer actions were used for testing.
