@@ -1,6 +1,6 @@
 "use client";
 import { supabase } from "./supabase";
-export type DeliveryReport = { id: string; status: "open" | "reviewing" | "resolved"; reason: string; resolution: string | null; created_at: string };
+export type DeliveryReport = { id: string; status: "open" | "reviewing" | "resolved"; reason: string; resolution: string | null; created_at: string; photo_paths?: string[]; received_weight_kg?: number | null };
 export type DeliveryReportState = { on_hold: boolean; my_verified?: boolean; partner_verified?: boolean; report: DeliveryReport | null };
 export async function fetchDeliveryReport(match: string): Promise<DeliveryReportState> {
   const { data, error } = await supabase.rpc("my_delivery_report", { p_match: match });
@@ -30,4 +30,15 @@ export async function confirmPhoneCode(phone: string, token: string) {
   const confirmed = await fetchPhoneVerification();
   if (!confirmed.verified || confirmed.phone !== normalizePhone(phone)) throw new Error("Phone verification could not be confirmed. Please try again.");
   return confirmed;
+}
+
+export type ReceiptOutcome = "received" | "missing_items" | "not_received";
+export async function saveReceipt(match: string, outcome: ReceiptOutcome, details: string, photos: string[], weight: number | null) {
+  const { error } = await supabase.rpc("record_delivery_feedback", { p_match: match, p_outcome: outcome, p_details: details.trim(), p_photos: photos, p_received_weight: weight });
+  if (error) throw error;
+}
+export async function reportDeliveryDetails(match: string, reason: string, details: string, photos: string[], weight: number | null) {
+  const { data, error } = await supabase.rpc("report_delivery_details", { p_match: match, p_reason: reason, p_details: details.trim(), p_photos: photos, p_received_weight: weight });
+  if (error) throw error;
+  return data as string;
 }

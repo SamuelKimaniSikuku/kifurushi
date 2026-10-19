@@ -197,7 +197,7 @@ export default function PrivacyPage() {
           link.
         </p>
         <p className="font-semibold">
-          Your email address and payment details are never shown to other members. WhatsApp sharing is optional and limited to accepted match partners.
+          Delivery complaint photos and reported received weights are private to the reporter and authorised support staff. Public reviews remain separate from these reports. Your email address and payment details are never shown to other members. WhatsApp sharing is optional and limited to accepted match partners.
         </p>
       </Section>
 

@@ -12,7 +12,7 @@ export default function RatingsFeedback({ matches, myUserId }: { matches: MatchD
   const { lang } = useLang();
   const s = reviewCopy[lang];
   const active = matches.some((match) => !["released", "cancelled", "declined"].includes(match.status));
-  const completed = matches.filter((match) => match.status === "released");
+  const completed = matches.filter((match) => match.canReview || match.status === "released");
   const matchKey = completed.map((match) => match.id).sort().join(",");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadedKey, setLoadedKey] = useState<string | null>(null);

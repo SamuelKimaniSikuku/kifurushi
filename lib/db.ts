@@ -601,6 +601,9 @@ export interface MatchDetail {
   hasCode: boolean;
   parcelWeightKg: number | null;
   remainingKg: number | null;
+  canReview?: boolean;
+  canReportReceipt?: boolean;
+  receiptOutcome?: "received" | "missing_items" | "not_received" | null;
 }
 
 export async function fetchMyMatches(): Promise<MatchDetail[]> {
@@ -687,7 +690,13 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
       })
   );
 
-  return details;
+  const { data: feedback, error: feedbackError } = await supabase.rpc("my_delivery_feedback");
+  if (feedbackError) throw feedbackError;
+  const states = new Map<string, { can_review: boolean; can_report_receipt: boolean; outcome: MatchDetail["receiptOutcome"] }>(
+    (Array.isArray(feedback) ? feedback : []).map((f) => [f.match_id, f])
+  );
+  return details.map((d) => ({ ...d, canReview: states.get(d.id)?.can_review ?? d.status === "released",
+    canReportReceipt: states.get(d.id)?.can_report_receipt ?? false, receiptOutcome: states.get(d.id)?.outcome ?? null }));
 }
 
 interface InspectionAttention {
@@ -700,6 +709,7 @@ interface InspectionAttention {
 /** Count a delivery only when this member has a next step, not while waiting. */
 export function needsMyAction(m: MatchDetail, myUserId: string, inspection?: InspectionAttention): boolean {
   const isTraveler = m.role === "traveler";
+  if (m.receiptOutcome) return false;
   switch (m.status) {
     case "requested":
       return m.requesterId !== myUserId;

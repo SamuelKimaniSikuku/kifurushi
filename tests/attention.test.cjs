@@ -9,9 +9,13 @@ require.extensions['.ts'] = (module, filename) => {
   }});
   module._compile(outputText, filename);
 };
-let tables, failures, calls, signedIn;
+let tables, failures, calls, signedIn, feedback;
 const uid = 'me', other = 'partner';
 const client = {
+  rpc: async name => {
+    assert.equal(name, 'my_delivery_feedback');
+    return { data: feedback, error: failures.feedback ?? null };
+  },
   auth: { getSession: async () => ({ data: { session: signedIn ? { user: { id: uid } } : null } }) },
   from: (table) => {
     const call = { table }; calls.push(call);
@@ -44,7 +48,7 @@ function match(id, role = 'traveler', status = 'escrow_paid', requester = other)
       profile: { id: role === 'sender' ? uid : other, full_name: 'Sender' } } };
 }
 const check = (id, role, user, version = 1) => ({ match_id: id, role, user_id: user, declaration_version: version });
-beforeEach(() => { tables = {}; failures = {}; calls = []; signedIn = true; });
+beforeEach(() => { tables = {}; failures = {}; calls = []; signedIn = true; feedback = []; });
 test('a traveller who confirmed and is waiting for the sender has no action badge', async () => {
   tables.matches = [match('waiting')];
   tables.parcel_declarations = [{ parcel_id: 'parcel-waiting', version: 1 }];
@@ -100,4 +104,15 @@ test('skip safety queries when they are not needed, and all queries while signed
   signedIn = false; calls = [];
   assert.deepEqual(await fetchAttention(), { total: 0, byTrip: {}, byParcel: {} });
   assert.equal(calls.length, 0);
+});
+
+test('a recorded receipt removes stale collection prompts without hiding unread messages', async () => {
+  tables.matches = [match('received', 'sender', 'accepted')];
+  feedback = [{ match_id: 'received', can_review: true, can_report_receipt: true, outcome: 'missing_items' }];
+  assert.equal((await fetchAttention()).total, 0);
+});
+test('receipt permission failures are surfaced for retry', async () => {
+  tables.matches = [match('received')];
+  failures.feedback = new Error('Feedback unavailable');
+  await assert.rejects(fetchAttention(), e => e === failures.feedback);
 });

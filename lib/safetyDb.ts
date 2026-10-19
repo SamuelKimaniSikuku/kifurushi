@@ -3,21 +3,21 @@
 import { supabase } from "./supabase";
 import { declarationSchema, validateEvidenceFile, type DeclarationDraft, type ParcelDeclaration, type Inspection, type RefusalReason, type SafetyRefusal } from "./parcelSafety";
 
-export async function uploadEvidence(file: File): Promise<string> {
+export async function uploadEvidence(file: File, reportMatchId?: string): Promise<string> {
   if (!validateEvidenceFile(file)) throw new Error("Use a JPG, PNG or WebP photo under 8 MB.");
   const { data } = await supabase.auth.getSession();
   if (!data.session) throw new Error("Sign in to add photos.");
   const extension = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : "webp";
-  const path = `${data.session.user.id}/${crypto.randomUUID()}.${extension}`;
-  const { error } = await supabase.storage.from("parcel-evidence").upload(path, file, { upsert: false, contentType: file.type });
+  const path = `${data.session.user.id}/${reportMatchId ? `${reportMatchId}/` : ""}${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from(reportMatchId ? "delivery-report-photos" : "parcel-evidence").upload(path, file, { upsert: false, contentType: file.type });
   if (error) throw error;
   return path;
 }
 
 // Download through the authenticated Storage API; object URLs never expose a
 // public bucket or long-lived signed URL and work with the existing CSP.
-export async function evidencePreview(path: string): Promise<string> {
-  const { data, error } = await supabase.storage.from("parcel-evidence").download(path);
+export async function evidencePreview(path: string, reportMatchId?: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(reportMatchId ? "delivery-report-photos" : "parcel-evidence").download(path);
   if (error) throw error;
   return URL.createObjectURL(data);
 }

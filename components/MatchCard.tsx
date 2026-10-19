@@ -4,19 +4,20 @@ import Link from "next/link";
 import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ChevronDown, Copy, KeyRound, MessageSquare, PackageCheck, Send, Star,
+  ChevronDown, Copy, KeyRound, MessageSquare, Send, Star,
 } from "lucide-react";
 import {
   TransitUpdate, MatchStatus, Message,
 } from "@/lib/types";
 import {
-  MatchDetail, deliverNow, fetchMatchWhatsapp, requestMatch, respondMatch, senderConfirmDelivery, advanceMatch, cancelMatch,
+  MatchDetail, deliverNow, fetchMatchWhatsapp, requestMatch, respondMatch, advanceMatch, cancelMatch,
   generateDeliveryCode, confirmDelivery,
   fetchTransitUpdates, addTransitUpdate,
   fetchMessages, sendMessage,
 } from "@/lib/db";
 import { transitUpdateSchema, messageSchema } from "@/lib/validation";
 import { useLang, useT } from "@/lib/i18n";
+import { receiptCopy } from "@/lib/locales/receipt";
 import { reviewCopy } from "@/lib/locales/reviews";
 import { deliveryCopy } from "@/lib/locales/delivery";
 import DeliveryProblem from "@/components/DeliveryProblem";
@@ -393,7 +394,7 @@ export default function MatchCard({
                   : "bg-warn-bg text-warn"
             }`}
           >
-            {d.status[match.status]}
+            {match.receiptOutcome ? receiptCopy[lang][match.receiptOutcome] : d.status[match.status]}
           </span>
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
@@ -403,7 +404,7 @@ export default function MatchCard({
         </span>
       </button>
 
-      {done && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
+      {(done || match.canReview) && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
         <Star size={17} className="fill-gold text-gold-deep" aria-hidden />
         {reviewCopy[lang].reviewLink}
       </a>}
@@ -411,16 +412,18 @@ export default function MatchCard({
       {open && (
       <>
 
-      {!ended && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
+      {!ended && !match.receiptOutcome && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
         {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
           <div className={`h-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-sand-deep"}`} />
           <p className={`mt-1 text-xs ${i <= stepIndex ? "font-medium text-forest" : "text-muted"}`}>{i + 1}. {step}</p>
         </li>)}
       </ol>}
 
+      <DeliveryProblem match={match} handover={match.status === "escrow_paid"} onHold={setReportHold} onChanged={onChanged} />
+
       <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setView("messages")}>
       {({ inspection, parcelDetails }) => <>
-      {(inspection || (!done && !ended)) && <div className="mt-4 space-y-3 rounded-xl bg-sand/60 p-4">
+      {!match.receiptOutcome && !reportHold && (inspection || (!done && !ended)) && <div className="mt-4 space-y-3 rounded-xl bg-sand/60 p-4">
       {inspection}
 
       {/* Role-aware actions */}
@@ -531,13 +534,6 @@ export default function MatchCard({
               </p>
             ))}
 
-          {!isTraveler && !reportHold && (inTransit || match.status === "delivered") && <div>
-            <p className="text-sm text-muted">{d.receivedHelp}</p>
-            <button className="btn-primary mt-3 min-h-11" disabled={busy}
-              onClick={() => act(() => senderConfirmDelivery(match.id), "Could not confirm — try again.")}>
-              <PackageCheck className="h-4 w-4 shrink-0" aria-hidden />{d.confirmArrived}
-            </button>
-          </div>}
 
           {actionError && <p role="alert" className="field-error">{actionError}</p>}
         </div>
@@ -578,7 +574,6 @@ export default function MatchCard({
         </div>
       )}
 
-      <DeliveryProblem matchId={match.id} handover={match.status === "escrow_paid"} onHold={setReportHold} />
 
       {chatVisible && <div role="tablist" aria-label={d.sections} className="mt-5 flex gap-5 border-b border-line">
         {(["messages", "details"] as const).map((tab) => <button

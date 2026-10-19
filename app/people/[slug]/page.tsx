@@ -315,7 +315,7 @@ export default function PersonProfilePage({
           <div className="mt-4">
             <EmptyState
               title="No reviews yet"
-              body={`Nobody has shared feedback about ${person.name} yet. Reviews can be posted after a completed delivery.`}
+              body={`Nobody has shared feedback about ${person.name} yet. Reviews come from accepted bookings after receipt is reported or the delivery date has passed.`}
             />
           </div>
         )}
