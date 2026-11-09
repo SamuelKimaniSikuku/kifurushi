@@ -20,7 +20,7 @@ import { useLang, useT } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 import { safetyCopy } from "@/lib/locales/safety";
-import { laterDepartures, upcomingOnRoute } from "@/lib/tripDiscovery";
+import { filterUpcomingTrips, laterDepartures } from "@/lib/tripDiscovery";
 
 function TripsContent() {
   const gate = useContactGate();
@@ -32,7 +32,7 @@ function TripsContent() {
   const [quickTrip, setQuickTrip] = useState<Trip | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const browse = useBrowseFilters("/trips");
-  const { from, to, date, sort } = browse.filters;
+  const { from, to, date, month, sort } = browse.filters;
   const x = t.experience;
   const [loadError, setLoadError] = useState(false);
   const [reload, setReload] = useState(0);
@@ -56,10 +56,8 @@ function TripsContent() {
   }, [reload]);
 
   const filtered = useMemo(() =>
-    upcomingOnRoute(trips, from, to).filter((item) => !date || item.departDate <= date).sort((a, b) => sort === "price"
-      ? a.pricePerKg - b.pricePerKg || a.departDate.localeCompare(b.departDate)
-      : a.departDate.localeCompare(b.departDate)),
-    [trips, from, to, date, sort]
+    filterUpcomingTrips(trips, { from, to, date, month, sort }),
+    [trips, from, to, date, month, sort]
   );
   const later = useMemo(() => laterDepartures(trips, from, to, date), [trips, from, to, date]);
 
@@ -115,7 +113,7 @@ function TripsContent() {
         <Link href={postHref("parcel", { from, to })} className="btn-primary"><Package size={18} aria-hidden />{x.postParcel}</Link>
       </div>
       <BrowseFilters kind="trips" {...browse} />
-      {!date && <p className="mt-3 text-sm text-muted">{s.anyDate}</p>}
+      {!date && !month && <p className="mt-3 text-sm text-muted">{s.anyDate}</p>}
 
       {!loaded ? (
         <div aria-busy="true" aria-label={x.loading} className="mt-6 grid items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -161,9 +159,11 @@ function TripsContent() {
                 <Link href={postHref("parcel", { from, to })} className="btn-primary">
                   {x.postParcel}
                 </Link>
-                <button type="button" className="btn-ghost" onClick={browse.clear}>
+                {month || date ? <button type="button" className="btn-ghost" onClick={() => browse.update({ date: "", month: "" })}>
+                  {x.showAnyDate}
+                </button> : <button type="button" className="btn-ghost" onClick={browse.clear}>
                   {x.clear}
-                </button>
+                </button>}
               </EmptyState>
             </div>
           )}

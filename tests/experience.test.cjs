@@ -15,7 +15,7 @@ const { browseHref, readRouteFilters, postHref, readPostRoute, safeReturnPath, s
 const { signInSchema, signUpSchema } = require('../lib/validation.ts');
 
 test('route shortcuts round-trip with country direction, date and sort intact', () => {
-  const filters = { from: 'FR', to: 'KE', date: '2026-12-20', sort: 'price' };
+  const filters = { from: 'FR', to: 'KE', date: '2026-12-20', month: '', sort: 'price' };
   const href = browseHref('/trips', filters);
   assert.deepEqual(readRouteFilters(new URL(href, 'https://www.kifurushiapp.com').searchParams), filters);
   assert.equal(browseHref('/parcels', { from: 'KE', to: 'FR' }), '/parcels?from=KE&to=FR');
@@ -23,7 +23,7 @@ test('route shortcuts round-trip with country direction, date and sort intact', 
 });
 
 test('malformed countries, impossible dates and unknown sort values are ignored', () => {
-  assert.deepEqual(readRouteFilters(new URLSearchParams('from=XX&to=KE&date=2026-02-30&sort=unsafe')), { from: '', to: 'KE', date: '', sort: 'date' });
+  assert.deepEqual(readRouteFilters(new URLSearchParams('from=XX&to=KE&date=2026-02-30&sort=unsafe')), { from: '', to: 'KE', date: '', month: '', sort: 'date' });
   assert.equal(readRouteFilters(new URLSearchParams('date=2028-02-29')).date, '2028-02-29');
   assert.equal(readRouteFilters(new URLSearchParams('date=2027-02-29')).date, '');
 });
@@ -75,4 +75,32 @@ test('shared review links use sign-in and keep the ratings section through authe
   assert.equal(auth.searchParams.get('mode'), 'signin');
   assert.equal(safeReturnPath(auth.searchParams.get('next')), '/dashboard#ratings');
   assert.equal(new URL(signInHref('//example.com'), auth.origin).searchParams.get('next'), '/dashboard');
+});
+
+
+test('month searches round-trip and preserve route and price sorting', () => {
+  const filters = { from: 'FR', to: 'KE', date: '', month: '2026-12', sort: 'price' };
+  const href = browseHref('/trips', filters);
+  assert.equal(href, '/trips?from=FR&to=KE&month=2026-12&sort=price');
+  assert.deepEqual(readRouteFilters(new URL(href, 'https://www.kifurushiapp.com').searchParams), filters);
+  const auth = new URL(signInHref(href), 'https://www.kifurushiapp.com');
+  assert.equal(safeReturnPath(auth.searchParams.get('next')), href);
+});
+test('only valid calendar months apply and a valid month takes precedence over an old date', () => {
+  for (const month of ['2026-00', '2026-13', '2026-1', '0000-12', '2026-11-09', 'banana', '2026-12 ']) {
+    assert.equal(readRouteFilters(new URLSearchParams({ month })).month, '');
+  }
+  const params = new URLSearchParams('month=2027-01&date=2026-12-02');
+  const filters = readRouteFilters(params);
+  assert.equal(filters.month, '2027-01');
+  assert.equal(filters.date, '');
+  assert.equal(browseHref('/trips', { month: '2027-01', date: '2026-12-02' }), '/trips?month=2027-01');
+  assert.equal(readRouteFilters(new URLSearchParams('month=bad&date=2026-12-02')).date, '2026-12-02');
+});
+test('traveller month parameter cannot override parcel travel-date filtering', () => {
+  const params = new URLSearchParams('month=2027-01&date=2026-12-02');
+  const filters = readRouteFilters(params, '/parcels');
+  assert.equal(filters.month, '');
+  assert.equal(filters.date, '2026-12-02');
+  assert.equal(browseHref('/parcels', { month: '2027-01', date: '2026-12-02' }), '/parcels?date=2026-12-02');
 });

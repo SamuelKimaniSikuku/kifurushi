@@ -4,20 +4,28 @@ export interface RouteFilters {
   from: string;
   to: string;
   date: string;
+  month: string;
   sort: "date" | "price" | "budget";
 }
 
 const countryCodes = new Set(ALL_COUNTRIES.map((country) => country.code));
 const country = (value: string | null) => countryCodes.has(value ?? "") ? value! : "";
 
-export function readRouteFilters(params: Pick<URLSearchParams, "get">): RouteFilters {
+export function isTravelMonth(value: string): boolean {
+  return /^(?!0000)\d{4}-(0[1-9]|1[0-2])$/.test(value);
+}
+
+export function readRouteFilters(params: Pick<URLSearchParams, "get">, path: "/trips" | "/parcels" = "/trips"): RouteFilters {
   const date = params.get("date") ?? "";
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(date) &&
     !Number.isNaN(Date.parse(date)) && new Date(date).toISOString().slice(0, 10) === date;
+  const month = params.get("month") ?? "";
+  const validMonth = path === "/trips" && isTravelMonth(month);
   const sort = params.get("sort");
   return {
     from: country(params.get("from")), to: country(params.get("to")),
-    date: validDate ? date : "",
+    date: !validMonth && validDate ? date : "",
+    month: validMonth ? month : "",
     sort: sort === "price" || sort === "budget" ? sort : "date",
   };
 }
@@ -26,7 +34,8 @@ export function browseHref(path: "/trips" | "/parcels", filters: Partial<RouteFi
   const params = new URLSearchParams();
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
-  if (filters.date) params.set("date", filters.date);
+  if (path === "/trips" && filters.month && isTravelMonth(filters.month)) params.set("month", filters.month);
+  else if (filters.date) params.set("date", filters.date);
   if (filters.sort && filters.sort !== "date") params.set("sort", filters.sort);
   return params.size ? `${path}?${params}` : path;
 }

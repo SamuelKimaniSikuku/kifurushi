@@ -143,6 +143,9 @@
   .browse-filters {
     @apply card mt-6 grid grid-cols-1 items-end gap-3 p-4 sm:p-5 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_minmax(0,1.15fr)_auto];
   }
+  .browse-filters-trips {
+    @apply lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)];
+  }
 }
 
 .getting-started > summary::-webkit-details-marker { display: none; }
