@@ -179,6 +179,11 @@ export default function MatchCard({
   const { lang } = useLang();
   const weightText = requestWeightCopy[lang];
   const d = deliveryCopy[lang];
+  const requestAvailable = match.requestAvailability === "available";
+  const unavailableRequest = match.status === "requested" &&
+    (match.requestAvailability === "booked_elsewhere" || match.requestAvailability === "unavailable");
+  const unavailableLabel = match.requestAvailability === "booked_elsewhere" ? weightText.bookedElsewhere : weightText.unavailable;
+  const unavailableHelp = match.requestAvailability === "booked_elsewhere" ? weightText.bookedElsewhereHelp : weightText.unavailableHelp;
   const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
   const [view, setView] = useState<"messages" | "details">("messages");
   const chatPanelRef = useRef<HTMLDivElement>(null);
@@ -394,7 +399,7 @@ export default function MatchCard({
                   : "bg-warn-bg text-warn"
             }`}
           >
-            {match.receiptOutcome ? receiptCopy[lang][match.receiptOutcome] : d.status[match.status]}
+            {match.receiptOutcome ? receiptCopy[lang][match.receiptOutcome] : unavailableRequest ? unavailableLabel : d.status[match.status]}
           </span>
           <ChevronDown
             className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
@@ -412,7 +417,7 @@ export default function MatchCard({
       {open && (
       <>
 
-      {!ended && !match.receiptOutcome && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
+      {!ended && !unavailableRequest && !match.receiptOutcome && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
         {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
           <div className={`h-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-sand-deep"}`} />
           <p className={`mt-1 text-xs ${i <= stepIndex ? "font-medium text-forest" : "text-muted"}`}>{i + 1}. {step}</p>
@@ -430,10 +435,14 @@ export default function MatchCard({
       {!done && !ended && (
         <div className="space-y-3">
           {match.status === "requested" && <div className="rounded-xl bg-sand p-3 text-sm">
-            <p className="font-semibold">{match.parcelWeightKg == null ? weightText.toAgree : `${match.parcelWeightKg} kg`}</p>
-            {weightNeedsAgreement && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
+            {match.parcelWeightKg != null && <p className="font-semibold">{match.parcelWeightKg} kg</p>}
+            {unavailableRequest ? <p className="mt-1 text-sm text-muted">{unavailableHelp}</p> : !requestAvailable ?
+              <p className="mt-1 text-sm text-muted">{weightText.detailsUnavailable}</p> : <>
+              {match.parcelWeightKg == null && <p className="font-semibold">{weightText.toAgree}</p>}
+              {weightNeedsAgreement && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
+            </>}
             <div className="mt-2 flex flex-wrap gap-3">
-              {!isTraveler && <Link href={`/post/parcel?edit=${match.parcelId}&next=%2Fdashboard%23deliveries`} className="font-semibold text-forest underline">{weightText.edit}</Link>}
+              {!isTraveler && requestAvailable && <Link href={`/post/parcel?edit=${match.parcelId}&next=%2Fdashboard%23deliveries`} className="font-semibold text-forest underline">{weightText.edit}</Link>}
               <button type="button" disabled={busy} onClick={onChanged} className="text-forest underline">{weightText.refresh}</button>
             </div>
           </div>}
@@ -442,7 +451,7 @@ export default function MatchCard({
               <div>
                 {/* updated_at still equals the request time while nothing has
                     answered it, so it doubles as "how long they've waited". */}
-                {waitingDays >= 1 && (
+                {requestAvailable && waitingDays >= 1 && (
                   <p className="mb-2 rounded-lg bg-gold/15 px-3 py-2 text-xs font-medium text-ink">
                     {t.browse.waitingForYou(match.counterpartyName, waitingDays)}
                   </p>
@@ -450,7 +459,7 @@ export default function MatchCard({
                 <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"
-                  disabled={busy || weightNeedsAgreement}
+                  disabled={busy || !requestAvailable || weightNeedsAgreement}
                   onClick={() =>
                     act(() => respondMatch(match.id, true), weightText.acceptError)
                   }
@@ -469,9 +478,9 @@ export default function MatchCard({
                 </div>
                 {/* The chat below is open already — accepting is not the only
                     way to start talking, and people assume it is. */}
-                <p className="mt-2 text-xs text-muted">{t.browse.askFirst}</p>
+                {requestAvailable && <p className="mt-2 text-xs text-muted">{t.browse.askFirst}</p>}
               </div>
-            ) : (
+            ) : requestAvailable && (
               <p className="text-sm text-muted">
                 {t.browse.chatWhileWaiting(match.counterpartyName)}
                 {waitingDays >= 1 && <> {t.browse.waitingSent(waitingDays)}</>}

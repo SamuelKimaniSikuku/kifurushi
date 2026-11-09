@@ -601,6 +601,7 @@ export interface MatchDetail {
   hasCode: boolean;
   parcelWeightKg: number | null;
   remainingKg: number | null;
+  requestAvailability?: "available" | "booked_elsewhere" | "unavailable" | "unknown";
   canReview?: boolean;
   canReportReceipt?: boolean;
   receiptOutcome?: "received" | "missing_items" | "not_received" | null;
@@ -692,11 +693,34 @@ export async function fetchMyMatches(): Promise<MatchDetail[]> {
 
   const { data: feedback, error: feedbackError } = await supabase.rpc("my_delivery_feedback");
   if (feedbackError) throw feedbackError;
-  const states = new Map<string, { can_review: boolean; can_report_receipt: boolean; outcome: MatchDetail["receiptOutcome"] }>(
+  const states = new Map<string, {
+    can_review: boolean;
+    can_report_receipt: boolean;
+    outcome: MatchDetail["receiptOutcome"];
+    parcel_weight_kg?: number | string | null;
+    remaining_kg?: number | string | null;
+    request_availability?: MatchDetail["requestAvailability"] | null;
+  }>(
     (Array.isArray(feedback) ? feedback : []).map((f) => [f.match_id, f])
   );
-  return details.map((d) => ({ ...d, canReview: states.get(d.id)?.can_review ?? d.status === "released",
-    canReportReceipt: states.get(d.id)?.can_report_receipt ?? false, receiptOutcome: states.get(d.id)?.outcome ?? null }));
+  return details.map((d) => {
+    const state = states.get(d.id);
+    // A hidden listing is different from an unknown weight. Use the
+    // participant-scoped context, including an explicitly unset weight.
+    return {
+      ...d,
+      parcelWeightKg: state && "parcel_weight_kg" in state
+        ? state.parcel_weight_kg == null ? null : Number(state.parcel_weight_kg)
+        : d.parcelWeightKg,
+      remainingKg: state && "remaining_kg" in state
+        ? state.remaining_kg == null ? null : Number(state.remaining_kg)
+        : d.remainingKg,
+      requestAvailability: state?.request_availability ?? "unknown",
+      canReview: state?.can_review ?? d.status === "released",
+      canReportReceipt: state?.can_report_receipt ?? false,
+      receiptOutcome: state?.outcome ?? null,
+    };
+  });
 }
 
 interface InspectionAttention {
@@ -712,7 +736,7 @@ export function needsMyAction(m: MatchDetail, myUserId: string, inspection?: Ins
   if (m.receiptOutcome) return false;
   switch (m.status) {
     case "requested":
-      return m.requesterId !== myUserId;
+      return m.requesterId !== myUserId && m.requestAvailability !== "booked_elsewhere" && m.requestAvailability !== "unavailable";
     case "accepted":
       return true;
     case "escrow_paid":
@@ -778,7 +802,7 @@ export async function fetchAttention(): Promise<Attention> {
   }
   for (const m of matches) {
     if (needsMyAction(m, uid, safety.get(m.id))) out.total += 1;
-    if (m.status === "requested" && m.requesterId !== uid) {
+    if (m.status === "requested" && needsMyAction(m, uid)) {
       if (m.role === "traveler") {
         out.byTrip[m.tripId] = (out.byTrip[m.tripId] ?? 0) + 1;
       } else {

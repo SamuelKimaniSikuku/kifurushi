@@ -94,3 +94,19 @@ declaration versions, separate sender/traveller confirmations, verified-travelle
 requirements, all delivery shortcuts, immutable records, frozen journey details,
 capacity release, refusal retries, support holds and legacy delivery completion.
 No production customer records are changed by this suite.
+
+## Pending requests for already-booked parcels
+
+Apply `20261109104216_match_listing_context.sql` before deploying the app. It
+extends the existing participant-only `my_delivery_feedback` response with the
+saved parcel weight, trip space and pending-request availability. A parcel hidden
+by listing RLS is no longer mistaken for an unspecified weight. Requests for a
+parcel booked elsewhere show that reason and stop contributing action badges.
+The migration does not alter customer bookings, table policies or acceptance guards.
+
+After `trust-bootstrap.sql` and
+`20261019080415_delivery_feedback_and_reviews.sql`, apply the context migration
+and run `tests/safety/match-listing-context.test.sql`. It reproduces two requests
+for one parcel, checks visibility for both parties, denies unrelated/anonymous
+access and confirms that unknown weight and duplicate acceptance remain blocked.
+UI and mapping regressions are covered by `node --test tests/*.test.cjs`.

@@ -13,6 +13,7 @@ let tables, failures, calls, signedIn, feedback;
 const uid = 'me', other = 'partner';
 const client = {
   rpc: async name => {
+    if (name === 'match_counterparty') return { data: other };
     assert.equal(name, 'my_delivery_feedback');
     return { data: feedback, error: failures.feedback ?? null };
   },
@@ -23,6 +24,8 @@ const client = {
       select: (columns) => { call.columns = columns; return chain; },
       in: (key, values) => { call.filter = { key, values }; return chain; },
       order: () => chain,
+      eq: () => chain,
+      maybeSingle: async () => ({ data: { full_name: 'Sender' } }),
       then: (resolve, reject) => {
         const rows = tables[table] ?? [];
         const data = call.filter ? rows.filter(row => call.filter.values.includes(row[call.filter.key])) : rows;
@@ -37,7 +40,7 @@ Module._load = function(request, parent, isMain) {
   if (request === './supabase' && parent?.filename.endsWith('/lib/db.ts')) return { supabase: client };
   return originalLoad.call(this, request, parent, isMain);
 };
-const { fetchAttention, needsMyAction } = require('../lib/db.ts');
+const { fetchAttention, needsMyAction, fetchMyMatches } = require('../lib/db.ts');
 Module._load = originalLoad;
 function match(id, role = 'traveler', status = 'escrow_paid', requester = other) {
   return { id, status, requester_id: requester, trip_id: 'trip-' + id, parcel_id: 'parcel-' + id,
@@ -115,4 +118,40 @@ test('receipt permission failures are surfaced for retry', async () => {
   tables.matches = [match('received')];
   failures.feedback = new Error('Feedback unavailable');
   await assert.rejects(fetchAttention(), e => e === failures.feedback);
+});
+
+
+test('hidden matched parcel uses the saved weight and reports another booking', async () => {
+  const row = match('booked', 'traveler', 'requested');
+  row.parcel = null; tables.matches = [row];
+  feedback = [{ match_id: 'booked', parcel_weight_kg: '4', remaining_kg: '10', request_availability: 'booked_elsewhere' }];
+  const [detail] = await fetchMyMatches();
+  assert.equal(detail.parcelWeightKg, 4);
+  assert.equal(detail.remainingKg, 10);
+  assert.equal(detail.counterpartyName, 'Sender');
+  assert.equal(detail.requestAvailability, 'booked_elsewhere');
+  assert.deepEqual(await fetchAttention(), { total: 0, byTrip: {}, byParcel: {} });
+});
+test('closed requests stop action badges for both roles, while open requests stay counted', async () => {
+  tables.matches = [match('closed-trip', 'sender', 'requested'), match('booked-parcel', 'traveler', 'requested'), match('open', 'traveler', 'requested')];
+  feedback = [
+    { match_id: 'closed-trip', request_availability: 'unavailable' },
+    { match_id: 'booked-parcel', request_availability: 'booked_elsewhere' },
+    { match_id: 'open', request_availability: 'available' },
+  ];
+  assert.deepEqual(await fetchAttention(), { total: 1, byTrip: { 'trip-open': 1 }, byParcel: {} });
+});
+test('fresh context preserves truly unknown weight and overrides stale joined details', async () => {
+  tables.matches = [match('open', 'traveler', 'requested')];
+  feedback = [{ match_id: 'open', parcel_weight_kg: null, remaining_kg: 0, request_availability: 'available' }];
+  const [detail] = await fetchMyMatches();
+  assert.equal(detail.parcelWeightKg, null);
+  assert.equal(detail.remainingKg, 0);
+  assert.equal(detail.requestAvailability, 'available');
+  feedback[0].parcel_weight_kg = '0.075';
+  assert.equal((await fetchMyMatches())[0].parcelWeightKg, 0.075);
+});
+test('missing context is distinguished from confirmed availability', async () => {
+  tables.matches = [match('open', 'traveler', 'requested')];
+  assert.equal((await fetchMyMatches())[0].requestAvailability, 'unknown');
 });
