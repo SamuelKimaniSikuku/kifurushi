@@ -24,7 +24,7 @@ Module._load = function(request, parent, isMain) {
   if (request === '@/components/MatchSafety') return {
     __esModule: true, default: ({ children }) => children({ inspection: null, parcelDetails: null }),
   };
-  if (request === '@/components/DeliveryProblem') return { __esModule: true, default: () => null };
+  if (request === '@/components/DeliveryProblem') return { __esModule: true, default: ({ children }) => children({ status: null, reportControl: null }) };
   if (request === 'next/link') return { __esModule: true, default: props => React.createElement('a', props) };
   if (request.startsWith('@/')) return originalLoad.call(this, path.resolve(__dirname, '..', request.slice(2)), parent, isMain);
   return originalLoad.call(this, request, parent, isMain);

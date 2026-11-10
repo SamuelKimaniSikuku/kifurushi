@@ -200,7 +200,7 @@
 .conversation-messages[hidden], .conversation-details[hidden] { display: none; }
 .conversation-chat { display: flex; flex: 1; flex-direction: column; min-height: 0; }
 .conversation-log { flex: 1; min-height: 0; }
-.conversation-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.conversation-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; overflow-anchor: none; padding: 16px; scroll-padding-top: 16px; }
 @media (max-width: 767px) {
   .delivery-inbox { display: block; height: calc(100dvh - 280px); min-height: 400px; }
   .inbox-list { height: 100%; border-right: 0; }

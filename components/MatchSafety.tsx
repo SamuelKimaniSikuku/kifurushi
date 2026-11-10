@@ -14,7 +14,7 @@ import EvidencePhotos from "./EvidencePhotos";
 
 export default function MatchSafety({ match, myUserId, onChanged, onReady, onMessage, children }: {
   match: MatchDetail; myUserId: string; onChanged: () => void; onReady: (ready: boolean) => void; onMessage: () => void;
-  children: (panels: { inspection: ReactNode; parcelDetails: ReactNode }) => ReactNode;
+  children: (panels: { inspection: ReactNode; parcelDetails: ReactNode; refusal?: ReactNode }) => ReactNode;
 }) {
   const { lang } = useLang(); const s = safetyCopy[lang]; const d = deliveryCopy[lang];
   const [state, setState] = useState<Awaited<ReturnType<typeof fetchMatchSafety>> | null>(null);
@@ -53,10 +53,10 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
   if (loadError || !state) return children({ inspection: loadNotice, parcelDetails: null });
   if (!declaration && !prePickup && !state.refusal) return children({ inspection: null, parcelDetails: null });
   const errorNotice = error && <div role="alert" className="field-error"><p>{error}</p>{traveler && /identity verification/i.test(error) && <Link href="/verify" className="mt-2 inline-flex min-h-11 items-center font-semibold underline">{s.verifyLink}</Link>}</div>;
-  const details = <section aria-label={s.title} className="text-sm">
-    <h3 className="flex items-center gap-2 font-semibold text-forest"><ShieldCheck size={18} aria-hidden />{s.title}</h3>
+  const details = <section aria-label={s.title} className="rounded-xl border border-line p-4 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-semibold text-forest"><ShieldCheck size={18} aria-hidden />{s.title}</h3>{match.parcelWeightKg != null && <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-medium text-muted">{match.parcelWeightKg} kg</span>}</div>
     {declaration && <p className="mt-2 break-words">{declaration.items.map((item) => item.description).join("; ")}</p>}
-    <div className="mt-2 space-y-3 text-muted">
+    <details className="mt-2"><summary className="cursor-pointer py-2 font-medium text-forest">{d.parcelInfo}</summary><div className="mt-2 space-y-3 text-muted">
       {declaration && <>
         {declaration.items.some((item) => item.quantity != null || item.valueUsd != null) && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line"><th className="py-2 pr-3">{s.item}</th><th className="p-2">{s.quantity}</th><th className="py-2 pl-3 text-right">{s.value}</th></tr></thead><tbody>{declaration.items.map((item, i) => <tr key={i} className="border-b border-line"><td className="py-2 pr-3">{item.description}</td><td className="p-2">{item.quantity ?? "—"}</td><td className="py-2 pl-3 text-right">{item.valueUsd != null ? `$${Number(item.valueUsd).toFixed(2)}` : "—"}</td></tr>)}</tbody></table></div>}
         {declaration.declared_value_usd != null && <p>{s.total}: ${Number(declaration.declared_value_usd).toFixed(2)}</p>}
@@ -67,10 +67,10 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
       </>}
       <p>{d.safetyHelp}</p>
       <Link href="/safety" className="inline-block font-medium text-forest underline">{s.prohibitedLink}</Link>
-    </div>
+    </div></details>
   </section>;
-  const refusalControl = traveler && prePickup && <div className="border-t border-line pt-4">
-      {!refusing ? <button type="button" disabled={busy || uploading} className="min-h-11 text-sm font-medium text-danger underline" onClick={() => setRefusing(true)}>{s.refuse}</button> : <div className="space-y-3">
+  const refusalControl = traveler && prePickup && <div className="border-t border-line pt-2">
+      {!refusing ? <button type="button" disabled={busy || uploading} className="min-h-11 text-sm font-medium text-danger underline" onClick={() => setRefusing(true)}>{d.refuseOnly}</button> : <div className="space-y-3">
         <p className="text-sm leading-relaxed">{s.refusalNote}</p>
         <label className="block text-sm font-semibold">{s.reason}<select className="field mt-1" value={reason} disabled={busy} onChange={(e) => setReason(e.target.value as RefusalReason)}>{REFUSAL_REASONS.map((r) => <option key={r} value={r}>{s[r]}</option>)}</select></label>
         <label className="block text-sm font-semibold">{s.notes}<textarea className="field mt-1" rows={3} maxLength={1000} value={notes} disabled={busy} onChange={(e) => setNotes(e.target.value)} /></label>
@@ -91,10 +91,9 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
     {declaration && !state.refusal && match.status === "escrow_paid" && <>
       {mine ? <>
         <p role="status" className="text-sm font-medium text-forest">{ready ? (traveler ? d.readyCollect : d.waitingCollection(match.counterpartyName)) : d.waitingFor(match.counterpartyName)}</p>
-        {!ready && <a href={`#messages-${match.id}`} onClick={onMessage} className="inline-flex min-h-11 items-center text-sm font-semibold text-forest underline">{d.message(match.counterpartyName)}</a>}
+        {!ready && <a href={`#messages-${match.id}`} onClick={(event) => { event.preventDefault(); onMessage(); }} className="inline-flex min-h-11 items-center text-sm font-semibold text-forest underline">{d.message(match.counterpartyName)}</a>}
       </> : <div className="space-y-3">
         <h3 className="text-sm font-semibold text-forest">{d.check}</h3>
-        <p className="break-words text-sm">{declaration.items.map((item) => item.description).join("; ")}</p>
         <p id={`inspection-help-${match.id}`} className="text-sm text-muted">{d.checkInstructions}</p>
         <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg bg-white p-3 text-sm leading-relaxed">
           <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-forest" checked={confirmingInspection}
@@ -111,14 +110,12 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
         {confirmingInspection && <p role="status" className="text-sm text-muted">{d.confirming}</p>}
       </div>}
     </>}
-    {match.status === "escrow_paid" && refusalControl}
-    {errorNotice}
+    {!refusing && errorNotice}
   </div>;
-  return children({ inspection, parcelDetails: <div className="space-y-4">
+  return children({ inspection, refusal: refusalControl && <>{refusalControl}{refusing && errorNotice}</>, parcelDetails: <div className="space-y-4">
     {state.refusal && <p role="status" className="text-sm text-danger">{s.refused} {s[state.refusal.reason]}</p>}
     {details}
     {traveler && declaration && !state.refusal && match.status === "escrow_paid" && !mine && <details className="border-t border-line pt-3 text-sm"><summary className="cursor-pointer py-2 text-forest">{d.checkHelp}</summary><div className="mt-2 space-y-3"><p className="text-muted">{s.verify} <Link className="font-medium text-forest underline" href="/verify">{s.verifyLink}</Link></p><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></div></details>}
-    {match.status !== "escrow_paid" && refusalControl}
-    {match.status !== "escrow_paid" && declaration && errorNotice}
+    {match.status !== "escrow_paid" && declaration && !refusing && errorNotice}
   </div> });
 }

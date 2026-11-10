@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useLang } from "@/lib/i18n";
 import { trustCopy } from "@/lib/locales/trust";
 import { receiptCopy } from "@/lib/locales/receipt";
@@ -8,7 +8,7 @@ import type { MatchDetail } from "@/lib/db";
 import { DeliveryReportState, fetchDeliveryReport, reportDeliveryDetails, saveReceipt, type ReceiptOutcome } from "@/lib/trust";
 import EvidencePhotos from "./EvidencePhotos";
 
-export default function DeliveryProblem({ match, handover, onHold, onChanged }: { match: MatchDetail; handover: boolean; onHold: (held: boolean) => void; onChanged: () => void }) {
+export default function DeliveryProblem({ match, handover, onHold, onChanged, children }: { match: MatchDetail; handover: boolean; onHold: (held: boolean) => void; onChanged: () => void; children: (panels: { status: ReactNode; reportControl: ReactNode }) => ReactNode }) {
  const { lang } = useLang(); const t = trustCopy[lang], s = receiptCopy[lang];
  const [state, setState] = useState<DeliveryReportState | null>(null);
  const [open, setOpen] = useState(false), [receipt, setReceipt] = useState<ReceiptOutcome | null>(null);
@@ -30,22 +30,7 @@ export default function DeliveryProblem({ match, handover, onHold, onChanged }: 
   } catch { setError(s.failed); } finally { setBusy(false); }
  }
  function choose(outcome: ReceiptOutcome) { setReceipt(outcome); setReason(outcome === "received" ? "other" : outcome); setOpen(true); setError(""); }
- const expanded = handover || open || loadError || state?.on_hold || state?.report || match.receiptOutcome || match.canReportReceipt || match.canReview;
- return <section className={expanded ? "my-4 space-y-3 rounded-xl border border-line p-4 text-sm" : "text-sm"} aria-label={t.report}>
-  {handover && !match.receiptOutcome && state?.my_verified === false && <Link href="/verify" className="inline-flex min-h-11 items-center font-semibold text-forest underline">{t.verify}</Link>}
-  {handover && !match.receiptOutcome && state?.partner_verified === false && <p className="text-muted">{t.partner}</p>}
-  {state?.on_hold && <p role="status" className="rounded-xl bg-warn-bg p-3 text-warn">{t.hold}</p>}
-  {loadError && <p role="alert" className="text-muted">{t.loadError} <button className="min-h-11 underline" onClick={() => void load()}>{t.retry}</button></p>}
-  {match.receiptOutcome && !editing && <p role="status" className="font-semibold text-forest">{s.saved}: {s[match.receiptOutcome]}</p>}
-  {!open && !state?.report && match.canReportReceipt && (!match.receiptOutcome || editing) && <>
-   <h3 className="font-semibold text-forest">{s.title}</h3>
-   <div className="flex flex-wrap gap-2">{(["received","missing_items","not_received"] as const).map(v => <button key={v} type="button" className="btn-ghost min-h-11" onClick={() => choose(v)}>{s[v]}</button>)}</div>
-  </>}
-  {state?.report ? <div role="status" className="space-y-2"><p>{state.report.status === "resolved" ? t.resolved : t.received} · #{state.report.id.slice(0,8)}</p>{state.report.resolution && <p className="whitespace-pre-wrap text-muted">{state.report.resolution}</p>}
-    {!!state.report.photo_paths?.length && <EvidencePhotos paths={state.report.photo_paths} reportMatchId={match.id} />}
-   </div> : !open && <button type="button" className="min-h-11 text-muted underline hover:text-forest" onClick={() => {setOpen(true);setReceipt(null);}}>{t.report}</button>}
-  {!open && match.receiptOutcome && !state?.on_hold && <button type="button" className="min-h-11 underline" onClick={() => {setEditing(true);if(state?.report) choose("received");}}>{s.change}</button>}
-  {open && <form onSubmit={submit} className="space-y-3">
+ const form = <form onSubmit={submit} className="space-y-3">
    {receipt ? <p className="font-semibold">{s[receipt]}</p> : <label className="block font-semibold">{t.reason}<select className="field mt-1" value={reason} disabled={busy} onChange={e => setReason(e.target.value)}>{Object.entries(t.reasons).map(([key,label]) => <option key={key} value={key}>{label}</option>)}</select></label>}
    {receipt !== "received" && <>
     <p className="text-muted">{s.reportOnly}</p>
@@ -56,8 +41,30 @@ export default function DeliveryProblem({ match, handover, onHold, onChanged }: 
    </>}
    {error && <p role="alert" className="field-error">{error}</p>}
    <div className="flex flex-wrap gap-2"><button disabled={busy || uploading} type="submit" className="btn-primary min-h-11">{busy ? t.sending : receipt === "received" ? s.confirm : t.send}</button><button type="button" disabled={busy || uploading} className="btn-ghost min-h-11" onClick={() => {setOpen(false);setReceipt(null);}}>{t.cancel}</button></div>
-  </form>}
+  </form>;
+ const status = <div className="space-y-3 text-sm empty:hidden">
+  {handover && !match.receiptOutcome && state?.my_verified === false && <Link href="/verify" className="inline-flex min-h-11 items-center rounded-lg bg-warn-bg px-3 font-semibold text-warn underline">{t.verify}</Link>}
+  {handover && !match.receiptOutcome && state?.partner_verified === false && <p className="rounded-lg bg-warn-bg p-3 text-warn">{t.partner}</p>}
+  {state?.on_hold && <p role="status" className="rounded-xl bg-warn-bg p-3 text-warn">{t.hold}</p>}
+  {loadError && <p role="alert" className="text-muted">{t.loadError} <button className="min-h-11 underline" onClick={() => void load()}>{t.retry}</button></p>}
+  {match.receiptOutcome && !editing && <p role="status" className="font-semibold text-forest">{s.saved}: {s[match.receiptOutcome]}</p>}
+  {!open && !state?.report && match.canReportReceipt && (!match.receiptOutcome || editing) && <>
+   <h3 className="font-semibold text-forest">{s.title}</h3>
+   <div className="flex flex-wrap gap-2">{(["received","missing_items","not_received"] as const).map(v => <button key={v} type="button" className="btn-ghost min-h-11" onClick={() => choose(v)}>{s[v]}</button>)}</div>
+  </>}
+  {state?.report ? <div role="status" className="space-y-2"><p>{state.report.status === "resolved" ? t.resolved : t.received} · #{state.report.id.slice(0,8)}</p>{state.report.resolution && <p className="whitespace-pre-wrap text-muted">{state.report.resolution}</p>}
+    {!!state.report.photo_paths?.length && <EvidencePhotos paths={state.report.photo_paths} reportMatchId={match.id} />}
+   </div> : null}
+  {!open && match.receiptOutcome && !state?.on_hold && <button type="button" className="min-h-11 underline" onClick={() => {setEditing(true);if(state?.report) choose("received");}}>{s.change}</button>}
+
+  {open && receipt && form}
+
   {match.canReview && <a href={`#review-${match.id}`} className="inline-flex min-h-11 items-center font-semibold text-forest underline">{s.review}</a>}
   {state?.report && <p className="text-xs text-muted">{match.canReview ? s.updated : s.reviewHint}</p>}
- </section>;
+ </div>;
+ const reportControl = !state?.report && !receipt ? <div className="space-y-3 text-sm">
+  {!open && <button type="button" className="min-h-11 text-muted underline hover:text-forest" onClick={() => {setOpen(true);setReceipt(null);}}>{t.report}</button>}
+  {open && form}
+ </div> : null;
+ return children({ status, reportControl });
 }

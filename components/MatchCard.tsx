@@ -184,6 +184,7 @@ export default function MatchCard({
   const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
   const [view, setView] = useState<"messages" | "details">("messages");
   const chatPanelRef = useRef<HTMLDivElement>(null);
+  const detailsPanelRef = useRef<HTMLDivElement>(null);
   const [chatInView, setChatInView] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(true);
@@ -260,6 +261,9 @@ export default function MatchCard({
   const chatVisible = conversation || !readOnly;
   const chatOpen = chatVisible && view === "messages";
   const activeView = chatVisible ? view : "details";
+  useEffect(() => {
+    if (activeView === "details" && detailsPanelRef.current) detailsPanelRef.current.scrollTop = 0;
+  }, [activeView, match.id]);
 
   // Opening the dashboard is not the same as reading every conversation.
   useEffect(() => {
@@ -433,8 +437,8 @@ export default function MatchCard({
       {open && (
       <>
 
-      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setView("messages")}>
-      {({ inspection, parcelDetails }) => <>
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => { setView("messages"); document.getElementById(`messages-tab-${match.id}`)?.focus({ preventScroll: true }); }}>
+      {({ inspection, parcelDetails, refusal }) => <>
       {chatVisible && <div role="tablist" aria-label={d.sections} className={`flex shrink-0 gap-5 border-b border-line ${conversation ? "px-4" : "mt-5"}`}>
         {(["messages", "details"] as const).map((tab) => <button
           key={tab} id={`${tab}-tab-${match.id}`} type="button" role="tab"
@@ -486,22 +490,25 @@ export default function MatchCard({
       )}
 
       </div>}
-      <div id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className={`space-y-4 ${conversation ? "conversation-details" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
+      <div ref={detailsPanelRef} id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className={`${conversation ? "conversation-details" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
+      <DeliveryProblem match={match} handover={match.status === "escrow_paid"} onHold={setReportHold} onChanged={onChanged}>
+      {({ status: deliveryStatus, reportControl }) => <div className="space-y-4">
       {(done || match.canReview) && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
         <Star size={17} className="fill-gold text-gold-deep" aria-hidden />
         {reviewCopy[lang].reviewLink}
       </a>}
 
-      {!ended && !unavailableRequest && !match.receiptOutcome && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
+      {!ended && !unavailableRequest && !match.receiptOutcome && <ol aria-label={d.progress} className="grid grid-cols-3 gap-2">
         {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
           <div className={`h-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-sand-deep"}`} />
           <p className={`mt-1 text-xs ${i <= stepIndex ? "font-medium text-forest" : "text-muted"}`}>{i + 1}. {step}</p>
         </li>)}
       </ol>}
 
-      <DeliveryProblem match={match} handover={match.status === "escrow_paid"} onHold={setReportHold} onChanged={onChanged} />
+      {deliveryStatus}
 
-      {!match.receiptOutcome && !reportHold && (inspection || (!done && !ended)) && <div className="mt-4 space-y-3 rounded-xl bg-sand/60 p-4">
+      {!match.receiptOutcome && !reportHold && (inspection || (!done && !ended)) && <div className="space-y-3 rounded-xl bg-sand p-4">
+      <h3 className="text-sm font-semibold text-forest">{d.nextStep}</h3>
       {inspection}
 
       {/* Role-aware actions */}
@@ -623,6 +630,8 @@ export default function MatchCard({
 
       </div>}
 
+      {parcelDetails}
+
       {ended && (
         <div className="mt-3">
           <p className="text-sm text-muted">
@@ -657,7 +666,6 @@ export default function MatchCard({
       )}
 
 
-        {parcelDetails}
           {/* Sender: the one-time delivery code */}
           {senderCodeWindow && (
             <details className="rounded-xl bg-sand p-3">
@@ -705,8 +713,12 @@ export default function MatchCard({
             </details>
           )}
 
-          {(cancellable || (isTraveler && match.status === "picked_up")) && <section className="border-t border-line pt-3 text-sm">
-            <h3 className="font-semibold text-forest">{d.more}</h3>
+          {(reportControl || refusal) && <details className="border-t border-line text-sm">
+            <summary className="cursor-pointer py-3 font-semibold text-forest">{d.helpReport}</summary>
+            <div className="space-y-2 pb-3">{reportControl}{refusal}</div>
+          </details>}
+          {(cancellable || (isTraveler && match.status === "picked_up")) && <details className="border-t border-line text-sm">
+            <summary className="cursor-pointer py-3 font-semibold text-forest">{d.more}</summary>
             <div className="mt-1 flex flex-wrap gap-3">
               {!waNumber && cancellable && match.status !== "requested" && <a href="#whatsapp" className="inline-flex min-h-11 items-center text-forest underline">{d.addWhatsapp}</a>}
               {isTraveler && match.status === "picked_up" && <button className="btn-ghost min-h-11" disabled={busy}
@@ -714,7 +726,7 @@ export default function MatchCard({
               {cancellable && <button className="btn-ghost min-h-11 text-xs" disabled={busy}
                 onClick={() => act(() => cancelMatch(match.id), "Could not cancel — try again.")}>Cancel this match</button>}
             </div>
-          </section>}
+          </details>}
 
       {/* Journey updates: visible from pickup onward */}
       {(inTransit || (received && updates.length > 0)) && (
@@ -767,6 +779,8 @@ export default function MatchCard({
           {noteError && <p className="field-error">{noteError}</p>}
         </details>
       )}
+      </div>}
+      </DeliveryProblem>
       </div>
       </>}
       </MatchSafety>
