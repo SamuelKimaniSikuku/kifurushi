@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Gift, Hand, IdCard, Package, PackageSearch, Plane, ShieldQuestion, Star,
+  Gift, Hand, IdCard, Package, Plane, ShieldQuestion, Star,
   Wallet,
 } from "lucide-react";
 import {
@@ -14,7 +14,8 @@ import {
   fetchMoneyTotals, fetchMyMatches, fetchVerification, isAdmin, MatchDetail,
   MoneyTotals, VerificationState,
 } from "@/lib/db";
-import MatchCard from "@/components/MatchCard";
+import DeliveryInbox from "@/components/DeliveryInbox";
+import { inboxCopy } from "@/lib/locales/inbox";
 import RatingsFeedback from "@/components/RatingsFeedback";
 import WhatsappSettings from "@/components/WhatsappSettings";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -51,6 +52,8 @@ export default function DashboardPage() {
   const t = useT();
   const { lang } = useLang();
   const reviewText = reviewCopy[lang];
+  const inboxText = inboxCopy[lang];
+  const [section, setSection] = useState<"deliveries" | "ratings" | "account">("deliveries");
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matches, setMatches] = useState<MatchDetail[]>([]);
@@ -96,13 +99,23 @@ export default function DashboardPage() {
   }, [router, loadAttempt]);
 
   useEffect(() => {
-    if (!ready || loadError) return;
-    // The section does not exist until the dashboard finishes loading.
-    const section = window.location.hash.slice(1);
-    if (section === "ratings" || section === "deliveries") {
-      document.getElementById(section)?.scrollIntoView({ block: "start" });
+    const syncSection = () => {
+      const hash = window.location.hash.slice(1);
+      setSection(hash === "ratings" || hash.startsWith("review-") ? "ratings" :
+        hash === "account" || hash === "whatsapp" ? "account" : "deliveries");
+    };
+    syncSection();
+    window.addEventListener("hashchange", syncSection);
+    return () => window.removeEventListener("hashchange", syncSection);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    const hash = window.location.hash.slice(1);
+    if (hash === "whatsapp" || hash.startsWith("review-")) {
+      requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView({ block: "start" }));
     }
-  }, [ready, loadError]);
+  }, [ready, section]);
 
   if (loadError) return <div className="mx-auto max-w-4xl px-4 py-10">
     <section id="ratings" className="card p-6">
@@ -115,7 +128,7 @@ export default function DashboardPage() {
   if (!ready || !session) return <DashboardSkeleton />;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 py-5 sm:py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="flex items-center gap-2.5 font-display text-3xl font-bold tracking-tight text-forest md:text-4xl">
@@ -159,14 +172,34 @@ export default function DashboardPage() {
             ) : null}
           </p>
         </div>
-        <button
-          className="btn-ghost"
-          onClick={async () => { await signOut(); router.push("/"); }}
-        >
-          Sign out
-        </button>
+        <div className="flex gap-2">
+          <Link href="/post/trip" className="btn-ghost"><Plane size={17} aria-hidden />{inboxText.postTrip}</Link>
+          <Link href="/post/parcel" className="btn-primary"><Package size={17} aria-hidden />{inboxText.sendParcel}</Link>
+        </div>
       </div>
 
+      <nav aria-label={inboxText.dashboardSections} className="mb-4 mt-5 flex gap-1 border-b border-line">
+        {(["deliveries", "ratings", "account"] as const).map((item) => <a key={item}
+          href={`#${item}`} aria-current={section === item ? "page" : undefined}
+          onClick={() => setSection(item)}
+          className={`min-h-11 border-b-2 px-4 py-2 text-sm font-semibold ${section === item ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}>
+          {inboxText[item]}
+        </a>)}
+      </nav>
+
+      <section id="deliveries" hidden={section !== "deliveries"} className="scroll-mt-24" aria-label={inboxText.deliveries}>
+        <DeliveryInbox matches={matches} myUserId={session.userId} active={section === "deliveries"}
+          onChanged={() => {
+            notifyAttentionChanged();
+            void fetchMyMatches().then(setMatches).catch(() => setLoadError(true));
+          }} />
+      </section>
+
+      <div hidden={section !== "ratings"}>
+        <RatingsFeedback key={session.userId} matches={matches} myUserId={session.userId} />
+      </div>
+
+      <section id="account" hidden={section !== "account"} className="scroll-mt-24" aria-label={inboxText.account}>
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Link href="/post/trip" className="card card-lift p-5">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-sand-deep text-forest" aria-hidden>
@@ -226,8 +259,6 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
-
-      <RatingsFeedback key={session.userId} matches={matches} myUserId={session.userId} />
 
       {money && (money.carriedCount > 0 || money.sentCount > 0) && (
         <div className="card mt-4 p-5">
@@ -295,43 +326,10 @@ export default function DashboardPage() {
 
       <WhatsappSettings />
 
-      <h2 id="deliveries" className="mt-10 scroll-mt-24 font-display text-2xl font-bold tracking-tight text-forest md:text-3xl">Your deliveries</h2>
-
-      {matches.length === 0 ? (
-        <div className="card mt-4 flex flex-col items-center px-6 py-12 text-center">
-          <span
-            aria-hidden
-            className="grid h-12 w-12 place-items-center rounded-full bg-sand-deep text-forest"
-          >
-            <PackageSearch size={20} strokeWidth={2} />
-          </span>
-          <p className="mt-4 max-w-sm text-sm text-muted">
-            Nothing in motion yet. Request a traveller from{" "}
-            <Link href="/trips" className="font-semibold text-forest underline">Find a traveller</Link>{" "}
-            or offer to carry from{" "}
-            <Link href="/parcels" className="font-semibold text-forest underline">Parcel requests</Link>.
-          </p>
-        </div>
-      ) : (
-        <div className="mt-4 space-y-4">
-          {matches.map((m) => (
-            <MatchCard
-              key={m.id}
-              match={m}
-              myUserId={session.userId}
-              // Live deliveries open; finished ones fold away to keep the
-              // dashboard short.
-              defaultOpen={
-                !["released", "declined", "cancelled"].includes(m.status)
-              }
-              onChanged={() => {
-                notifyAttentionChanged();
-                void fetchMyMatches().then(setMatches).catch(() => setLoadError(true));
-              }}
-            />
-          ))}
-        </div>
-      )}
+        <button className="btn-ghost mt-5" onClick={async () => { await signOut(); router.push("/"); }}>
+          {inboxText.signOut}
+        </button>
+      </section>
     </div>
   );
 }

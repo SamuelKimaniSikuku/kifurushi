@@ -85,3 +85,21 @@ test('all supported languages explain the hidden-listing case', () => {
   }
   lang = 'en';
 });
+
+test('inbox opens messages first and keeps delivery actions in the hidden details panel', () => {
+  const html = renderToStaticMarkup(React.createElement(MatchCard, {
+    match: base, myUserId: 'traveler', onChanged: () => {}, conversation: true,
+  }));
+  assert.match(html, /id="messages-panel-pending"[^>]*role="tabpanel"[^>]*class="conversation-messages/);
+  assert.match(html, /id="details-panel-pending"[^>]*hidden=""/);
+  assert.ok(html.indexOf('Write a message') < html.indexOf('Accept request'));
+  assert.match(html, /Delivery details/);
+});
+test('cancelled conversations retain history without allowing a new message', () => {
+  const html = renderToStaticMarkup(React.createElement(MatchCard, {
+    match: {...base, status:'cancelled'}, myUserId:'traveler', onChanged:()=>{}, conversation:true,
+  }));
+  assert.match(html, /This request is closed/);
+  assert.doesNotMatch(html, /Write a message/);
+  assert.doesNotMatch(html, />Accept request</);
+});

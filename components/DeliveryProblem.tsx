@@ -30,7 +30,8 @@ export default function DeliveryProblem({ match, handover, onHold, onChanged }: 
   } catch { setError(s.failed); } finally { setBusy(false); }
  }
  function choose(outcome: ReceiptOutcome) { setReceipt(outcome); setReason(outcome === "received" ? "other" : outcome); setOpen(true); setError(""); }
- return <section className="my-4 space-y-3 rounded-xl border border-line p-4 text-sm" aria-label={t.report}>
+ const expanded = handover || open || loadError || state?.on_hold || state?.report || match.receiptOutcome || match.canReportReceipt || match.canReview;
+ return <section className={expanded ? "my-4 space-y-3 rounded-xl border border-line p-4 text-sm" : "text-sm"} aria-label={t.report}>
   {handover && !match.receiptOutcome && state?.my_verified === false && <Link href="/verify" className="inline-flex min-h-11 items-center font-semibold text-forest underline">{t.verify}</Link>}
   {handover && !match.receiptOutcome && state?.partner_verified === false && <p className="text-muted">{t.partner}</p>}
   {state?.on_hold && <p role="status" className="rounded-xl bg-warn-bg p-3 text-warn">{t.hold}</p>}

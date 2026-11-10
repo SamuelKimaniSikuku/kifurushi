@@ -4,7 +4,7 @@ import Link from "next/link";
 import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ChevronDown, Copy, KeyRound, MessageSquare, Send, Star,
+  ArrowLeft, ChevronDown, Copy, KeyRound, MessageSquare, Send, Star,
 } from "lucide-react";
 import {
   TransitUpdate, MatchStatus, Message,
@@ -23,31 +23,11 @@ import { deliveryCopy } from "@/lib/locales/delivery";
 import DeliveryProblem from "@/components/DeliveryProblem";
 import MatchSafety from "@/components/MatchSafety";
 
+import { inboxCopy } from "@/lib/locales/inbox";
+import { readChatMarker as readMarker, writeChatMarker as writeMarker, summarizeConversation, type ConversationSummary } from "@/lib/inbox";
+
 const CHAT_POLL_MS = 5000;
 const CHAT_IDLE_POLL_MS = 30000;
-
-// Per-match read marker: the timestamp of the newest message this browser has
-// seen with the panel open. Anything newer from the other party is unread.
-function markerKey(matchId: string) {
-  return `kifurushi.chatread.${matchId}`;
-}
-
-function readMarker(matchId: string): string {
-  if (typeof window === "undefined") return "";
-  try {
-    return localStorage.getItem(markerKey(matchId)) ?? "";
-  } catch {
-    return "";
-  }
-}
-
-function writeMarker(matchId: string, iso: string) {
-  try {
-    localStorage.setItem(markerKey(matchId), iso);
-  } catch {
-    // private mode — the badge just won't persist across reloads
-  }
-}
 
 function ChatPanel({
   matchId,
@@ -56,6 +36,9 @@ function ChatPanel({
   messages,
   visible,
   onSent,
+  draftStore,
+  readOnly = false,
+  conversation = false,
 }: {
   matchId: string;
   myUserId: string;
@@ -63,10 +46,13 @@ function ChatPanel({
   messages: Message[];
   visible: boolean;
   onSent: () => void;
+  draftStore?: Map<string, string>;
+  readOnly?: boolean;
+  conversation?: boolean;
 }) {
   const { lang } = useLang();
   const d = deliveryCopy[lang];
-  const [draft, setDraft] = useState("");
+  const [draft, setDraft] = useState(() => draftStore?.get(matchId) ?? "");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -89,6 +75,7 @@ function ChatPanel({
     try {
       await sendMessage(matchId, parsed.data);
       setDraft("");
+      draftStore?.delete(matchId);
       onSent();
     } catch {
       setError("Could not send — please try again.");
@@ -98,10 +85,10 @@ function ChatPanel({
   }
 
   return (
-    <div id={`messages-${matchId}`} className="scroll-mt-24">
+    <div id={`messages-${matchId}`} className={`scroll-mt-24 ${conversation ? "conversation-chat" : ""}`}>
       <div
         ref={scrollRef}
-        className="max-h-64 space-y-2 overflow-y-auto rounded-xl bg-sand/50 p-3"
+        className={`${conversation ? "conversation-log" : "max-h-64"} space-y-3 overflow-y-auto overscroll-contain rounded-xl bg-sand/50 p-3 sm:p-4`}
         aria-live="polite"
       >
         {messages.length === 0 ? (
@@ -137,24 +124,25 @@ function ChatPanel({
         )}
       </div>
 
-      <form onSubmit={submit} className="mt-3 flex gap-2">
+      {!readOnly && <form onSubmit={submit} className="mt-3 flex shrink-0 gap-2">
         <input
           aria-label={`Message ${counterpartyName}`}
           className={`field min-w-0 flex-1 ${error ? "field-invalid" : ""}`}
           placeholder={d.messagePlaceholder}
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => { setDraft(e.target.value); draftStore?.set(matchId, e.target.value); }}
           maxLength={2000}
         />
         <button
           type="submit"
           className="btn-primary min-h-[44px] shrink-0"
-          disabled={sending}
+          disabled={sending || !draft.trim()}
         >
           <Send className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
           {d.send}
         </button>
-      </form>
+      </form>}
+      {readOnly && <p className="mt-3 text-xs text-muted">{inboxCopy[lang].closed}</p>}
       {error && <p className="field-error">{error}</p>}
     </div>
   );
@@ -167,17 +155,26 @@ export default function MatchCard({
   myUserId,
   onChanged,
   defaultOpen = true,
+  conversation = false,
+  draftStore,
+  onSummary,
+  onBack,
 }: {
   match: MatchDetail;
   myUserId: string;
   onChanged: () => void;
   defaultOpen?: boolean;
+  conversation?: boolean;
+  draftStore?: Map<string, string>;
+  onSummary?: (id: string, summary: ConversationSummary, marker: string) => void;
+  onBack?: () => void;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const [reportHold, setReportHold] = useState(false);
   const t = useT();
   const { lang } = useLang();
   const weightText = requestWeightCopy[lang];
+  const inboxText = inboxCopy[lang];
   const d = deliveryCopy[lang];
   const requestAvailable = match.requestAvailability === "available";
   const unavailableRequest = match.status === "requested" &&
@@ -189,6 +186,10 @@ export default function MatchCard({
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const [chatInView, setChatInView] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [messagesError, setMessagesError] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
   const [note, setNote] = useState("");
@@ -250,10 +251,13 @@ export default function MatchCard({
   // Messages live at card level so the unread badge works even when the card
   // (or the chat panel inside it) is collapsed. Fast poll only while reading.
   const reloadMessages = useCallback(() => {
-    fetchMessages(match.id).then(setMessages).catch(() => {});
+    fetchMessages(match.id).then(items => {
+      if (mounted.current) { setMessages(items); setMessagesLoading(false); setMessagesError(false); }
+    }).catch(() => { if (mounted.current) { setMessagesError(true); setMessagesLoading(false); } });
   }, [match.id]);
 
-  const chatVisible = match.status !== "declined" && match.status !== "cancelled";
+  const readOnly = match.status === "declined" || match.status === "cancelled";
+  const chatVisible = conversation || !readOnly;
   const chatOpen = chatVisible && view === "messages";
   const activeView = chatVisible ? view : "details";
 
@@ -296,6 +300,10 @@ export default function MatchCard({
       writeMarker(match.id, newest);
     }
   }, [open, chatOpen, chatInView, messages, lastRead, match.id]);
+
+  useEffect(() => {
+    if (!messagesLoading && !messagesError) onSummary?.(match.id, summarizeConversation(messages, myUserId, lastRead), lastRead);
+  }, [messages, lastRead, match.id, myUserId, onSummary, messagesLoading, messagesError]);
 
   const act = useCallback(
     async (fn: () => Promise<unknown>, fallbackMessage: string) => {
@@ -370,7 +378,17 @@ export default function MatchCard({
   }
 
   return (
-    <div className="card p-4 sm:p-5">
+    <div className={conversation ? "conversation-card" : "card p-4 sm:p-5"}>
+      {conversation ? <header className="conversation-header flex items-start gap-3 border-b border-line p-4">
+        <button type="button" onClick={onBack} className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-forest md:hidden" aria-label={inboxText.back}><ArrowLeft size={22} aria-hidden /></button>
+        <div className="min-w-0 flex-1">
+          <h2 id={`conversation-heading-${match.id}`} tabIndex={-1} className="break-words text-base font-bold text-forest outline-none">{match.counterpartyName}</h2>
+          <p className="mt-0.5 text-xs text-muted">{match.route} · {isTraveler ? d.sender : d.traveller}</p>
+        </div>
+        <button type="button" onClick={() => setView("details")} className="max-w-[42%] rounded-lg bg-sand px-2 py-2 text-xs font-semibold text-forest" aria-label={`${inboxText.details}: ${d.status[match.status]}`}>
+          {match.receiptOutcome ? receiptCopy[lang][match.receiptOutcome] : unavailableRequest ? unavailableLabel : d.status[match.status]}
+        </button>
+      </header> : <>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -409,13 +427,70 @@ export default function MatchCard({
         </span>
       </button>
 
+      </>}
+
+
+      {open && (
+      <>
+
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setView("messages")}>
+      {({ inspection, parcelDetails }) => <>
+      {chatVisible && <div role="tablist" aria-label={d.sections} className={`flex shrink-0 gap-5 border-b border-line ${conversation ? "px-4" : "mt-5"}`}>
+        {(["messages", "details"] as const).map((tab) => <button
+          key={tab} id={`${tab}-tab-${match.id}`} type="button" role="tab"
+          aria-selected={activeView === tab} aria-controls={`${tab}-panel-${match.id}`}
+          tabIndex={activeView === tab ? 0 : -1}
+          onClick={() => setView(tab)}
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? "messages" : event.key === "End" ? "details" : tab === "messages" ? "details" : "messages";
+            setView(next);
+            document.getElementById(`${next}-tab-${match.id}`)?.focus();
+          }}
+          className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-1 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf ${activeView === tab ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}
+        >
+          {tab === "messages" ? d.messages : conversation ? inboxText.details : d.details}
+          {tab === "messages" && unread > 0 && <span className="rounded-full bg-clay px-1.5 py-0.5 text-xs text-white">{unread > 9 ? "9+" : unread}<span className="sr-only"> unread messages</span></span>}
+        </button>)}
+      </div>}
+      {chatVisible && <div ref={chatPanelRef} id={`messages-panel-${match.id}`} role="tabpanel" aria-labelledby={`messages-tab-${match.id}`} hidden={activeView !== "messages"} tabIndex={0} className={`${conversation ? "conversation-messages" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
+      {reportHold && <button type="button" onClick={() => setView("details")} className="mb-2 rounded-lg bg-warn-bg p-2 text-left text-xs text-warn">{inboxText.hold}</button>}
+      {waNumber && !ended && (
+        <a
+          href={`https://wa.me/${waNumber.replace("+", "")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-success underline"
+        >
+          <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+          WhatsApp
+        </a>
+      )}
+
+      {messagesLoading && <p role="status" className="p-3 text-sm text-muted">{inboxText.loading}</p>}
+      {messagesError && <p role="alert" className="p-3 text-sm text-danger">{inboxText.failed} <button type="button" className="underline" onClick={reloadMessages}>{inboxText.retry}</button></p>}
+      {/* Closed requests retain a read-only record. */}
+      {chatVisible && (
+        <ChatPanel
+          matchId={match.id}
+          myUserId={myUserId}
+          counterpartyName={match.counterpartyName}
+          messages={messages}
+          visible={chatOpen}
+          onSent={reloadMessages}
+          draftStore={draftStore}
+          readOnly={readOnly}
+          conversation={conversation}
+        />
+      )}
+
+      </div>}
+      <div id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className={`space-y-4 ${conversation ? "conversation-details" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
       {(done || match.canReview) && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
         <Star size={17} className="fill-gold text-gold-deep" aria-hidden />
         {reviewCopy[lang].reviewLink}
       </a>}
-
-      {open && (
-      <>
 
       {!ended && !unavailableRequest && !match.receiptOutcome && <ol aria-label={d.progress} className="mt-4 grid grid-cols-3 gap-2">
         {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
@@ -426,8 +501,6 @@ export default function MatchCard({
 
       <DeliveryProblem match={match} handover={match.status === "escrow_paid"} onHold={setReportHold} onChanged={onChanged} />
 
-      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => setView("messages")}>
-      {({ inspection, parcelDetails }) => <>
       {!match.receiptOutcome && !reportHold && (inspection || (!done && !ended)) && <div className="mt-4 space-y-3 rounded-xl bg-sand/60 p-4">
       {inspection}
 
@@ -584,52 +657,6 @@ export default function MatchCard({
       )}
 
 
-      {chatVisible && <div role="tablist" aria-label={d.sections} className="mt-5 flex gap-5 border-b border-line">
-        {(["messages", "details"] as const).map((tab) => <button
-          key={tab} id={`${tab}-tab-${match.id}`} type="button" role="tab"
-          aria-selected={activeView === tab} aria-controls={`${tab}-panel-${match.id}`}
-          tabIndex={activeView === tab ? 0 : -1}
-          onClick={() => setView(tab)}
-          onKeyDown={(event) => {
-            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-            event.preventDefault();
-            const next = event.key === "Home" ? "messages" : event.key === "End" ? "details" : tab === "messages" ? "details" : "messages";
-            setView(next);
-            document.getElementById(`${next}-tab-${match.id}`)?.focus();
-          }}
-          className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-1 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf ${activeView === tab ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}
-        >
-          {tab === "messages" ? d.messages : d.details}
-          {tab === "messages" && unread > 0 && <span className="rounded-full bg-clay px-1.5 py-0.5 text-xs text-white">{unread > 9 ? "9+" : unread}<span className="sr-only"> unread messages</span></span>}
-        </button>)}
-      </div>}
-      {chatVisible && <div ref={chatPanelRef} id={`messages-panel-${match.id}`} role="tabpanel" aria-labelledby={`messages-tab-${match.id}`} hidden={activeView !== "messages"} tabIndex={0} className="pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf">
-      {waNumber && !ended && (
-        <a
-          href={`https://wa.me/${waNumber.replace("+", "")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-success underline"
-        >
-          <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-          WhatsApp
-        </a>
-      )}
-
-      {/* Match-scoped chat — everywhere except dead matches */}
-      {chatVisible && (
-        <ChatPanel
-          matchId={match.id}
-          myUserId={myUserId}
-          counterpartyName={match.counterpartyName}
-          messages={messages}
-          visible={chatOpen}
-          onSent={reloadMessages}
-        />
-      )}
-
-      </div>}
-      <div id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className="space-y-4 pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf">
         {parcelDetails}
           {/* Sender: the one-time delivery code */}
           {senderCodeWindow && (

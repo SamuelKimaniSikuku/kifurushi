@@ -183,3 +183,31 @@
     transform: none !important;
   }
 }
+
+/* A single conversation stays in view while its messages scroll. */
+.delivery-inbox {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  height: min(780px, calc(100dvh - 280px));
+  min-height: 400px;
+  overflow: hidden;
+}
+.inbox-list { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
+.inbox-main { min-width: 0; min-height: 0; }
+.conversation-card { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.conversation-header { flex-shrink: 0; }
+.conversation-messages { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 12px 16px 16px; }
+.conversation-messages[hidden], .conversation-details[hidden] { display: none; }
+.conversation-chat { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+.conversation-log { flex: 1; min-height: 0; }
+.conversation-details { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+@media (max-width: 767px) {
+  .delivery-inbox { display: block; height: calc(100dvh - 280px); min-height: 400px; }
+  .inbox-list { height: 100%; border-right: 0; }
+  .inbox-main { display: none; }
+  .inbox-mobile-open .inbox-main {
+    display: block; position: fixed; inset: 0; z-index: 70; height: 100dvh;
+    background: white; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+  }
+  .conversation-messages { padding: 10px 12px 12px; }
+}

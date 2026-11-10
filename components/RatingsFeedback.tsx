@@ -29,6 +29,17 @@ export default function RatingsFeedback({ matches, myUserId }: { matches: MatchD
     return () => { active = false; };
   }, [matchKey, myUserId, attempt]);
 
+  useEffect(() => {
+    if (loadedKey !== matchKey) return;
+    const showLinkedReview = () => {
+      const id = window.location.hash.slice(1);
+      if (id.startsWith("review-")) requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ block: "start" }));
+    };
+    showLinkedReview();
+    window.addEventListener("hashchange", showLinkedReview);
+    return () => window.removeEventListener("hashchange", showLinkedReview);
+  }, [loadedKey, matchKey]);
+
   const pendingCount = completed.filter((match) => !reviews.some((review) => review.matchId === match.id && review.authorId === myUserId)).length;
 
   return <section id="ratings" aria-labelledby="ratings-title" className="card mt-6 scroll-mt-24 p-5 sm:p-6">
