@@ -3,6 +3,8 @@
 @tailwind utilities;
 
 :root {
+  --font-body: "Kifurushi Inter", "Kifurushi Inter Fallback";
+  --font-display: "Kifurushi Sora", "Kifurushi Sora Fallback";
   --forest: #0b3b2e;
   --forest-deep: #072a20;
   --leaf: #1a6b4f;

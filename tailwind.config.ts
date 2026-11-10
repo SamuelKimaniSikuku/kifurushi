@@ -31,9 +31,9 @@ const config: Config = {
         "danger-bg": "var(--danger-bg)",
       },
       fontFamily: {
-        display: ["var(--font-display)", "ui-sans-serif", "system-ui", "sans-serif"],
-        body: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
-        sans: ["var(--font-body)", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-display, ui-sans-serif)", "ui-sans-serif", "system-ui", "sans-serif"],
+        body: ["var(--font-body, ui-sans-serif)", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["var(--font-body, ui-sans-serif)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },

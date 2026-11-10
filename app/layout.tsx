@@ -1,24 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Sora } from "next/font/google";
+import "./fonts.css";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { LanguageProvider } from "@/lib/i18n";
-
-const sora = Sora({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-display",
-  display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-body",
-  display: "swap",
-});
 
 // metadataBase makes every relative OG/canonical URL absolute, which is what
 // WhatsApp, LinkedIn and Google actually require. The title template gives
@@ -68,7 +54,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${sora.variable} ${inter.variable}`}>
+    <html lang="en">
+      <head>
+        <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/sora-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body className="antialiased">
         <script
           type="application/ld+json"
