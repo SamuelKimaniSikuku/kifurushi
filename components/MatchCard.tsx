@@ -398,7 +398,7 @@ export default function MatchCard({
       {conversation ? <header className="conversation-header flex items-start gap-3 border-b border-line p-4">
         <button type="button" onClick={onBack} className="-ml-2 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-forest md:hidden" aria-label={inboxText.back}><ArrowLeft size={22} aria-hidden /></button>
         <div className="min-w-0 flex-1">
-          <h2 id={`conversation-heading-${match.id}`} tabIndex={-1} className="break-words text-base font-bold text-forest outline-none">{match.counterpartyName}</h2>
+          <h2 id={`conversation-heading-${match.id}`} tabIndex={-1} className="break-words font-body text-base font-semibold tracking-normal text-forest outline-none">{match.counterpartyName}</h2>
           <p className="mt-0.5 text-xs text-muted">{match.route} · {isTraveler ? d.sender : d.traveller}</p>
         </div>
         <button type="button" onClick={() => setView("details")} className="max-w-[42%] rounded-lg bg-sand px-2 py-2 text-xs font-semibold text-forest" aria-label={`${inboxText.details}: ${d.status[match.status]}`}>
