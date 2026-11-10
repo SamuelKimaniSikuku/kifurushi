@@ -112,6 +112,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!ready) return;
     const hash = window.location.hash.slice(1);
+    if (section === "deliveries") {
+      // Old dashboard links may restore a scroll position several cards down.
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    }
     if (hash === "whatsapp" || hash.startsWith("review-")) {
       requestAnimationFrame(() => document.getElementById(hash)?.scrollIntoView({ block: "start" }));
     }
