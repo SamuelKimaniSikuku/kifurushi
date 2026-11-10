@@ -19,6 +19,7 @@ export const sw: Dict = {
     dashboardOf: (name: string) => `Dashibodi ya ${name}`,
     openMenu: "Fungua menyu",
     closeMenu: "Funga menyu",
+    unreadChats: (n: number) => `Mazungumzo ${n} yenye ujumbe ambao haujasomwa`,
     needsAttention: (n: number) => `${n} yanakusubiri`,
   },
   footer: {

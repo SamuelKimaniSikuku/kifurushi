@@ -19,6 +19,7 @@ export const fr: Dict = {
     dashboardOf: (name: string) => `Tableau de bord de ${name}`,
     openMenu: "Ouvrir le menu",
     closeMenu: "Fermer le menu",
+    unreadChats: (n: number) => `${n} conversation${n === 1 ? "" : "s"} avec des messages non lus`,
     needsAttention: (n: number) => `${n} en attente de vous`,
   },
   footer: {

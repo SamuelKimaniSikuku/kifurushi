@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Globe, Menu, Package, Plane, X } from "lucide-react";
 import { useSession } from "@/lib/auth";
-import { fetchAttention } from "@/lib/db";
+import { countUnreadChats, fetchIncomingChatActivity, type IncomingChatActivity } from "@/lib/chatNotifications";
+import { CHAT_READ_CHANGED, CHAT_READ_PREFIX } from "@/lib/inbox";
 import { ATTENTION_CHANGED } from "@/lib/attentionEvents";
 import { useLang, useT, LANG_LABELS, LANG_FLAGS, type Lang } from "@/lib/i18n";
 
@@ -124,33 +125,45 @@ export default function Nav() {
   const pathname = usePathname();
   const { session } = useSession();
   const [open, setOpen] = useState(false);
-  const [waiting, setWaiting] = useState(0);
+  const [unreadChats, setUnreadChats] = useState(0);
   const mobileButton = useRef<HTMLButtonElement>(null);
   const t = useT();
   const userId = session?.userId;
 
-  // Update immediately after a delivery action and when returning to the app.
+  // The dashboard badge represents unread conversations, just like the inbox.
   useEffect(() => {
-    setWaiting(0);
+    setUnreadChats(0);
     if (!userId) return;
     let live = true;
     let request = 0;
+    let activity: IncomingChatActivity = {};
+    const recount = () => { if (live) setUnreadChats(countUnreadChats(activity)); };
     const load = async () => {
+      if (document.visibilityState !== "visible") return;
       const current = ++request;
       try {
-        const attention = await fetchAttention();
-        if (live && current === request) setWaiting(attention.total);
-      } catch { /* Keep the last successful count on a temporary read failure. */ }
+        const incoming = await fetchIncomingChatActivity(userId);
+        if (live && current === request) { activity = incoming; recount(); }
+      } catch { /* Retain the last successful snapshot on a temporary failure. */ }
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key.startsWith(CHAT_READ_PREFIX)) recount();
     };
     void load();
-    const timer = setInterval(load, 60000);
+    const timer = setInterval(load, 30000);
+    window.addEventListener(CHAT_READ_CHANGED, recount);
+    window.addEventListener("storage", onStorage);
     window.addEventListener(ATTENTION_CHANGED, load);
     window.addEventListener("focus", load);
+    document.addEventListener("visibilitychange", load);
     return () => {
       live = false;
       clearInterval(timer);
+      window.removeEventListener(CHAT_READ_CHANGED, recount);
+      window.removeEventListener("storage", onStorage);
       window.removeEventListener(ATTENTION_CHANGED, load);
       window.removeEventListener("focus", load);
+      document.removeEventListener("visibilitychange", load);
     };
   }, [userId, pathname]);
 
@@ -248,12 +261,12 @@ export default function Nav() {
         <div className="hidden shrink-0 items-center gap-2 xl:flex">
           <LanguageSwitcher />
           {session ? (
-            <Link href={waiting > 0 ? "/dashboard#deliveries" : "/dashboard"} title={waiting > 0 ? t.nav.needsAttention(waiting) : undefined} className="btn-primary relative whitespace-nowrap">
+            <Link href={unreadChats > 0 ? "/dashboard#unread" : "/dashboard"} title={unreadChats > 0 ? t.nav.unreadChats(unreadChats) : undefined} className="btn-primary relative whitespace-nowrap">
               {t.nav.dashboard}
-              {waiting > 0 && (
+              {unreadChats > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-clay px-1 text-[11px] font-bold text-white ring-2 ring-white">
-                  {waiting > 9 ? "9+" : waiting}
-                  <span className="sr-only"> {t.nav.needsAttention(waiting)}</span>
+                  {unreadChats > 9 ? "9+" : unreadChats}
+                  <span className="sr-only"> {t.nav.unreadChats(unreadChats)}</span>
                 </span>
               )}
             </Link>
@@ -338,15 +351,15 @@ export default function Nav() {
             <LanguageSwitcher compact />
           </div>
           <Link
-            href={session ? (waiting > 0 ? "/dashboard#deliveries" : "/dashboard") : "/auth?mode=signin"}
-            title={session && waiting > 0 ? t.nav.needsAttention(waiting) : undefined}
+            href={session ? (unreadChats > 0 ? "/dashboard#unread" : "/dashboard") : "/auth?mode=signin"}
+            title={session && unreadChats > 0 ? t.nav.unreadChats(unreadChats) : undefined}
             className="btn-primary w-full"
           >
             {session ? t.nav.dashboard : t.nav.signIn}
-            {session && waiting > 0 && (
+            {session && unreadChats > 0 && (
               <span className="ml-1.5 grid h-5 min-w-[20px] place-items-center rounded-full bg-clay px-1 text-[11px] font-bold text-white">
-                {waiting > 9 ? "9+" : waiting}
-                <span className="sr-only"> {t.nav.needsAttention(waiting)}</span>
+                {unreadChats > 9 ? "9+" : unreadChats}
+                <span className="sr-only"> {t.nav.unreadChats(unreadChats)}</span>
               </span>
             )}
           </Link>

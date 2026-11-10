@@ -24,10 +24,21 @@ export function inboxMatches(matches: MatchDetail[], summaries: Record<string, C
   });
 }
 
+export const CHAT_READ_CHANGED = "kifurushi:chat-read-changed";
+export const CHAT_READ_PREFIX = "kifurushi.chatread.";
+const memoryReadMarkers = new Map<string, string>();
+
 export function readChatMarker(matchId: string): string {
-  try { return localStorage.getItem(`kifurushi.chatread.${matchId}`) ?? ""; } catch { return ""; }
+  let saved = "";
+  try { saved = localStorage.getItem(`${CHAT_READ_PREFIX}${matchId}`) ?? ""; } catch { /* Storage can be unavailable. */ }
+  const marker = memoryReadMarkers.get(matchId) ?? "";
+  return saved > marker ? saved : marker;
 }
 
 export function writeChatMarker(matchId: string, iso: string) {
-  try { localStorage.setItem(`kifurushi.chatread.${matchId}`, iso); } catch { /* Private browsing: keep the in-memory marker. */ }
+  // A slow response or another tab must never move the read position backwards.
+  if (!iso || iso <= readChatMarker(matchId)) return;
+  memoryReadMarkers.set(matchId, iso);
+  try { localStorage.setItem(`${CHAT_READ_PREFIX}${matchId}`, iso); } catch { /* Keep the shared in-memory marker. */ }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(CHAT_READ_CHANGED));
 }

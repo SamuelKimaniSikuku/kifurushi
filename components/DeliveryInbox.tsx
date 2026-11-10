@@ -9,7 +9,7 @@ import { inboxCopy } from "@/lib/locales/inbox";
 import { deliveryCopy } from "@/lib/locales/delivery";
 import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { receiptCopy } from "@/lib/locales/receipt";
-import { inboxMatches, isHistory, readChatMarker, summarizeConversation, type ConversationSummary, type InboxFilter } from "@/lib/inbox";
+import { CHAT_READ_CHANGED, CHAT_READ_PREFIX, inboxMatches, isHistory, readChatMarker, summarizeConversation, type ConversationSummary, type InboxFilter } from "@/lib/inbox";
 import MatchCard from "./MatchCard";
 
 export default function DeliveryInbox({ matches, myUserId, active, onChanged }: {
@@ -26,7 +26,6 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
   const [attempt, setAttempt] = useState(0);
   // Drafts live only in this signed-in dashboard, and survive switching chats.
   const drafts = useRef(new Map<string, string>());
-  const readAt = useRef(new Map<string, string>());
   const matchKey = matches.map(m => m.id).sort().join(",");
 
   useEffect(() => {
@@ -45,6 +44,8 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
           setSelectedId(id); setMobileOpen(true); setQuery("");
           setFilter(isHistory(match) ? "history" : "active");
         }
+      } else if (hash === "unread") {
+        setFilter("unread"); setSelectedId(null); setMobileOpen(false); setQuery("");
       } else if (hash === "deliveries") setMobileOpen(false);
     };
     sync(); window.addEventListener("hashchange", sync);
@@ -66,7 +67,7 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
           results.forEach((result, i) => {
             const id = ids[i];
             if (result.status !== "fulfilled") return;
-            const summary = summarizeConversation(result.value, myUserId, readAt.current.get(id) ?? readChatMarker(id));
+            const summary = summarizeConversation(result.value, myUserId, readChatMarker(id));
             // A slower background response must not replace a newer chat update.
             if ((summary.lastMessage?.createdAt ?? "") < (current[id]?.lastMessage?.createdAt ?? "")) return;
             next[id] = summary;
@@ -79,12 +80,19 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
     void load();
     const timer = setInterval(() => void load(), 30000);
     const onFocus = () => void load();
+    const onStorage = (event: StorageEvent) => { if (!event.key || event.key.startsWith(CHAT_READ_PREFIX)) void load(); };
     document.addEventListener("visibilitychange", onFocus);
-    return () => { live = false; clearInterval(timer); document.removeEventListener("visibilitychange", onFocus); };
+    window.addEventListener(CHAT_READ_CHANGED, onFocus);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      live = false; clearInterval(timer);
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener(CHAT_READ_CHANGED, onFocus);
+      window.removeEventListener("storage", onStorage);
+    };
   }, [active, matchKey, myUserId, attempt]);
 
-  const updateSummary = useCallback((id: string, summary: ConversationSummary, marker: string) => {
-    readAt.current.set(id, marker);
+  const updateSummary = useCallback((id: string, summary: ConversationSummary) => {
     setSummaries(current => ({ ...current, [id]: summary }));
   }, []);
   const visibleMatches = inboxMatches(matches, summaries, filter, query);
@@ -95,7 +103,10 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
     setSelectedId(match.id); setMobileOpen(true);
     window.history.replaceState(null, "", `#messages-${match.id}`);
   };
-  const changeFilter = (next: InboxFilter) => { setFilter(next); setSelectedId(null); setMobileOpen(false); };
+  const changeFilter = (next: InboxFilter) => {
+    setFilter(next); setSelectedId(null); setMobileOpen(false);
+    window.history.replaceState(null, "", next === "unread" ? "#unread" : "#deliveries");
+  };
 
   return <div className={`delivery-inbox card ${mobileOpen ? "inbox-mobile-open" : ""}`}>
     <aside className="inbox-list" aria-label={s.title}>

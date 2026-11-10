@@ -18,6 +18,7 @@ export const en = {
     dashboardOf: (name: string) => `${name}'s dashboard`,
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    unreadChats: (n: number) => `${n} conversation${n === 1 ? "" : "s"} with unread messages`,
     needsAttention: (n: number) => `${n} waiting for you`,
   },
   footer: {

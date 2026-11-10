@@ -24,7 +24,7 @@ import DeliveryProblem from "@/components/DeliveryProblem";
 import MatchSafety from "@/components/MatchSafety";
 
 import { inboxCopy } from "@/lib/locales/inbox";
-import { readChatMarker as readMarker, writeChatMarker as writeMarker, summarizeConversation, type ConversationSummary } from "@/lib/inbox";
+import { CHAT_READ_CHANGED, CHAT_READ_PREFIX, readChatMarker as readMarker, writeChatMarker as writeMarker, summarizeConversation, type ConversationSummary } from "@/lib/inbox";
 
 const CHAT_POLL_MS = 5000;
 const CHAT_IDLE_POLL_MS = 30000;
@@ -192,6 +192,18 @@ export default function MatchCard({
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [lastRead, setLastRead] = useState<string>(() => readMarker(match.id));
+  useEffect(() => {
+    const syncRead = () => setLastRead(current => {
+      const marker = readMarker(match.id);
+      return marker > current ? marker : current;
+    });
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === `${CHAT_READ_PREFIX}${match.id}`) syncRead();
+    };
+    window.addEventListener(CHAT_READ_CHANGED, syncRead);
+    window.addEventListener("storage", onStorage);
+    return () => { window.removeEventListener(CHAT_READ_CHANGED, syncRead); window.removeEventListener("storage", onStorage); };
+  }, [match.id]);
   const [updates, setUpdates] = useState<TransitUpdate[]>([]);
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState("");
