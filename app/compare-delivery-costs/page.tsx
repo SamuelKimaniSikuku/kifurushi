@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import DeliveryCostComparison from "@/components/DeliveryCostComparison";
 
-const description = "Compare your DHL or other international courier quote with a Kifurushi traveller’s fee. Calculate potential savings using your own total prices.";
+const description = "Estimate your Kifurushi delivery cost from parcel weight and a traveller’s price per kg. Add a DHL or other courier quote to compare potential savings.";
 export const metadata: Metadata = {
   title: "Compare DHL and courier costs with Kifurushi",
   description,
