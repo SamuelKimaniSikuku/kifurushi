@@ -20,6 +20,7 @@ import ContentsDeclaration from "@/components/ContentsDeclaration";
 import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
 import { fetchDeclaration } from "@/lib/safetyDb";
 import { safetyCopy } from "@/lib/locales/safety";
+import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 
@@ -288,6 +289,7 @@ function PostParcelForm() {
             {errors.budgetUsd && (
               <p id="budgetUsd-error" className="field-error">{errors.budgetUsd}</p>
             )}
+            <a href="/compare-delivery-costs" target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex min-h-11 items-center text-xs font-semibold text-forest underline underline-offset-4">{deliveryCostCopy[lang].formLink}</a>
           </div>
         </div>
 
