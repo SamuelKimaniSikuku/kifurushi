@@ -52,14 +52,37 @@ test('booked request shows saved weight and explanation without false weight or 
   assert.match(html, /Write a message/);
   assert.match(html, />Decline</);
 });
-test('valid available weight enables acceptance; unknown and overweight estimates do not', () => {
+test('known and unknown weights allow acceptance; known over-capacity estimates still explain the block', () => {
   lang = 'en';
   assert.doesNotMatch(acceptButton(render()), /disabled/);
   const unknown = render({ parcelWeightKg: null });
   assert.match(unknown, /Weight to agree/);
-  assert.match(acceptButton(unknown), /disabled/);
-  assert.match(acceptButton(render({ parcelWeightKg: 12 })), /disabled/);
+  assert.doesNotMatch(acceptButton(unknown), /disabled/);
+  assert.match(unknown, /You can accept now and agree the weight in Messages/);
+  assert.doesNotMatch(acceptButton(render({ parcelWeightKg: null, remainingKg: 0 })), /disabled/);
+  const oversized = render({ parcelWeightKg: 12 });
+  assert.match(acceptButton(oversized), /disabled/);
+  assert.match(oversized, /This estimate exceeds the available space/);
   assert.match(acceptButton(render({ remainingKg: 0 })), /disabled/);
+});
+test('accepting unknown weight keeps a reminder in delivery details in every language', () => {
+  for (lang of ['en', 'fr', 'sw']) {
+    const pending = render({ parcelWeightKg: null });
+    assert.doesNotMatch(acceptButton(pending), /disabled/);
+    assert.ok(pending.includes(requestWeightCopy[lang].pending));
+    for (const status of ['accepted', 'escrow_paid']) {
+      const html = render({ status, parcelWeightKg: null });
+      assert.ok(html.includes(requestWeightCopy[lang].acceptedUnknown));
+      assert.doesNotMatch(html, />0 kg</);
+    }
+  }
+  lang = 'en';
+});
+test('unknown weight never unlocks another booking, a closed listing, or the requester’s own acceptance', () => {
+  for (const requestAvailability of ['booked_elsewhere', 'unavailable', 'unknown']) {
+    assert.match(acceptButton(render({ parcelWeightKg: null, requestAvailability })), /disabled/);
+  }
+  assert.equal(acceptButton(render({ parcelWeightKg: null, requesterId: 'traveler' })), undefined);
 });
 test('missing availability prompts refresh instead of claiming unknown weight', () => {
   lang = 'en';
