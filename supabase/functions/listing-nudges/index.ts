@@ -1,6 +1,7 @@
 // Nudges for listings nobody has taken. Run once a morning by pg_cron.
 //
-// Two moments matter to a member:
+// Three moments matter to a member:
+//   early   — 48 hours after posting, before the final three days
 //   soon    — the deadline (or departure) is 3 days out and still nothing
 //             booked, while there is usually still time to change the date
 //   expired — it has passed unmatched, so the listing is dead and only a
@@ -18,6 +19,10 @@ type Lang = "en" | "fr" | "sw";
 const T: Record<
   Lang,
   {
+    parcelEarly: (city: string) => string;
+    parcelEarlyBody: string;
+    tripEarly: (city: string) => string;
+    tripEarlyBody: string;
     parcelSoon: (city: string, date: string) => string;
     parcelSoonBody: (date: string, alt: number) => string;
     parcelGone: (city: string) => string;
@@ -46,9 +51,13 @@ const T: Record<
   }
 > = {
   en: {
+    parcelEarly: (city) => `Still looking for a traveller to ${city}?`,
+    parcelEarlyBody: "Your parcel has been listed for at least two days without a confirmed booking. Check travellers on your route, send a request, or follow up on a request you've already sent. If your dates are flexible, updating your deadline may give you more options. A request is only a booking once it is accepted.",
+    tripEarly: (city) => `Find a parcel for your trip to ${city}`,
+    tripEarlyBody: "Your trip has been listed for at least two days without a confirmed booking. Check parcels on your route and offer to carry one, reply to any requests, or share your trip. Make sure your dates, available space and price are up to date. A request is only a booking once it is accepted.",
     parcelSoon: (city, date) => `No traveller yet for ${city} — needed by ${date}`,
     parcelSoonBody: (date, alt) =>
-      `Your parcel still has nobody to carry it, and you need it there by <b>${date}</b>.` +
+      `Your parcel still has no confirmed booking, and you need it there by <b>${date}</b>.` +
       (alt > 0
         ? ` ${alt} traveller${alt === 1 ? "" : "s"} on your route leave${
             alt === 1 ? "s" : ""
@@ -95,9 +104,13 @@ const T: Record<
     footer: "You get this because you have an open listing on Kifurushi.",
   },
   fr: {
+    parcelEarly: (city) => `Vous cherchez encore un voyageur pour ${city} ?`,
+    parcelEarlyBody: "Votre colis est publié depuis au moins deux jours sans réservation confirmée. Consultez les voyageurs sur votre trajet, envoyez une demande ou relancez une demande déjà envoyée. Si vos dates sont flexibles, modifier votre date limite peut vous donner plus de choix. Une demande devient une réservation uniquement après acceptation.",
+    tripEarly: (city) => `Trouvez un colis pour votre voyage vers ${city}`,
+    tripEarlyBody: "Votre voyage est publié depuis au moins deux jours sans réservation confirmée. Consultez les colis sur votre trajet, proposez de les transporter, répondez aux demandes ou partagez votre voyage. Vérifiez vos dates, la place disponible et votre tarif. Une demande devient une réservation uniquement après acceptation.",
     parcelSoon: (city, date) => `Aucun voyageur pour ${city} — requis avant le ${date}`,
     parcelSoonBody: (date, alt) =>
-      `Personne ne s'est encore proposé pour votre colis, et vous en avez besoin sur place avant le <b>${date}</b>.` +
+      `Votre colis n'a pas encore de réservation confirmée, et vous en avez besoin sur place avant le <b>${date}</b>.` +
       (alt > 0
         ? ` ${alt} voyageur${alt === 1 ? "" : "s"} sur votre itinéraire part${
             alt === 1 ? "" : "ent"
@@ -142,9 +155,13 @@ const T: Record<
     footer: "Vous recevez ceci car vous avez une annonce ouverte sur Kifurushi.",
   },
   sw: {
+    parcelEarly: (city) => `Bado unatafuta msafiri kwenda ${city}?`,
+    parcelEarlyBody: "Kifurushi chako kimetangazwa kwa angalau siku mbili bila makubaliano yaliyothibitishwa. Angalia wasafiri kwenye njia yako, tuma ombi au fuatilia ombi ulilotuma. Kama tarehe zako zinaweza kubadilika, kuongeza muda kunaweza kukupa chaguo zaidi. Ombi linakuwa makubaliano baada ya kukubaliwa.",
+    tripEarly: (city) => `Tafuta kifurushi kwa safari yako ya ${city}`,
+    tripEarlyBody: "Safari yako imetangazwa kwa angalau siku mbili bila makubaliano yaliyothibitishwa. Angalia vifurushi kwenye njia yako, jitolee kuvibeba, jibu maombi au shiriki safari yako. Hakikisha tarehe, nafasi na bei yako ni sahihi. Ombi linakuwa makubaliano baada ya kukubaliwa.",
     parcelSoon: (city, date) => `Hakuna msafiri kwa ${city} — kinahitajika kabla ya ${date}`,
     parcelSoonBody: (date, alt) =>
-      `Kifurushi chako hakina mtu wa kukichukua, na unakihitaji huko kabla ya <b>${date}</b>.` +
+      `Kifurushi chako bado hakina makubaliano yaliyothibitishwa, na unakihitaji huko kabla ya <b>${date}</b>.` +
       (alt > 0
         ? ` Wasafiri ${alt} kwenye njia yako wanaondoka baada ya tarehe hiyo — kuongeza siku kadhaa kutawafanya wafikike.`
         : ` Kuruhusu tarehe ya baadaye huongeza wasafiri wanaoweza kukichukua.`),
@@ -199,7 +216,7 @@ function shell(
   return `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
-    <h1 style="margin:0;font-size:22px">${heading}</h1>
+    <h1 style="margin:0;font-size:22px">${escapeHtml(heading)}</h1>
   </div>
   <div style="font-size:14px;line-height:1.7;margin:20px 0">${body}</div>
   <a href="${href}" style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;padding:12px 22px;border-radius:12px;font-weight:600">${cta}</a>
@@ -209,7 +226,7 @@ function shell(
 </div>`;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+async function sendEmail(to: string, subject: string, html: string, idempotencyKey: string): Promise<boolean> {
   // Test-run guard: temp accounts created during verification use "+test"
   // aliases. Their matches exercise the real pipeline, but nobody should
   // receive the mail — least of all the founder's inbox.
@@ -221,7 +238,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<boo
   if (!key) return false;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
     body: JSON.stringify({
       from: "Kifurushi <hello@kifurushiapp.com>",
       to: [to],
@@ -247,357 +264,327 @@ const day = (iso: string, lang: Lang) =>
     month: "long",
   });
 
+const DAY = 86_400_000;
+const BOOKED_STATUSES = ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered", "released", "disputed"];
+type ReminderPhase = "early" | "soon" | "expired";
+type ListingReminder = {
+  id: string; user_id: string; status: string; to_city: string;
+  from_country: string; to_country: string; listing_date: string; created_at: string;
+  remaining_kg?: number; nudged_early_at: string | null;
+  nudged_soon_at: string | null; nudged_expired_at: string | null;
+};
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+function reminderPhase(listing: ListingReminder, now: number): ReminderPhase | null {
+  const today = new Date(now).toISOString().slice(0, 10);
+  const date = listing.listing_date;
+  const created = Date.parse(listing.created_at);
+  if (!Number.isFinite(created) || !Number.isFinite(Date.parse(date))) return null;
+  const markers = [listing.nudged_early_at, listing.nudged_soon_at, listing.nudged_expired_at];
+  // Space listing reminders out even when a member changes their deadline.
+  if (markers.some((at) => at && now - Date.parse(at) < 2 * DAY)) return null;
+  if (date < today) {
+    const oldest = new Date(now - 3 * DAY).toISOString().slice(0, 10);
+    return !listing.nudged_expired_at && date >= oldest ? "expired" : null;
+  }
+  if (listing.status !== "open" || (listing.remaining_kg !== undefined && !(listing.remaining_kg > 0))) return null;
+  const in3 = new Date(now + 3 * DAY).toISOString().slice(0, 10);
+  if (date <= in3) return !listing.nudged_soon_at && !listing.nudged_expired_at ? "soon" : null;
+  return now - created >= 2 * DAY && markers.every((at) => !at) ? "early" : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-  if (req.headers.get("x-hook-secret") !== Deno.env.get("ALERT_HOOK_SECRET")) {
+  const secret = Deno.env.get("ALERT_HOOK_SECRET");
+  if (!secret || req.headers.get("x-hook-secret") !== secret) {
     return new Response("Forbidden", { status: 403 });
   }
 
-  const admin = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  try {
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
 
-  const today = new Date().toISOString().slice(0, 10);
-  const in3 = new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10);
+    const now = Date.now();
+    const today = new Date(now).toISOString().slice(0, 10);
+    const threeDaysAgo = new Date(now - 3 * DAY).toISOString().slice(0, 10);
+    const body = await req.json().catch(() => ({}));
+    const dryRun = body?.dry_run === true;
+    const notifiedUsers = new Set<string>();
+    const planned: Record<string, number> = {};
+    let sent = 0;
 
-  async function recipient(userId: string) {
-    const [{ data: prof }, { data: userRes }] = await Promise.all([
-      admin.from("profiles").select("full_name, lang").eq("id", userId).maybeSingle(),
-      admin.auth.admin.getUserById(userId),
-    ]);
-    const lang: Lang = ["en", "fr", "sw"].includes(prof?.lang ?? "")
-      ? (prof!.lang as Lang)
-      : "en";
-    return { email: userRes?.user?.email ?? null, lang };
-  }
+    async function recipient(userId: string) {
+      const [{ data: prof, error: profileError }, { data: userRes, error: userError }] = await Promise.all([
+        admin.from("profiles").select("full_name, lang").eq("id", userId).maybeSingle(),
+        admin.auth.admin.getUserById(userId),
+      ]);
+      if (profileError || userError) throw profileError || userError;
+      const lang: Lang = ["en", "fr", "sw"].includes(prof?.lang ?? "")
+        ? (prof!.lang as Lang)
+        : "en";
+      return { email: userRes?.user?.email ?? null, lang };
+    }
 
-  /** Has this listing been booked by anyone? A declined request doesn't count. */
-  async function hasLiveMatch(column: "parcel_id" | "trip_id", id: string) {
-    const { count } = await admin
+    async function hasConfirmedBooking(column: "parcel_id" | "trip_id", id: string) {
+      // Requests are conversations, not bookings. Keep disputes suppressed too.
+      // A database error must never be interpreted as "no booking".
+      const { count } = await admin.from("matches")
+        .select("id", { count: "exact", head: true })
+        .eq(column, id)
+        .in("status", BOOKED_STATUSES)
+        .throwOnError();
+      return (count ?? 0) > 0;
+    }
+
+    async function recordNudge(table: string, id: string, column: string) {
+      if (dryRun) return;
+      await admin.from(table).update({ [column]: new Date(now).toISOString() })
+        .eq("id", id).throwOnError();
+    }
+
+    async function sendOnce(userId: string, key: string, email: string, subject: string, html: string) {
+      // Prioritise a concrete request over a generic follow-up. Other listings
+      // stay unmarked and can be considered on a later daily run.
+      if (notifiedUsers.has(userId)) return false;
+      const ok = dryRun || await sendEmail(email, subject, html, `listing-nudge/${key}`);
+      if (ok) {
+        notifiedUsers.add(userId);
+        const phase = key.split("/")[0];
+        planned[phase] = (planned[phase] ?? 0) + 1;
+        if (!dryRun) sent++;
+      }
+      return ok;
+    }
+
+    // ----------------------------------- match requests unanswered for 48h
+    // The responder got one email when the request landed and nothing since.
+    // One reminder, once per match. A request whose listings have since gone
+    // stale (trip departed, deadline passed) is marked without an email —
+    // there is nothing useful left to answer.
+    const cutoff = new Date(now - 48 * 3_600_000).toISOString();
+    const { data: pending } = await admin
       .from("matches")
-      .select("id", { count: "exact", head: true })
-      .eq(column, id)
-      .not("status", "in", '("declined","cancelled")');
-    return (count ?? 0) > 0;
-  }
-
-  let sent = 0;
-
-  // ---------------------------------------------------- parcels, deadline near
-  const { data: parcelsSoon } = await admin
-    .from("parcels")
-    .select("id, user_id:sender_id, to_city, from_country, to_country, needed_by")
-    .eq("status", "open")
-    .is("nudged_soon_at", null)
-    .gte("needed_by", today)
-    .lte("needed_by", in3);
-
-  for (const p of parcelsSoon ?? []) {
-    if (await hasLiveMatch("parcel_id", p.id)) continue;
-    const { email, lang } = await recipient(p.user_id);
-    if (!email) continue;
-
-    // How many travellers are just out of reach? That's the number that makes
-    // "change the date" concrete rather than a platitude.
-    const { count: alt } = await admin
-      .from("trips")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open")
-      .eq("from_country", p.from_country)
-      .eq("to_country", p.to_country)
-      .gt("depart_date", p.needed_by);
-
-    const L = T[lang];
-    const ok = await sendEmail(
-      email,
-      L.parcelSoon(p.to_city, day(p.needed_by, lang)),
-      shell(
-        L.parcelSoon(p.to_city, day(p.needed_by, lang)),
-        L.parcelSoonBody(day(p.needed_by, lang), alt ?? 0),
-        L.editParcel,
-        `${SITE}/post/parcel?edit=${p.id}`,
-        lang
+      .select(
+        `id, parcel_id, requester_id, updated_at,
+         trip:trips!matches_trip_id_fkey(traveler_id, to_city, depart_date),
+         parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg, budget_usd, needed_by)`
       )
-    );
-    if (ok) {
-      await admin
-        .from("parcels")
-        .update({ nudged_soon_at: new Date().toISOString() })
-        .eq("id", p.id);
-      sent++;
-    }
-  }
+      .eq("status", "requested")
+      .is("request_nudged_at", null)
+      .lte("updated_at", cutoff)
+      .limit(50)
+      .throwOnError();
 
-  // ------------------------------------------------------ parcels, now expired
-  const { data: parcelsGone } = await admin
-    .from("parcels")
-    .select("id, user_id:sender_id, to_city")
-    .eq("status", "open")
-    .is("nudged_expired_at", null)
-    .lt("needed_by", today);
+    for (const m of pending ?? []) {
+      const trip = m.trip as unknown as {
+        traveler_id: string; to_city: string; depart_date: string;
+      } | null;
+      const parcel = m.parcel as unknown as {
+        sender_id: string; weight_kg: number | null; budget_usd: number; needed_by: string;
+      } | null;
+      if (!trip || !parcel) continue;
 
-  for (const p of parcelsGone ?? []) {
-    if (await hasLiveMatch("parcel_id", p.id)) continue;
-    const { email, lang } = await recipient(p.user_id);
-    if (!email) continue;
-    const L = T[lang];
-    const ok = await sendEmail(
-      email,
-      L.parcelGone(p.to_city),
-      shell(
-        L.parcelGone(p.to_city),
-        L.parcelGoneBody,
-        L.editParcel,
-        `${SITE}/post/parcel?edit=${p.id}`,
-        lang
-      )
-    );
-    if (ok) {
-      await admin
-        .from("parcels")
-        .update({ nudged_expired_at: new Date().toISOString() })
-        .eq("id", p.id);
-      sent++;
-    }
-  }
+      const mark = () => recordNudge("matches", m.id, "request_nudged_at");
 
-  // -------------------------------------------- trips leaving with empty space
-  const { data: tripsSoon } = await admin
-    .from("trips")
-    .select("id, user_id:traveler_id, to_city, from_country, to_country, depart_date, remaining_kg")
-    .eq("status", "open")
-    .is("nudged_soon_at", null)
-    .gte("depart_date", today)
-    .lte("depart_date", in3)
-    .gt("remaining_kg", 0);
+      if (trip.depart_date < today || parcel.needed_by < today) {
+        await mark();
+        continue;
+      }
 
-  for (const tr of tripsSoon ?? []) {
-    if (await hasLiveMatch("trip_id", tr.id)) continue;
-    const { email, lang } = await recipient(tr.user_id);
-    if (!email) continue;
+      // A different accepted booking makes this request obsolete.
+      if (await hasConfirmedBooking("parcel_id", m.parcel_id)) {
+        await mark();
+        continue;
+      }
+      const senderRequested = m.requester_id === parcel.sender_id;
+      const responderId = senderRequested ? trip.traveler_id : parcel.sender_id;
+      const { email, lang } = await recipient(responderId);
+      if (!email) {
+        await mark();
+        continue;
+      }
+      const { data: reqProf } = await admin
+        .from("profiles")
+        .select("full_name")
+        .eq("id", m.requester_id)
+        .maybeSingle();
+      const name = reqProf?.full_name ?? "A member";
+      const days = Math.max(2, Math.floor((Date.now() - new Date(m.updated_at).getTime()) / 86_400_000));
 
-    const { count: waiting } = await admin
-      .from("parcels")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open")
-      .eq("from_country", tr.from_country)
-      .eq("to_country", tr.to_country)
-      .gte("needed_by", tr.depart_date);
-
-    const L = T[lang];
-    const ok = await sendEmail(
-      email,
-      L.tripSoon(tr.to_city, day(tr.depart_date, lang)),
-      shell(
-        L.tripSoon(tr.to_city, day(tr.depart_date, lang)),
-        L.tripSoonBody(tr.remaining_kg, waiting ?? 0),
-        waiting ? L.browseParcels : L.editTrip,
-        waiting ? `${SITE}/parcels` : `${SITE}/post/trip?edit=${tr.id}`,
-        lang
-      )
-    );
-    if (ok) {
-      await admin
-        .from("trips")
-        .update({ nudged_soon_at: new Date().toISOString() })
-        .eq("id", tr.id);
-      sent++;
-    }
-  }
-
-  // ------------------------------------------------ trips flown unmatched
-  // The apology the sender side always had and the traveller side never did.
-  // Status is ignored on purpose: the nightly closer marks departed trips
-  // 'closed', and that must not silence this. Once per trip.
-  const { data: tripsGone } = await admin
-    .from("trips")
-    .select("id, user_id:traveler_id, to_city, from_country, to_country")
-    .is("nudged_expired_at", null)
-    .lt("depart_date", today);
-
-  for (const tr of tripsGone ?? []) {
-    if (await hasLiveMatch("trip_id", tr.id)) continue;
-    const { email, lang } = await recipient(tr.user_id);
-    if (!email) continue;
-
-    const { count: waiting } = await admin
-      .from("parcels")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open")
-      .eq("from_country", tr.from_country)
-      .eq("to_country", tr.to_country)
-      .gte("needed_by", today);
-
-    const L = T[lang];
-    const ok = await sendEmail(
-      email,
-      L.tripGone(tr.to_city),
-      shell(
-        L.tripGone(tr.to_city),
-        L.tripGoneBody(waiting ?? 0),
-        L.editTrip,
-        `${SITE}/post/trip`,
-        lang
-      )
-    );
-    if (ok) {
-      await admin
-        .from("trips")
-        .update({ nudged_expired_at: new Date().toISOString() })
-        .eq("id", tr.id);
-      sent++;
-    }
-  }
-
-  // ----------------------------------- match requests unanswered for 48h
-  // The responder got one email when the request landed and nothing since.
-  // One reminder, once per match. A request whose listings have since gone
-  // stale (trip departed, deadline passed) is marked without an email —
-  // there is nothing useful left to answer.
-  const cutoff = new Date(Date.now() - 48 * 3_600_000).toISOString();
-  const { data: pending } = await admin
-    .from("matches")
-    .select(
-      `id, requester_id, updated_at,
-       trip:trips!matches_trip_id_fkey(traveler_id, to_city, depart_date),
-       parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg, budget_usd, needed_by)`
-    )
-    .eq("status", "requested")
-    .is("request_nudged_at", null)
-    .lt("updated_at", cutoff)
-    .limit(50);
-
-  for (const m of pending ?? []) {
-    const trip = m.trip as unknown as {
-      traveler_id: string; to_city: string; depart_date: string;
-    } | null;
-    const parcel = m.parcel as unknown as {
-      sender_id: string; weight_kg: number | null; budget_usd: number; needed_by: string;
-    } | null;
-    if (!trip || !parcel) continue;
-
-    const mark = () =>
-      admin
-        .from("matches")
-        .update({ request_nudged_at: new Date().toISOString() })
-        .eq("id", m.id);
-
-    if (trip.depart_date < today || parcel.needed_by < today) {
-      await mark();
-      continue;
-    }
-
-    const senderRequested = m.requester_id === parcel.sender_id;
-    const responderId = senderRequested ? trip.traveler_id : parcel.sender_id;
-    const { email, lang } = await recipient(responderId);
-    if (!email) {
-      await mark();
-      continue;
-    }
-    const { data: reqProf } = await admin
-      .from("profiles")
-      .select("full_name")
-      .eq("id", m.requester_id)
-      .maybeSingle();
-    const name = reqProf?.full_name ?? "A member";
-    const days = Math.max(2, Math.floor((Date.now() - new Date(m.updated_at).getTime()) / 86_400_000));
-
-    const L = T[lang];
-    const ctx = {
-      name,
-      days,
-      kg: parcel.weight_kg == null ? null : Number(parcel.weight_kg),
-      budget: Math.round(Number(parcel.budget_usd)),
-      city: trip.to_city,
-    };
-    const ok = await sendEmail(
-      email,
-      senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
-      shell(
+      const L = T[lang];
+      const ctx = {
+        name: escapeHtml(name),
+        days,
+        kg: parcel.weight_kg == null ? null : Number(parcel.weight_kg),
+        budget: Math.round(Number(parcel.budget_usd)),
+        city: escapeHtml(trip.to_city),
+      };
+      const ok = await sendOnce(
+        responderId, `request/${m.id}`, email,
         senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
-        senderRequested ? L.pendingAskBody(ctx) : L.pendingOfferBody(ctx),
-        L.respondNow,
-        `${SITE}/dashboard`,
-        lang,
-        L.footerPending
-      )
-    );
-    if (ok) {
-      await mark();
-      sent++;
+        shell(
+          senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
+          senderRequested ? L.pendingAskBody(ctx) : L.pendingOfferBody(ctx),
+          L.respondNow,
+          `${SITE}/dashboard`,
+          lang,
+          L.footerPending
+        )
+      );
+      if (ok) await mark();
     }
-  }
 
-  // ------------------------------------------- free month about to run out
-  // Warned once, three days out, while there is still time to decide. Someone
-  // discovering the paywall by finding they can no longer post is someone who
-  // concludes the app broke, not that their trial ended.
-  const { data: trialsEnding } = await admin
-    .from("memberships")
-    .select("user_id, current_period_end")
-    .eq("provider", "trial")
-    .eq("status", "active")
-    .is("trial_notified_at", null)
-    .gt("current_period_end", new Date().toISOString())
-    .lte("current_period_end", new Date(Date.now() + 3 * 86_400_000).toISOString());
+    // Only recently expired listings are useful to follow up on. This also
+    // avoids emailing months of old requested-only listings on rollout.
+    for (const kind of ["parcel", "trip"] as const) {
+      const table = kind === "parcel" ? "parcels" : "trips";
+      const dateColumn = kind === "parcel" ? "needed_by" : "depart_date";
+      const ownerColumn = kind === "parcel" ? "sender_id" : "traveler_id";
+      let query = admin.from(table).select(
+        `id, user_id:${ownerColumn}, status, to_city, from_country, to_country,
+         listing_date:${dateColumn}, created_at, nudged_early_at, nudged_soon_at, nudged_expired_at` +
+        (kind === "trip" ? ", remaining_kg" : "")
+      ).gte(dateColumn, threeDaysAgo).order(dateColumn);
+      if (kind === "parcel") query = query.eq("status", "open").eq("safety_hold", false);
+      const { data: listings } = await query.throwOnError();
 
-  for (const m of trialsEnding ?? []) {
-    const { email, lang } = await recipient(m.user_id);
-    if (!email) continue;
-    const L = T[lang];
-    const when = day(m.current_period_end, lang);
-    const ok = await sendEmail(
-      email,
-      L.trialSoon(when),
-      shell(
+      for (const listing of (listings ?? []) as unknown as ListingReminder[]) {
+        const phase = reminderPhase(listing, now);
+        if (!phase || notifiedUsers.has(listing.user_id)) continue;
+        if (await hasConfirmedBooking(kind === "parcel" ? "parcel_id" : "trip_id", listing.id)) continue;
+        const { email, lang } = await recipient(listing.user_id);
+        if (!email) continue;
+        const L = T[lang];
+        const city = listing.to_city;
+        const when = day(listing.listing_date, lang);
+        const route = `from=${encodeURIComponent(listing.from_country.trim())}&to=${encodeURIComponent(listing.to_country.trim())}`;
+        let heading: string;
+        let content: string;
+        let cta: string;
+        let href: string;
+        if (phase === "early") {
+          heading = kind === "parcel" ? L.parcelEarly(city) : L.tripEarly(city);
+          content = kind === "parcel" ? L.parcelEarlyBody : L.tripEarlyBody;
+          cta = kind === "parcel" ? L.browseTrips : L.browseParcels;
+          href = `${SITE}/${kind === "parcel" ? "trips" : "parcels"}?${route}`;
+        } else if (kind === "parcel") {
+          let alternatives = 0;
+          if (phase === "soon") {
+            const { count } = await admin.from("trips").select("id", { count: "exact", head: true })
+              .eq("status", "open").gt("remaining_kg", 0)
+              .eq("from_country", listing.from_country).eq("to_country", listing.to_country)
+              .gt("depart_date", listing.listing_date)
+              .lte("depart_date", new Date(Date.parse(listing.listing_date) + 7 * DAY).toISOString().slice(0, 10))
+              .throwOnError();
+            alternatives = count ?? 0;
+          }
+          heading = phase === "soon" ? L.parcelSoon(city, when) : L.parcelGone(city);
+          content = phase === "soon" ? L.parcelSoonBody(when, alternatives) : L.parcelGoneBody;
+          cta = L.editParcel;
+          href = `${SITE}/post/parcel?edit=${listing.id}`;
+        } else {
+          const { count: waiting } = await admin.from("parcels")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "open").eq("safety_hold", false)
+            .eq("from_country", listing.from_country).eq("to_country", listing.to_country)
+            .gte("needed_by", phase === "soon" ? listing.listing_date : today)
+            .throwOnError();
+          heading = phase === "soon" ? L.tripSoon(city, when) : L.tripGone(city);
+          content = phase === "soon" ? L.tripSoonBody(listing.remaining_kg ?? 0, waiting ?? 0) : L.tripGoneBody(waiting ?? 0);
+          cta = phase === "soon" && waiting ? L.browseParcels : L.editTrip;
+          href = phase === "expired" ? `${SITE}/post/trip` : waiting ? `${SITE}/parcels?${route}` : `${SITE}/post/trip?edit=${listing.id}`;
+        }
+        const ok = await sendOnce(listing.user_id, `${phase}/${table}/${listing.id}`, email,
+          heading, shell(heading, content, cta, href, lang));
+        if (ok) await recordNudge(table, listing.id, `nudged_${phase}_at`);
+      }
+    }
+
+    // An authenticated preview exercises the real selection without sending
+    // email or updating any timestamps (including the membership reminders).
+    if (dryRun) return Response.json({ ok: true, dry_run: true, sent: 0, planned });
+
+    // ------------------------------------------- free month about to run out
+    // Warned once, three days out, while there is still time to decide. Someone
+    // discovering the paywall by finding they can no longer post is someone who
+    // concludes the app broke, not that their trial ended.
+    const { data: trialsEnding } = await admin
+      .from("memberships")
+      .select("user_id, current_period_end")
+      .eq("provider", "trial")
+      .eq("status", "active")
+      .is("trial_notified_at", null)
+      .gt("current_period_end", new Date().toISOString())
+      .lte("current_period_end", new Date(Date.now() + 3 * 86_400_000).toISOString());
+
+    for (const m of trialsEnding ?? []) {
+      const { email, lang } = await recipient(m.user_id);
+      if (!email) continue;
+      const L = T[lang];
+      const when = day(m.current_period_end, lang);
+      const ok = await sendEmail(
+        email,
         L.trialSoon(when),
-        L.trialSoonBody(when),
-        L.choosePlan,
-        `${SITE}/pricing`,
-        lang,
-        L.footerTrial
-      )
-    );
-    if (ok) {
-      await admin
-        .from("memberships")
-        .update({ trial_notified_at: new Date().toISOString() })
-        .eq("user_id", m.user_id);
-      sent++;
+        shell(
+          L.trialSoon(when),
+          L.trialSoonBody(when),
+          L.choosePlan,
+          `${SITE}/pricing`,
+          lang,
+          L.footerTrial
+        ),
+        `trial-soon/${m.user_id}/${m.current_period_end}`
+      );
+      if (ok) {
+        await admin
+          .from("memberships")
+          .update({ trial_notified_at: new Date().toISOString() })
+          .eq("user_id", m.user_id);
+        sent++;
+      }
     }
-  }
 
-  // ------------------------------------------------- free month has lapsed
-  // Only for members still on a trial: anyone who has since paid has a
-  // provider of 'stripe' and never sees this.
-  const { data: trialsOver } = await admin
-    .from("memberships")
-    .select("user_id")
-    .eq("provider", "trial")
-    .is("trial_ended_notified_at", null)
-    .lt("current_period_end", new Date().toISOString());
+    // ------------------------------------------------- free month has lapsed
+    // Only for members still on a trial: anyone who has since paid has a
+    // provider of 'stripe' and never sees this.
+    const { data: trialsOver } = await admin
+      .from("memberships")
+      .select("user_id")
+      .eq("provider", "trial")
+      .is("trial_ended_notified_at", null)
+      .lt("current_period_end", new Date().toISOString());
 
-  for (const m of trialsOver ?? []) {
-    const { email, lang } = await recipient(m.user_id);
-    if (!email) continue;
-    const L = T[lang];
-    const ok = await sendEmail(
-      email,
-      L.trialOver,
-      shell(L.trialOver, L.trialOverBody, L.choosePlan, `${SITE}/pricing`, lang, L.footerTrial)
-    );
-    if (ok) {
-      await admin
-        .from("memberships")
-        .update({ trial_ended_notified_at: new Date().toISOString() })
-        .eq("user_id", m.user_id);
-      sent++;
+    for (const m of trialsOver ?? []) {
+      const { email, lang } = await recipient(m.user_id);
+      if (!email) continue;
+      const L = T[lang];
+      const ok = await sendEmail(
+        email,
+        L.trialOver,
+        shell(L.trialOver, L.trialOverBody, L.choosePlan, `${SITE}/pricing`, lang, L.footerTrial),
+        `trial-over/${m.user_id}`
+      );
+      if (ok) {
+        await admin
+          .from("memberships")
+          .update({ trial_ended_notified_at: new Date().toISOString() })
+          .eq("user_id", m.user_id);
+        sent++;
+      }
     }
-  }
 
-  return new Response(JSON.stringify({ ok: true, sent }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(JSON.stringify({ ok: true, sent }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Listing follow-up failed", error);
+    // Return a failure for operational monitoring without leaking user data.
+    return Response.json({ ok: false, error: "Listing follow-up failed" }, { status: 500 });
+  }
 });
