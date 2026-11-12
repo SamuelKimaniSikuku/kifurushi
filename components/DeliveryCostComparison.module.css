@@ -3,15 +3,8 @@
 .eyebrow { display: flex; align-items: center; gap: 8px; color: var(--clay-deep); font-size: 13px; font-weight: 650; }
 .hero h1 { max-width: 620px; margin-top: 14px; font-size: clamp(30px, 3.3vw, 42px); font-weight: 650; line-height: 1.2; color: var(--forest); letter-spacing: -1.5px; }
 .intro { max-width: 580px; margin-top: 14px; color: var(--muted); font-size: 15px; }
-.exampleAction { flex-shrink: 0; padding-bottom: 2px; font-size: 12px; color: var(--muted); }
-.exampleAction > span { display: block; }
-.exampleAction button { display: flex; align-items: center; gap: 12px; min-height: 44px; color: var(--forest); font-size: 14px; font-weight: 650; }
-.exampleNotice { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--warn-bg); color: var(--warn); padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
-.exampleNotice > svg { flex-shrink: 0; }
-.exampleNotice button { min-height: 44px; margin-left: auto; text-decoration: underline; flex-shrink: 0; font-weight: 600; }
 .calculator { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; scroll-margin-top: 90px; }
 .formCard { border: 1px solid var(--line); border-radius: 24px; background: white; padding: 26px 30px 12px; }
-.formHeading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .formTitle { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .iconTile { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; color: var(--forest); background: var(--sand-deep); flex-shrink: 0; }
 .formTitle h2 { color: var(--forest); font-size: 20px; font-weight: 650; }
@@ -20,7 +13,6 @@
 .currency label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .currency select { border: 1px solid var(--line); background: white; border-radius: 10px; min-height: 44px; padding: 6px 8px; color: var(--forest); font-size: 14px; font-weight: 650; }
 .currency select:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
-.currencyNote { color: var(--muted); font-size: 11px; margin-top: 14px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .inputStep { margin-top: 22px; }
 .stepLabel { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 15px; font-weight: 650; color: var(--forest); }
 .stepLabel > span { display: grid; place-items: center; border-radius: 50%; background: var(--success-bg); width: 24px; height: 24px; flex-shrink: 0; font-size: 11px; }
@@ -39,19 +31,7 @@
 .presets button[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: white; font-weight: 600; }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 8px; }
 .fieldLabel { display: block; font-size: 12px; font-weight: 550; color: var(--muted); margin-bottom: 7px; }
-.moneyInput { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line-strong); border-radius: 12px; padding: 0 14px; min-height: 56px; background: white; }
-.moneyInput:focus-within { outline: 2px solid var(--leaf); outline-offset: 2px; }
-.moneyInput > span { flex-shrink: 0; color: var(--muted); font-size: 13px; }
-.moneyInput > input { flex: 1; min-width: 0; width: 100%; padding: 10px 0; border: 0; background: transparent; outline: none; color: var(--forest); font-size: 23px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.moneyInput > input::placeholder { color: var(--muted); font-weight: 400; }
 .invalid { border-color: var(--danger); }
-.extras { margin-top: 22px; border-top: 1px solid var(--line); }
-.extras summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 60px; cursor: pointer; color: var(--forest); font-size: 13px; font-weight: 550; }
-.extras summary > span:first-child { display: flex; align-items: center; gap: 8px; }
-.extras summary svg { flex-shrink: 0; }
-.extras summary::-webkit-details-marker, .help summary::-webkit-details-marker { display: none; }
-.extrasAmount { color: var(--muted); font-size: 12px; }
-.extras > div { padding: 0 0 18px; }
 .estimateCard { display: flex; flex-direction: column; min-width: 0; overflow: hidden; background: var(--forest); border-radius: 24px; color: white; padding: 30px; }
 .estimateTop { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .estimateTop > span { text-transform: uppercase; letter-spacing: 1.6px; font-size: 11px; font-weight: 550; color: #c6ded3; }
@@ -71,32 +51,9 @@
 .estimateActions > a:first-child { font-size: 14px; border-radius: 12px; }
 .estimateActions > a:last-child { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; color: #e2eee8; font-size: 13px; margin-top: 8px; }
 .estimateActions a:focus-visible { outline: 2px solid white; outline-offset: 3px; }
-.comparisonCard { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); border: 1px solid var(--line); border-radius: 24px; background: white; margin-top: 24px; overflow: hidden; }
-.quoteForm { padding: 28px 30px; }
-.compareHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--forest); }
-.compareHeading > span { border-radius: 20px; background: var(--sand); padding: 3px 10px; font-size: 11px; color: var(--muted); }
-.quoteForm h2 { font-weight: 600; font-size: 20px; line-height: 1.3; color: var(--forest); margin-top: 14px; }
-.compareIntro { font-size: 13px; color: var(--muted); margin-top: 8px; margin-bottom: 20px; }
 .quoteLink { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--forest); font-size: 12px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; margin-top: 8px; }
-.comparisonResult { display: flex; flex-direction: column; justify-content: center; min-width: 0; border-left: 1px solid var(--line); padding: 28px 30px; }
-.barRow + .barRow { margin-top: 18px; }
-.barRow > div:first-child { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12px; }
-.barRow strong { color: var(--forest); font-size: 13px; flex-shrink: 0; }
-.barTrack { width: 100%; height: 8px; border-radius: 8px; background: var(--sand); margin-top: 8px; overflow: hidden; }
-.barTrack > span { display: block; height: 100%; border-radius: 8px; transition: width .2s; }
-.travellerBar { background: var(--leaf); }
-.courierBar { background: var(--line-strong); }
-.saving { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; justify-content: space-between; border-radius: 14px; padding: 16px 18px; margin-top: 24px; color: var(--forest); background: var(--success-bg); }
-.saving p { font-size: 12px; }
-.saving strong { display: block; font: 600 28px/1.3 var(--font-display), sans-serif; margin-top: 4px; overflow-wrap: anywhere; }
-.saving > div { min-width: 0; }
-.savingPercent { border-radius: 20px; color: white; background: var(--leaf); padding: 4px 10px; font-size: 13px; font-weight: 600; }
 .higher { background: var(--warn-bg); color: var(--warn); }
 .comparisonNote { color: var(--muted); font-size: 11px; margin-top: 8px; line-height: 1.7; }
-.comparisonEmpty { text-align: center; max-width: 300px; margin: 0 auto; padding: 20px 0; }
-.comparisonEmpty > span { display: inline-grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; color: var(--leaf); background: var(--success-bg); }
-.comparisonEmpty > p { margin-top: 15px; color: var(--forest); font-size: 15px; font-weight: 600; }
-.comparisonEmpty > small { display: block; color: var(--muted); font-size: 13px; line-height: 1.7; margin-top: 8px; }
 .reset { display: flex; gap: 7px; align-items: center; min-height: 44px; font-size: 12px; color: var(--muted); margin: 10px 0 0 auto; }
 .help { max-width: 800px; margin: 42px auto 0; }
 .help h2 { color: var(--forest); font-size: 19px; font-weight: 600; margin-bottom: 14px; }
@@ -106,36 +63,77 @@
 .help details[open] summary svg { transform: rotate(180deg); }
 .help details > p { font-size: 14px; color: var(--muted); margin-bottom: 16px; line-height: 1.8; }
 .help details > a { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; color: var(--forest); margin-bottom: 8px; }
+
+.formCard { padding-bottom: 26px; }
+.hero .currency select { min-width: 100px; }
+.routeFields { display: grid; grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr); gap: 8px; align-items: end; }
+.routeFields > div { min-width: 0; }
+.routeFields select { min-width: 0; width: 100%; font-size: 13px; padding: 14px 8px; }
+.swap { min-height: 48px; display: grid; place-items: center; color: var(--forest); border-radius: 10px; }
+.swap:hover { background: var(--sand); }
+.routeSuggestions { margin-top: 18px; }
+.routeSuggestions > p { font-size: 11px; color: var(--muted); margin-bottom: 7px; }
+.routeSuggestions > div { display: flex; gap: 6px; flex-wrap: wrap; }
+.routeSuggestions button { min-height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; color: var(--forest); font-size: 11px; text-transform: capitalize; text-align: left; }
+.routeSuggestions button[aria-pressed="true"] { border-color: var(--leaf); background: var(--success-bg); }
+.tripInfo { display: flex; gap: 11px; margin-top: 22px; }
+.tripInfo svg { flex-shrink: 0; margin-top: 3px; color: #c6ded3; }
+.tripInfo strong { font-size: 15px; font-weight: 600; text-transform: capitalize; }
+.tripInfo p { color: #c6ded3; margin-top: 5px; font-size: 12px; }
+.retry { align-self: flex-start; color: white; text-decoration: underline; min-height: 44px; font-size: 13px; }
+.courierSection { margin-top: 32px; }
+.sectionHeading { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 18px; color: var(--forest); }
+.sectionHeading h2 { font-size: 22px; font-weight: 650; letter-spacing: -.5px; }
+.sectionHeading p { color: var(--muted); font-size: 13px; margin-top: 5px; }
+.sectionHeading svg { flex-shrink: 0; }
+.courierGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.courierCard { background: white; border: 1px solid var(--line); border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; min-width: 0; }
+.courierHeading h3 { color: var(--forest); font-size: 17px; font-weight: 600; }
+.courierHeading > span { display: inline-block; color: var(--muted); background: var(--sand); border-radius: 6px; padding: 3px 7px; margin-top: 8px; font-size: 11px; }
+.courierPrice { font: 600 30px/1.3 var(--font-display), sans-serif; color: var(--forest); margin-top: 20px; letter-spacing: -1px; overflow-wrap: anywhere; }
+.courierNote { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 16px; }
+.priceDifference { margin-top: auto; padding: 12px 14px; border-radius: 10px; background: var(--success-bg); color: var(--forest); }
+.priceDifference span { font-size: 10px; display: block; margin-bottom: 4px; }
+.priceDifference strong { font-size: 13px; font-weight: 600; }
+.priceDifference.higher { background: var(--warn-bg); color: var(--warn); }
+.courierCard .quoteLink { align-self: flex-start; margin-bottom: -8px; }
+.dataNote { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.dataNote summary { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; color: var(--forest); }
+.dataNote summary::-webkit-details-marker { display: none; }
+.dataNote p { margin-bottom: 12px; max-width: 800px; }
+.comparisonNote a { text-decoration: underline; text-underline-offset: 3px; }
+.page button:focus-visible, .page summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+.estimateCard button:focus-visible { outline-color: white; }
 @media (max-width: 767px) {
   .page { padding: 28px 16px 44px; }
   .hero { display: block; margin-bottom: 24px; }
   .hero h1 { font-size: 32px; letter-spacing: -1px; max-width: 520px; }
   .intro { font-size: 14px; }
-  .exampleAction { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
-  .exampleAction > span { display: inline; }
-  .exampleNotice { flex-wrap: wrap; font-size: 12px; }
-  .exampleNotice > span { flex: 1; min-width: 180px; }
-  .calculator, .comparisonCard { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .formCard { padding: 20px 20px 8px; border-radius: 20px; }
+  .hero .currency { margin-top: 16px; display: flex; align-items: center; gap: 10px; }
+  .hero .currency label { margin: 0; font-size: 12px; }
+  .calculator, .courierGrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .formCard { padding: 22px 20px; border-radius: 20px; }
   .formTitle h2 { font-size: 18px; }
   .formTitle p { font-size: 11px; }
   .iconTile { width: 38px; height: 38px; border-radius: 10px; }
+  .routeFields { grid-template-columns: minmax(0, 1fr) 44px; gap: 10px; }
+  .routeFields > div:first-child { grid-column: 1; grid-row: 1; }
+  .routeFields > div:last-child { grid-column: 1; grid-row: 2; }
+  .routeFields .swap { grid-column: 2; grid-row: 1 / 3; align-self: center; border: 1px solid var(--line); }
+  .swap svg { transform: rotate(90deg); }
   .estimateCard { padding: 24px; border-radius: 20px; }
   .estimateBody { margin-top: 20px; }
-  .total { font-size: 44px; }
+  .total { font-size: 42px; }
   .receipt { margin-top: 22px; padding: 18px 0; }
   .estimateActions { padding-top: 20px; }
-  .comparisonCard { gap: 0; margin-top: 20px; border-radius: 20px; }
-  .quoteForm, .comparisonResult { padding: 24px; }
-  .comparisonResult { border-left: 0; border-top: 1px solid var(--line); }
-  .comparisonEmpty { padding: 8px 0; }
+  .estimateActions a { white-space: normal; text-align: center; }
+  .courierCard { padding: 24px; }
   .help { margin-top: 32px; }
 }
 @media (max-width: 359px) {
   .page { padding-left: 12px; padding-right: 12px; }
-  .formCard, .estimateCard, .quoteForm, .comparisonResult { padding-left: 16px; padding-right: 16px; }
-  .formTitle .iconTile { display: none; }
+  .formCard, .estimateCard, .courierCard { padding-left: 16px; padding-right: 16px; }
   .presets { gap: 5px; }
   .stepLabel { font-size: 14px; }
 }
-@media (prefers-reduced-motion: reduce) { .barTrack > span, .help summary svg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .help summary svg { transition: none; } }
