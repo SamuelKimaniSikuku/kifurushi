@@ -18,8 +18,16 @@ select test.ok((select remaining_kg=9 from public.trips where id='40000000-0000-
 select test.ok((select count(*)=1 from public.messages where match_id='50000000-0000-4000-8000-000000000005'),'sender can negotiate in chat while weight is unknown');
 select test.denied($q$select public.respond_match('50000000-0000-4000-8000-000000000005',true)$q$,'other party','sender cannot accept their own request');
 select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
-select test.denied($q$select public.respond_match('50000000-0000-4000-8000-000000000005',true)$q$,'Agree the parcel weight','unknown weight cannot be accepted');
-select test.ok((select status='requested' from public.matches where id='50000000-0000-4000-8000-000000000005'),'blocked acceptance leaves the request available for discussion');
+savepoint unknown_acceptance;
+select public.respond_match('50000000-0000-4000-8000-000000000005',true);
+select test.ok((select status='accepted' from public.matches where id='50000000-0000-4000-8000-000000000005'),'traveller can accept before weight is agreed');
+select test.ok((select remaining_kg=9 from public.trips where id='40000000-0000-4000-8000-000000000004'),'unknown accepted weight does not invent reserved kilos');
+select test.denied($q$select public.respond_match('50000000-0000-4000-8000-000000000005',true)$q$,'not awaiting','repeated acceptance cannot repeat a status transition');
+select test.denied($q$select public.deliver_now('50000000-0000-4000-8000-000000000005')$q$,'inspection','acceptance does not skip physical handover checks');
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select test.ok((select status='matched' and weight_kg is null from public.parcels where id=:'parcel_id'),'parcel is booked while its weight stays unknown');
+-- Reuse the request to exercise known-weight acceptance independently.
+rollback to savepoint unknown_acceptance;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
 select public.save_parcel(:'payload'::jsonb || '{"weightKg":0.025}','[{"description":"Document in an envelope"}]',ARRAY[]::text[],true,:'parcel_id');
 select test.ok((select weight_kg=0.025 from public.parcels where id=:'parcel_id'),'the sender’s light-weight estimate is preserved');
