@@ -26,13 +26,13 @@ export const metadata: Metadata = {
     url: "/",
     title: "Kifurushi — send parcels home with verified travellers",
     description:
-      "Travellers earn from their spare kilos; senders pay about half the courier price. 54 African countries, 23 diaspora destinations. Free during launch.",
+      "Send parcels with someone already travelling your route. Compare a courier quote with the traveller’s agreed fee. Free during launch.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Kifurushi — send parcels home with verified travellers",
     description:
-      "Travellers earn from their spare kilos; senders pay about half the courier price. Free during launch.",
+      "Send parcels with someone already travelling your route. Compare a courier quote with the traveller’s agreed fee. Free during launch.",
   },
 };
 

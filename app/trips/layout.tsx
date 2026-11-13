@@ -5,11 +5,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: 'Find a traveller flying your route',
   description:
-    'Browse verified travellers with spare luggage space between Africa and the diaspora. Send your parcel with someone already flying — typically $7–12/kg, about half the courier price.',
+    'Find travellers with spare luggage space between Africa and the diaspora. Check verification and reviews, agree the fee, and compare it with your courier quote.',
   alternates: { canonical: '/trips' },
   openGraph: {
     title: 'Find a traveller flying your route',
-    description: 'Browse verified travellers with spare luggage space between Africa and the diaspora. Send your parcel with someone already flying — typically $7–12/kg, about half the courier price.',
+    description: 'Find travellers with spare luggage space between Africa and the diaspora. Check verification and reviews, agree the fee, and compare it with your courier quote.',
     url: '/trips',
   },
 };
