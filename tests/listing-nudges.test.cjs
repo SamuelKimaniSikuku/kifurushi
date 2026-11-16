@@ -16,13 +16,13 @@ function trip(overrides = {}) {
   return { ...p, id: 't1', traveler_id: 'traveller', depart_date: '2026-11-19', remaining_kg: 10, ...overrides };
 }
 function match(overrides = {}) {
-  return { id: 'm1', trip_id: 't1', parcel_id: 'p1', requester_id: 'sender', status: 'requested', request_nudged_at: null, updated_at: '2026-11-12T01:00:00Z', ...overrides };
+  return { id: 'm1', trip_id: 't1', parcel_id: 'p1', requester_id: 'sender', status: 'requested', request_nudged_at: null, request_first_nudged_at: null, created_at: overrides.updated_at ?? '2026-11-12T01:00:00Z', updated_at: '2026-11-12T01:00:00Z', ...overrides };
 }
 function listing(overrides = {}) {
   return { ...parcel(), user_id: 'sender', listing_date: '2026-11-20', ...overrides };
 }
 function harness(seed = {}, options = {}) {
-  const db = { parcels: [], trips: [], matches: [], profiles: [], memberships: [], ...structuredClone(seed) };
+  const db = { parcels: [], trips: [], matches: [], profiles: [], memberships: [], messages: [], ...structuredClone(seed) };
   const mail = [], writes = [], incidents = [];
   let handler;
   class Query {
@@ -68,6 +68,12 @@ function harness(seed = {}, options = {}) {
     Deno: { serve(fn) { handler = fn; }, env: { get(name) { return name === 'ALERT_HOOK_SECRET' ? options.noSecret ? undefined : 'test-hook' : name === 'RESEND_API_KEY' ? options.noEmailKey ? undefined : 'fake-email-key' : 'fake'; } } },
     createClient() { return { from: table => new Query(table), auth: { admin: { getUserById: async id => ({ data: { user: { email: `${id}@example.invalid` } }, error: null }) } } }; },
     fetch: async (url, opts) => { assert.equal(url, 'https://api.resend.com/emails'); mail.push({ ...JSON.parse(opts.body), key: opts.headers['Idempotency-Key'] }); return new Response('{}', { status: options.emailFailure ? 429 : 200 }); },
+    sendTrackedEmail: async (_admin,input)=>{
+      if(options.noEmailKey)return false;
+      mail.push({to:[input.to],subject:input.subject,html:input.html,key:input.key});
+      if(options.emailFailure){incidents.push(['email_send_failed']);return false;}
+      return true;
+    },
     logIncident: async (...args) => incidents.push(args),
   };
   vm.runInNewContext(js, context);
@@ -90,8 +96,8 @@ test('each phase runs once and there is a 48-hour gap between listing emails', (
 test('closed or full future trips and malformed dates get no reminder', () => {
   for (const patch of [{ status: 'closed' }, { remaining_kg: 0 }, { remaining_kg: null }, { created_at: 'bad' }, { listing_date: 'bad' }]) assert.equal(policy(listing(patch), NOW), null);
 });
-test('expiry includes nightly closed trips, but never replays an old backlog', () => {
-  assert.equal(policy(listing({ status: 'closed', listing_date: '2026-11-11' }), NOW), 'expired');
+test('closed trips and old expiry backlogs do not prompt the owner', () => {
+  assert.equal(policy(listing({ status: 'closed', listing_date: '2026-11-11' }), NOW), null);
   assert.equal(policy(listing({ listing_date: '2026-11-08' }), NOW), null);
   assert.equal(policy(listing({ listing_date: '2026-11-11', nudged_expired_at: '2026-11-09T07:00:00Z' }), NOW), null);
 });
@@ -103,8 +109,8 @@ for (const status of ['requested', 'declined', 'cancelled']) {
     assert.equal(h.mail.length, 2);
     assert.ok(h.db.parcels[0].nudged_early_at);
     assert.ok(h.db.trips[0].nudged_early_at);
-    assert.ok(h.mail[0].html.includes('/trips?from=KE&to=FR'));
-    assert.ok(h.mail[1].html.includes('/parcels?from=KE&to=FR'));
+    assert.ok(h.mail[0].html.includes('/dashboard/listings?kind=parcel&id=p1'));
+    assert.ok(h.mail[1].html.includes('/dashboard/listings?kind=trip&id=t1'));
   });
 }
 for (const status of ['accepted', 'escrow_paid', 'picked_up', 'in_transit', 'delivered', 'released', 'disputed']) {
@@ -119,7 +125,7 @@ test('pending-only near-date and expiry reminders are no longer silenced', async
   for (const date of ['2026-11-14', '2026-11-11']) {
     const h = harness({ parcels: [parcel({ needed_by: date })], trips: [trip({ depart_date: date, status: date < '2026-11-12' ? 'closed' : 'open' })], matches: [match()] });
     await h.run();
-    assert.equal(h.mail.length, 2);
+    assert.equal(h.mail.length, date < '2026-11-12' ? 1 : 2);
     assert.ok(h.db.parcels[0][`nudged_${date < '2026-11-12' ? 'expired' : 'soon'}_at`]);
   }
 });
@@ -170,7 +176,7 @@ test('a timestamp write failure is visible and keeps the retry key stable', asyn
 test('dry-run uses real selection but has no email or database side effects', async () => {
   const h = harness({ parcels: [parcel()], trips: [trip()], matches: [match({ updated_at: '2026-11-09T07:00:00Z' })], memberships: [{ user_id: 'trial', provider: 'trial', current_period_end: '2026-11-01' }] });
   const result = await (await h.run({ dry_run: true })).json();
-  assert.deepEqual(result, { ok: true, dry_run: true, sent: 0, planned: { request: 1, early: 1 } });
+  assert.deepEqual(result, { ok: true, dry_run: true, sent: 0, planned: { request48: 1, early: 1 } });
   assert.equal(h.mail.length, 0); assert.equal(h.writes.length, 0);
 });
 test('hook authentication is required for sends and dry runs, including an unset secret', async () => {
@@ -190,4 +196,26 @@ test('early copy works in all three member languages and escapes city text', asy
     assert.doesNotMatch(h.mail[0].html, /<script>|undefined|null/);
     assert.ok(h.mail[0].html.includes(h.T[lang].parcelEarlyBody));
   }
+});
+test('first request reminder starts at 24 hours and deep links to that conversation',async()=>{
+ const seed={parcels:[parcel()],trips:[trip()],matches:[match({created_at:new Date(NOW-DAY).toISOString()})]};
+ const h=harness(seed);await h.run();
+ assert.ok(h.db.matches[0].request_first_nudged_at);assert.equal(h.db.matches[0].request_nudged_at,null);
+ assert.match(h.mail[0].html,/#messages-m1/);
+ assert.match(h.mail[0].key,/request24/);
+ await h.run();assert.equal(h.mail.filter(m=>/request24/.test(m.key)).length,1);
+});
+test('a reply stops both unanswered-request reminders',async()=>{
+ const h=harness({parcels:[parcel()],trips:[trip()],matches:[match({created_at:new Date(NOW-3*DAY).toISOString()})],messages:[{id:'reply',match_id:'m1',sender_id:'traveller'}]});await h.run();
+ assert.ok(h.db.matches[0].request_nudged_at);assert.ok(h.mail.every(m=>!m.key.includes('request')));
+});
+test('48-hour reminder uses creation time even when the 24-hour marker updated the record',async()=>{
+ const h=harness({parcels:[parcel()],trips:[trip()],matches:[match({created_at:new Date(NOW-2*DAY).toISOString(),updated_at:new Date(NOW-DAY).toISOString(),request_first_nudged_at:new Date(NOW-DAY).toISOString()})]});await h.run();
+ assert.ok(h.mail.some(m=>m.key.includes('request48')));assert.ok(h.db.matches[0].request_nudged_at);
+});
+test('weekly availability checks wait after a recent owner confirmation',()=>{
+ const old=listing({created_at:'2026-10-01T07:00:00Z',nudged_early_at:'2026-10-03T07:00:00Z'});
+ assert.equal(policy(old,NOW),'check');
+ assert.equal(policy({...old,availability_confirmed_at:'2026-11-10T07:00:00Z'},NOW),null);
+ assert.equal(policy({...old,nudged_check_at:'2026-11-08T07:00:00Z'},NOW),null);
 });

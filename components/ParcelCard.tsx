@@ -18,12 +18,14 @@ export default function ParcelCard({
   requested,
   mine,
   pending = 0,
+  working = false,
 }: {
   parcel: ParcelRequest;
   onOffer?: (parcel: ParcelRequest) => void;
   requested?: boolean;
   mine?: boolean;
   pending?: number;
+  working?: boolean;
 }) {
   const t = useT();
   const { lang } = useLang();
@@ -147,7 +149,7 @@ export default function ParcelCard({
               {t.browse.offerSent}
             </button>
           ) : (
-            <button className="btn-primary min-w-0 flex-1 px-3" onClick={() => onOffer(parcel)}>
+            <button className="btn-primary min-w-0 flex-1 px-3" disabled={working} onClick={() => onOffer(parcel)}>
               {t.browse.offerToCarry}
             </button>
           ))}

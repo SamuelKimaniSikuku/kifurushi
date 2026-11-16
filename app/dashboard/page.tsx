@@ -14,6 +14,7 @@ import {
   fetchMoneyTotals, fetchMyMatches, fetchVerification, isAdmin, MatchDetail,
   MoneyTotals, VerificationState,
 } from "@/lib/db";
+import NextSteps from "@/components/NextSteps";
 import DeliveryInbox from "@/components/DeliveryInbox";
 import { inboxCopy } from "@/lib/locales/inbox";
 import RatingsFeedback from "@/components/RatingsFeedback";
@@ -182,16 +183,18 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <nav aria-label={inboxText.dashboardSections} className="mb-4 mt-5 flex gap-1 border-b border-line">
+      <nav aria-label={inboxText.dashboardSections} className="mb-4 mt-5 flex flex-wrap gap-1 border-b border-line">
         {(["deliveries", "ratings", "account"] as const).map((item) => <a key={item}
           href={`#${item}`} aria-current={section === item ? "page" : undefined}
           onClick={() => setSection(item)}
           className={`min-h-11 border-b-2 px-4 py-2 text-sm font-semibold ${section === item ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}>
           {inboxText[item]}
         </a>)}
+        <Link href="/dashboard/listings" className="min-h-11 px-4 py-2 text-sm font-semibold text-muted hover:text-forest">My listings</Link>
       </nav>
 
       <section id="deliveries" hidden={section !== "deliveries"} className="scroll-mt-24" aria-label={inboxText.deliveries}>
+        <NextSteps matches={matches} userId={session.userId} />
         <DeliveryInbox matches={matches} myUserId={session.userId} active={section === "deliveries"}
           onChanged={() => {
             notifyAttentionChanged();
@@ -326,6 +329,7 @@ export default function DashboardPage() {
         </Link>
       )}
 
+      {reviewer && <Link href="/admin/matching" className="card mt-3 block p-4 text-sm font-semibold text-forest">Matching & promotion →</Link>}
       {reviewer && <Link href="/admin/reports" className="card mt-3 block p-4 text-sm font-semibold text-forest">Delivery reports →</Link>}
 
       <WhatsappSettings />

@@ -1,3 +1,4 @@
+import {sendTrackedEmail} from "../_shared/notifications.ts";
 // Nudges for listings nobody has taken. Run once a morning by pg_cron.
 //
 // Three moments matter to a member:
@@ -266,11 +267,11 @@ const day = (iso: string, lang: Lang) =>
 
 const DAY = 86_400_000;
 const BOOKED_STATUSES = ["accepted", "escrow_paid", "picked_up", "in_transit", "delivered", "released", "disputed"];
-type ReminderPhase = "early" | "soon" | "expired";
+type ReminderPhase = "early" | "soon" | "expired" | "check";
 type ListingReminder = {
   id: string; user_id: string; status: string; to_city: string;
   from_country: string; to_country: string; listing_date: string; created_at: string;
-  remaining_kg?: number; nudged_early_at: string | null;
+  remaining_kg?: number; availability_confirmed_at?:string|null; nudged_check_at?:string|null; nudged_early_at: string | null;
   nudged_soon_at: string | null; nudged_expired_at: string | null;
 };
 
@@ -283,7 +284,9 @@ function reminderPhase(listing: ListingReminder, now: number): ReminderPhase | n
   const date = listing.listing_date;
   const created = Date.parse(listing.created_at);
   if (!Number.isFinite(created) || !Number.isFinite(Date.parse(date))) return null;
-  const markers = [listing.nudged_early_at, listing.nudged_soon_at, listing.nudged_expired_at];
+  const markers = [listing.nudged_early_at, listing.nudged_soon_at, listing.nudged_expired_at, listing.nudged_check_at];
+  if (listing.status !== "open") return null;
+  if (listing.availability_confirmed_at && now-Date.parse(listing.availability_confirmed_at)<2*DAY) return null;
   // Space listing reminders out even when a member changes their deadline.
   if (markers.some((at) => at && now - Date.parse(at) < 2 * DAY)) return null;
   if (date < today) {
@@ -293,7 +296,9 @@ function reminderPhase(listing: ListingReminder, now: number): ReminderPhase | n
   if (listing.status !== "open" || (listing.remaining_kg !== undefined && !(listing.remaining_kg > 0))) return null;
   const in3 = new Date(now + 3 * DAY).toISOString().slice(0, 10);
   if (date <= in3) return !listing.nudged_soon_at && !listing.nudged_expired_at ? "soon" : null;
-  return now - created >= 2 * DAY && markers.every((at) => !at) ? "early" : null;
+  if(now-created>=2*DAY && markers.every(at=>!at)) return 'early';
+  const lastCheck=Math.max(created,...[listing.availability_confirmed_at,listing.nudged_check_at].filter(Boolean).map(at=>Date.parse(at!)));
+  return now-lastCheck>=7*DAY ? 'check' : null;
 }
 
 Deno.serve(async (req) => {
@@ -351,7 +356,11 @@ Deno.serve(async (req) => {
       // Prioritise a concrete request over a generic follow-up. Other listings
       // stay unmarked and can be considered on a later daily run.
       if (notifiedUsers.has(userId)) return false;
-      const ok = dryRun || await sendEmail(email, subject, html, `listing-nudge/${key}`);
+      const ok = dryRun || await sendTrackedEmail(admin, {
+        key:`listing-nudge/${key}`, recipientId:userId, kind:key.split('/')[0],
+        matchId:key.startsWith('request') ? key.split('/')[1] : undefined,
+        reminder:true, to:email, subject, html
+      });
       if (ok) {
         notifiedUsers.add(userId);
         const phase = key.split("/")[0];
@@ -361,48 +370,54 @@ Deno.serve(async (req) => {
       return ok;
     }
 
-    // ----------------------------------- match requests unanswered for 48h
+    // Unanswered requests: at 24 hours and 48 hours, with no reminder after a reply.
     // The responder got one email when the request landed and nothing since.
     // One reminder, once per match. A request whose listings have since gone
     // stale (trip departed, deadline passed) is marked without an email —
     // there is nothing useful left to answer.
-    const cutoff = new Date(now - 48 * 3_600_000).toISOString();
+    const cutoff = new Date(now - 24 * 3_600_000).toISOString();
     const { data: pending } = await admin
       .from("matches")
       .select(
-        `id, parcel_id, requester_id, updated_at,
-         trip:trips!matches_trip_id_fkey(traveler_id, to_city, depart_date),
-         parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg, budget_usd, needed_by)`
+        `id, parcel_id, requester_id, created_at, updated_at, request_first_nudged_at,
+         trip:trips!matches_trip_id_fkey(traveler_id, to_city, depart_date, status),
+         parcel:parcels!matches_parcel_id_fkey(sender_id, weight_kg, budget_usd, needed_by, status, safety_hold)`
       )
       .eq("status", "requested")
       .is("request_nudged_at", null)
-      .lte("updated_at", cutoff)
-      .limit(50)
+      .lte("created_at", cutoff)
+      .order("created_at").limit(200)
       .throwOnError();
 
     for (const m of pending ?? []) {
       const trip = m.trip as unknown as {
-        traveler_id: string; to_city: string; depart_date: string;
+        traveler_id: string; to_city: string; depart_date: string; status:string;
       } | null;
       const parcel = m.parcel as unknown as {
-        sender_id: string; weight_kg: number | null; budget_usd: number; needed_by: string;
+        sender_id: string; weight_kg: number | null; budget_usd: number; needed_by: string; status:string; safety_hold:boolean;
       } | null;
       if (!trip || !parcel) continue;
 
-      const mark = () => recordNudge("matches", m.id, "request_nudged_at");
+      const age=now-Date.parse(m.created_at);
+      const phase=age>=2*DAY ? 'request48' : 'request24';
+      if(phase==='request24' && m.request_first_nudged_at) continue;
+      const mark = () => recordNudge("matches", m.id, phase==='request24'?'request_first_nudged_at':'request_nudged_at');
+      const stop = () => recordNudge("matches", m.id, "request_nudged_at");
 
-      if (trip.depart_date < today || parcel.needed_by < today) {
-        await mark();
+      if (trip.status!=="open" || parcel.status!=="open" || parcel.safety_hold || trip.depart_date < today || parcel.needed_by < today) {
+        await stop();
         continue;
       }
 
       // A different accepted booking makes this request obsolete.
       if (await hasConfirmedBooking("parcel_id", m.parcel_id)) {
-        await mark();
+        await stop();
         continue;
       }
       const senderRequested = m.requester_id === parcel.sender_id;
       const responderId = senderRequested ? trip.traveler_id : parcel.sender_id;
+      const {count:replies}=await admin.from('messages').select('id',{count:'exact',head:true}).eq('match_id',m.id).eq('sender_id',responderId).throwOnError();
+      if((replies??0)>0){await stop();continue;}
       const { email, lang } = await recipient(responderId);
       if (!email) {
         await mark();
@@ -414,7 +429,7 @@ Deno.serve(async (req) => {
         .eq("id", m.requester_id)
         .maybeSingle();
       const name = reqProf?.full_name ?? "A member";
-      const days = Math.max(2, Math.floor((Date.now() - new Date(m.updated_at).getTime()) / 86_400_000));
+      const days = Math.max(1, Math.floor(age / DAY));
 
       const L = T[lang];
       const ctx = {
@@ -425,13 +440,13 @@ Deno.serve(async (req) => {
         city: escapeHtml(trip.to_city),
       };
       const ok = await sendOnce(
-        responderId, `request/${m.id}`, email,
+        responderId, `${phase}/${m.id}`, email,
         senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
         shell(
           senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
           senderRequested ? L.pendingAskBody(ctx) : L.pendingOfferBody(ctx),
           L.respondNow,
-          `${SITE}/dashboard`,
+          `${SITE}/dashboard#messages-${m.id}`,
           lang,
           L.footerPending
         )
@@ -447,7 +462,7 @@ Deno.serve(async (req) => {
       const ownerColumn = kind === "parcel" ? "sender_id" : "traveler_id";
       let query = admin.from(table).select(
         `id, user_id:${ownerColumn}, status, to_city, from_country, to_country,
-         listing_date:${dateColumn}, created_at, nudged_early_at, nudged_soon_at, nudged_expired_at` +
+         listing_date:${dateColumn}, created_at, availability_confirmed_at, nudged_check_at, nudged_early_at, nudged_soon_at, nudged_expired_at` +
         (kind === "trip" ? ", remaining_kg" : "")
       ).gte(dateColumn, threeDaysAgo).order(dateColumn);
       if (kind === "parcel") query = query.eq("status", "open").eq("safety_hold", false);
@@ -467,7 +482,7 @@ Deno.serve(async (req) => {
         let content: string;
         let cta: string;
         let href: string;
-        if (phase === "early") {
+        if (phase === "early" || phase === "check") {
           heading = kind === "parcel" ? L.parcelEarly(city) : L.tripEarly(city);
           content = kind === "parcel" ? L.parcelEarlyBody : L.tripEarlyBody;
           cta = kind === "parcel" ? L.browseTrips : L.browseParcels;
@@ -499,7 +514,13 @@ Deno.serve(async (req) => {
           cta = phase === "soon" && waiting ? L.browseParcels : L.editTrip;
           href = phase === "expired" ? `${SITE}/post/trip` : waiting ? `${SITE}/parcels?${route}` : `${SITE}/post/trip?edit=${listing.id}`;
         }
-        const ok = await sendOnce(listing.user_id, `${phase}/${table}/${listing.id}`, email,
+        if(phase==='check'){
+          const labels={en:['Still looking for a match?','Confirm that your listing is still available, change the date, or close it if you no longer need a match.','Manage my listing'],fr:['Toujours à la recherche ?','Confirmez la disponibilité, changez la date ou fermez votre annonce.','Gérer mon annonce'],sw:['Bado unatafuta mtu?','Thibitisha upatikanaji, badilisha tarehe au funga tangazo lako.','Simamia tangazo langu']}[lang];
+          [heading,content,cta]=labels;
+        }
+        href=`${SITE}/dashboard/listings?kind=${kind}&id=${listing.id}`;
+        const cycle=phase==='check'?`/${listing.nudged_check_at??'first'}`:'';
+        const ok = await sendOnce(listing.user_id, `${phase}/${table}/${listing.id}${cycle}`, email,
           heading, shell(heading, content, cta, href, lang));
         if (ok) await recordNudge(table, listing.id, `nudged_${phase}_at`);
       }
