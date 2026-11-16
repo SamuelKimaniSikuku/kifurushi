@@ -1,0 +1,18 @@
+"use client";
+import {useEffect,useState} from 'react';
+import Link from 'next/link';
+import AdminSecurity from '@/components/AdminSecurity';
+import {supabase} from '@/lib/supabase';
+import {fetchTrips} from '@/lib/db';
+import type {Trip} from '@/lib/types';
+import {tripPromotion} from '@/lib/matching';
+function Matching(){
+ const [stats,setStats]=useState<Record<string,number>|null>(null),[trips,setTrips]=useState<Trip[]>([]),[error,setError]=useState(''),[copied,setCopied]=useState('');
+ useEffect(()=>{Promise.all([supabase.rpc('admin_matching_metrics'),fetchTrips()]).then(([r,t])=>{if(r.error)throw r.error;setStats(r.data);setTrips(t);}).catch(()=>setError('Could not load matching activity. Check administrator access and refresh.'));},[]);
+ const labels:Record<string,string>={parcels:'Parcels posted',trips:'Trips posted',requests:'Requests started',replied:'Requests with a reply',bookings:'Confirmed bookings',emails_sent:'Emails accepted by provider',emails_visited:'Emails followed back to Kifurushi'};
+ return <div className="mx-auto max-w-5xl px-4 py-8"><Link className="text-sm underline" href="/dashboard#account">← Dashboard</Link><h1 className="mt-4 font-display text-3xl font-bold text-forest">Matching & promotion</h1><p className="mt-2 text-muted">See where people need help and share trips with the right communities.</p>{error&&<p role="alert" className="mt-4 text-danger">{error}</p>}
+ {!stats&&!error&&<p className="mt-6">Loading…</p>}{stats&&<><h2 className="mt-8 text-xl font-bold text-forest">Last 30 days</h2><div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{Object.entries(labels).map(([key,label])=><div key={key} className="card p-4"><p className="text-2xl font-bold text-forest">{stats[key]}</p><p className="mt-1 text-sm text-muted">{label}</p></div>)}</div><p className="mt-3 text-xs text-muted">Email tracking starts with this update. A return is a signed-in visit from an email link, not an email open. Provider acceptance does not confirm inbox delivery. Replies and current bookings are for requests started in the last 30 days; cancelled bookings are excluded.</p><p className="card mt-5 p-4 text-sm"><strong>Needs attention:</strong> {stats.unanswered} current requests without a reply · {stats.expired_parcels} open parcels with past deadlines.</p></>}
+ <h2 className="mt-8 text-xl font-bold text-forest">Share upcoming trips</h2><p className="mt-2 text-sm text-muted">Choose communities connected to the departure and destination cities. Check group posting rules. The announcement includes the date, listed price and a direct trip link.</p><p role="status" className="mt-3 text-sm text-forest">{copied}</p><div className="mt-3 grid gap-4 md:grid-cols-2">{trips.map(t=><div className="card p-5" key={t.id}><h3 className="font-semibold text-forest">{t.fromCity} → {t.toCity}</h3><p className="mt-1 text-sm text-muted">{t.departDate} · {t.remainingKg} kg available · ${t.pricePerKg}/kg</p><p className="mt-2 text-sm">{t.travelerVerified?'Identity verified':'Identity verification pending'}</p><details className="mt-3"><summary className="cursor-pointer text-sm underline">Preview announcement</summary><p className="mt-2 whitespace-pre-wrap break-words text-sm">{tripPromotion(t)}</p></details><button className="btn-primary mt-4" onClick={()=>navigator.clipboard.writeText(tripPromotion(t)).then(()=>setCopied(`Copied: ${t.fromCity} → ${t.toCity}`)).catch(()=>setCopied('Please copy the text from the preview.'))}>Copy announcement</button></div>)}</div>
+ </div>;
+}
+export default function Page(){return <AdminSecurity><Matching/></AdminSecurity>;}

@@ -1,3 +1,4 @@
+import {sendTrackedEmail, escapeHtml} from "../_shared/notifications.ts";
 // Emails members about every match event — a request arriving, an accept or
 // decline, each delivery milestone, and new chat activity. Invoked by the
 // matches/messages DB triggers via pg_net; the shared secret header keeps
@@ -11,7 +12,6 @@
 //   message              -> whoever did not send it
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { logIncident } from "../_shared/incidents.ts";
 
 type Lang = "en" | "fr" | "sw";
 type Role = "traveler" | "sender";
@@ -249,65 +249,14 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
-  // Test-run guard: temp accounts created during verification use "+test"
-  // aliases. Their matches exercise the real pipeline, but nobody should
-  // receive the mail — least of all the founder's inbox.
-  if (/\+test/i.test(to)) {
-    console.log("skipping test-alias recipient", to);
-    return ;
-  }
-  const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) {
-    await logIncident("email_not_configured", "RESEND_API_KEY is missing", "severe");
-    return;
-  }
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Kifurushi <hello@kifurushiapp.com>",
-        to: [to],
-        subject,
-        html,
-      }),
-    });
-    // This used to be fire-and-forget: a rejected or suppressed address
-    // looked exactly like a delivered one, so a member could sit waiting for
-    // a notification that Resend had refused to send.
-    if (!res.ok) {
-      const detail = await res.text();
-      console.error("match email rejected", res.status, detail);
-      await logIncident(
-        "email_send_failed",
-        `Resend rejected a match notification (${res.status})`,
-        "severe",
-        { subject, status: res.status, detail: detail.slice(0, 500) }
-      );
-    }
-  } catch (e) {
-    console.error("match email failed", e);
-    await logIncident(
-      "email_send_failed",
-      "A match notification could not be sent",
-      "severe",
-      { subject, error: String(e) }
-    );
-  }
-}
-
-function shell(heading: string, body: string, lang: Lang): string {
+function shell(heading: string, body: string, lang: Lang, matchId: string): string {
   return `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
     <h1 style="margin:0;font-size:22px">${heading}</h1>
   </div>
   <div style="font-size:14px;line-height:1.7;margin:20px 0">${body}</div>
-  <a href="https://www.kifurushiapp.com/dashboard"
+  <a href="https://www.kifurushiapp.com/dashboard#messages-${matchId}"
      style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px">
     ${BUTTON[lang]}
   </a>
@@ -358,13 +307,15 @@ Deno.serve(async (req) => {
   const { data: match, error } = await admin
     .from("matches")
     .select(
-      `id, requester_id,
+      `id, requester_id, updated_at, status,
        trip:trips!matches_trip_id_fkey(from_city, to_city, traveler_id),
        parcel:parcels!matches_parcel_id_fkey(sender_id)`
     )
     .eq("id", matchId)
     .maybeSingle();
-  if (error || !match) return ok({ ignored: "match not found" });
+  if (error) throw error;
+  if (!match) return ok({ ignored: "match not found" });
+  if(event !== "message" && match.status !== event)return ok({ignored:"superseded event"});
 
   const trip = match.trip as unknown as {
     from_city: string;
@@ -414,7 +365,15 @@ Deno.serve(async (req) => {
     profile(senderId),
   ]);
 
-  const jobs: Promise<void>[] = [];
+  // Message hooks are throttled upstream. Use the latest message as a stable
+  // retry key, while status events use the transition timestamp.
+  let eventKey = match.updated_at;
+  if(event === 'message'){
+    const {data:latest,error:messageError}=await admin.from('messages').select('id').eq('match_id',matchId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+    if(messageError)throw messageError;
+    eventKey=latest?.id ?? match.updated_at;
+  }
+  const jobs: Promise<boolean>[] = [];
   for (const uid of recipients) {
     // Never email someone about their own action.
     if (uid === actor) continue;
@@ -423,15 +382,13 @@ Deno.serve(async (req) => {
     if (!me.email) continue;
     const role: Role = uid === travelerId ? "traveler" : "sender";
     const c = COPY[me.lang][event];
-    jobs.push(
-      sendEmail(
-        me.email,
-        c.subject,
-        shell(c.heading, c.body({ route, other: other.name, role }), me.lang)
-      )
-    );
+    jobs.push(sendTrackedEmail(admin, {
+      key:`match/${matchId}/${event}/${eventKey}/${uid}`, recipientId:uid,
+      kind:`match_${event}`, matchId, to:me.email, subject:c.subject,
+      html:shell(c.heading,c.body({route:escapeHtml(route),other:escapeHtml(other.name),role}),me.lang,matchId)
+    }));
   }
-  await Promise.all(jobs);
+  const outcomes=await Promise.all(jobs);
 
-  return ok({ event, emailed: jobs.length });
+  return ok({ event, emailed: outcomes.filter(Boolean).length });
 });

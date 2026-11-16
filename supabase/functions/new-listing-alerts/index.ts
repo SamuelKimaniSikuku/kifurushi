@@ -1,3 +1,4 @@
+import {sendTrackedEmail, escapeHtml} from "../_shared/notifications.ts";
 // The moment a listing is posted, tell the people it fits — immediately, not
 // in tomorrow's digest. A sender's parcel goes to every traveller whose open
 // trip can carry it; a traveller's new trip goes to every sender whose open
@@ -8,7 +9,6 @@
 // alert hook secret.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { logIncident } from "../_shared/incidents.ts";
 
 const SITE = "https://www.kifurushiapp.com";
 const MAX_RECIPIENTS = 30;
@@ -41,7 +41,7 @@ const T: Record<
     tripSubject: (from, to) => `A traveller just posted your route: ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> is flying <b>${c.from} → ${c.to}</b> on ${c.depart} ` +
-      `with ${c.kg} kg free at $${c.price}/kg. Ask about your parcel and agree the weight before acceptance.`,
+      `with ${c.kg} kg free at $${c.price}/kg. Ask about your parcel. You can agree the weight and final fee in Messages.`,
     seeParcels: "See the parcel",
     seeTravellers: "Request this traveller",
     footer: "You get this because you have an open listing on this route.",
@@ -55,7 +55,7 @@ const T: Record<
     tripSubject: (from, to) => `Un voyageur vient de publier votre itinéraire : ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> part de <b>${c.from} → ${c.to}</b> le ${c.depart} ` +
-      `avec ${c.kg} kg libres à ${c.price} $/kg. Discutez de votre colis et convenez du poids avant l’acceptation.`,
+      `avec ${c.kg} kg libres à ${c.price} $/kg. Discutez du poids et du prix final dans Messages.`,
     seeParcels: "Voir le colis",
     seeTravellers: "Solliciter ce voyageur",
     footer: "Vous recevez ceci car vous avez une annonce ouverte sur cet itinéraire.",
@@ -69,7 +69,7 @@ const T: Record<
     tripSubject: (from, to) => `Msafiri ametangaza njia yako: ${from} → ${to} ✈️`,
     tripBody: (c) =>
       `<b>${c.traveler}</b> anasafiri <b>${c.from} → ${c.to}</b> tarehe ${c.depart} ` +
-      `akiwa na kg ${c.kg} wazi kwa $${c.price}/kg. Uliza kuhusu kifurushi chako na mkubaliane uzito kabla ya kukubali.`,
+      `akiwa na kg ${c.kg} wazi kwa $${c.price}/kg. Uliza kuhusu kifurushi chako. Kubalianeni uzito na bei ya mwisho kwenye Messages.`,
     seeParcels: "Ona kifurushi",
     seeTravellers: "Omba msafiri huyu",
     footer: "Unapata hii kwa sababu una tangazo wazi kwenye njia hii.",
@@ -88,37 +88,6 @@ function shell(heading: string, body: string, cta: string, href: string, footer:
 </div>`;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<"sent" | "skipped" | "failed"> {
-  // Test-run guard, same convention as every other sender.
-  if (/\+test/i.test(to)) {
-    console.log("skipping test-alias recipient", to);
-    return "skipped";
-  }
-  const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) return "failed";
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: "Kifurushi <hello@kifurushiapp.com>",
-      to: [to],
-      subject,
-      html,
-    }),
-  });
-  if (!res.ok) {
-    const detail = await res.text();
-    await logIncident(
-      "email_send_failed",
-      `Resend rejected a new-listing alert (${res.status})`,
-      "severe",
-      { subject, detail: detail.slice(0, 400) }
-    );
-    return "failed";
-  }
-  return "sent";
-}
-
 const day = (iso: string, lang: Lang) =>
   new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : lang, {
     day: "numeric",
@@ -127,7 +96,7 @@ const day = (iso: string, lang: Lang) =>
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405 });
-  if (req.headers.get("x-hook-secret") !== Deno.env.get("ALERT_HOOK_SECRET")) {
+  if (!Deno.env.get("ALERT_HOOK_SECRET") || req.headers.get("x-hook-secret") !== Deno.env.get("ALERT_HOOK_SECRET")) {
     return new Response("Forbidden", { status: 403 });
   }
 
@@ -163,14 +132,14 @@ Deno.serve(async (req) => {
   if (body.kind === "parcel") {
     const { data: p } = await admin
       .from("parcels")
-      .select("id, sender_id, from_country, from_city, to_country, to_city, needed_by, weight_kg, budget_usd, profile:profiles!parcels_sender_id_fkey(full_name)")
+      .select("id, status, safety_hold, categories, sender_id, from_country, from_city, to_country, to_city, needed_by, weight_kg, budget_usd, profile:profiles!parcels_sender_id_fkey(full_name)")
       .eq("id", body.id)
-      .maybeSingle();
-    if (!p) return new Response("Not found", { status: 404 });
+      .maybeSingle().throwOnError();
+    if (!p || p.status !== "open" || p.safety_hold || p.needed_by < today) return new Response("Unavailable", { status: 200 });
 
     const { data: trips } = await admin
       .from("trips")
-      .select("traveler_id, depart_date")
+      .select("id, traveler_id, depart_date, categories")
       .eq("status", "open")
       .eq("from_country", p.from_country)
       .eq("to_country", p.to_country)
@@ -179,90 +148,86 @@ Deno.serve(async (req) => {
       .gte("remaining_kg", p.weight_kg ?? 0.1)
       .neq("traveler_id", p.sender_id)
       .order("depart_date", { ascending: true })
-      .limit(MAX_RECIPIENTS);
+      .limit(MAX_RECIPIENTS).throwOnError();
 
     // One email per traveller, their soonest fitting trip named.
-    const byTraveler = new Map<string, string>();
+    const byTraveler = new Map<string, {id:string;date:string}>();
     for (const t of trips ?? []) {
-      if (!byTraveler.has(t.traveler_id)) byTraveler.set(t.traveler_id, t.depart_date);
+      if ((p.categories??[]).every((c:string)=>(t.categories??[]).includes(c)) && !byTraveler.has(t.traveler_id)) byTraveler.set(t.traveler_id, {id:t.id,date:t.depart_date});
     }
 
     const senderName =
       (p.profile as { full_name?: string } | null)?.full_name ?? "A member";
-    for (const [travelerId, tripDate] of byTraveler) {
+    for (const [travelerId, candidate] of byTraveler) {
       const r = await recipient(travelerId);
       if (!r.email) continue;
       const L = T[r.lang];
-      const result = await sendEmail(
-        r.email,
-        L.parcelSubject(p.from_city, p.to_city),
-        shell(
-          L.parcelSubject(p.from_city, p.to_city),
+      const result = await sendTrackedEmail(admin, {
+        key:`listing/parcel/${p.id}/${travelerId}`,recipientId:travelerId,kind:'new_parcel',to:r.email,
+        subject:L.parcelSubject(p.from_city,p.to_city),html:shell(
+          escapeHtml(L.parcelSubject(p.from_city, p.to_city)),
           L.parcelBody({
-            sender: senderName,
-            from: p.from_city,
-            to: p.to_city,
+            sender: escapeHtml(senderName),
+            from: escapeHtml(p.from_city),
+            to: escapeHtml(p.to_city),
             kg: p.weight_kg == null ? null : Number(p.weight_kg),
             budget: Math.round(Number(p.budget_usd)),
             needed: day(p.needed_by, r.lang),
-            tripDate: day(tripDate, r.lang),
+            tripDate: day(candidate.date, r.lang),
           }),
           L.seeParcels,
-          `${SITE}/parcels`,
+          `${SITE}/dashboard/listings?kind=trip&id=${candidate.id}`,
           L.footer
         )
-      );
-      if (result === "sent") sent++;
-      if (result === "skipped") skipped++;
+      });
+      if (result) sent++; else skipped++;
     }
   } else {
     const { data: t } = await admin
       .from("trips")
-      .select("id, traveler_id, from_country, from_city, to_country, to_city, depart_date, remaining_kg, price_per_kg, profile:profiles!trips_traveler_id_fkey(full_name)")
+      .select("id, status, categories, traveler_id, from_country, from_city, to_country, to_city, depart_date, remaining_kg, price_per_kg, profile:profiles!trips_traveler_id_fkey(full_name)")
       .eq("id", body.id)
-      .maybeSingle();
-    if (!t) return new Response("Not found", { status: 404 });
+      .maybeSingle().throwOnError();
+    if (!t || t.status !== "open" || t.depart_date < today || !(Number(t.remaining_kg)>0)) return new Response("Unavailable", { status: 200 });
 
     const { data: parcels } = await admin
       .from("parcels")
-      .select("sender_id")
-      .eq("status", "open")
+      .select("id, sender_id, categories")
+      .eq("status", "open").eq("safety_hold",false)
       .eq("from_country", t.from_country)
       .eq("to_country", t.to_country)
       .gte("needed_by", t.depart_date)
       .or(`weight_kg.is.null,weight_kg.lte.${Number(t.remaining_kg)}`)
       .neq("sender_id", t.traveler_id)
-      .limit(MAX_RECIPIENTS);
+      .limit(MAX_RECIPIENTS).throwOnError();
 
     const travelerName =
       (t.profile as { full_name?: string } | null)?.full_name ?? "A member";
     const seen = new Set<string>();
     for (const p of parcels ?? []) {
-      if (seen.has(p.sender_id)) continue;
+      if (seen.has(p.sender_id) || !(p.categories??[]).every((c:string)=>(t.categories??[]).includes(c))) continue;
       seen.add(p.sender_id);
       const r = await recipient(p.sender_id);
       if (!r.email) continue;
       const L = T[r.lang];
-      const result = await sendEmail(
-        r.email,
-        L.tripSubject(t.from_city, t.to_city),
-        shell(
-          L.tripSubject(t.from_city, t.to_city),
+      const result = await sendTrackedEmail(admin, {
+        key:`listing/trip/${t.id}/${p.sender_id}`,recipientId:p.sender_id,kind:'new_trip',to:r.email,
+        subject:L.tripSubject(t.from_city,t.to_city),html:shell(
+          escapeHtml(L.tripSubject(t.from_city, t.to_city)),
           L.tripBody({
-            traveler: travelerName,
-            from: t.from_city,
-            to: t.to_city,
+            traveler: escapeHtml(travelerName),
+            from: escapeHtml(t.from_city),
+            to: escapeHtml(t.to_city),
             kg: Number(t.remaining_kg),
             price: Number(t.price_per_kg),
             depart: day(t.depart_date, r.lang),
           }),
           L.seeTravellers,
-          `${SITE}/trips`,
+          `${SITE}/dashboard/listings?kind=parcel&id=${p.id}`,
           L.footer
         )
-      );
-      if (result === "sent") sent++;
-      if (result === "skipped") skipped++;
+      });
+      if (result) sent++; else skipped++;
     }
   }
 

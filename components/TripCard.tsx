@@ -18,6 +18,7 @@ export default function TripCard({
   requested,
   mine,
   pending = 0,
+  working = false,
   detailsHref,
 }: {
   trip: Trip;
@@ -25,6 +26,7 @@ export default function TripCard({
   requested?: boolean;
   mine?: boolean;
   pending?: number;
+  working?: boolean;
   detailsHref?: string;
 }) {
   const t = useT();
@@ -179,7 +181,7 @@ export default function TripCard({
               {t.browse.requestSent}
             </button>
           ) : (
-            <button className="btn-accent min-w-0 flex-1 px-3" onClick={() => onRequest(trip)}>
+            <button className="btn-accent min-w-0 flex-1 px-3" disabled={working} onClick={() => onRequest(trip)}>
               {t.browse.requestTraveller}
             </button>
           ))}

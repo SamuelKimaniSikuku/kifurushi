@@ -143,11 +143,12 @@ function PostTripForm() {
       if (editId) {
         await updateTrip(editId, { ...parsed.data, categoriesAccepted: cats });
       } else {
-        await addTrip({ ...parsed.data, categoriesAccepted: cats });
+        const postedId = await addTrip({ ...parsed.data, categoriesAccepted: cats });
+        router.push(`/dashboard/listings?kind=trip&id=${postedId}&posted=1`);
+        return;
       }
-      // If parcels are already waiting on this route, land the traveller on
-      // them so the offer happens now — not on the list of rival trips.
-      router.push(fit && fit.fits > 0 ? "/parcels" : "/trips");
+      // Return to the updated listing and its current recommendations.
+      router.push(editId ? `/dashboard/listings?kind=trip&id=${editId}` : "/trips");
     } catch {
       setErrors({ _submit: t.postTrip.submitError });
       setSubmitting(false);
