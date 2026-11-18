@@ -115,3 +115,44 @@ test('INR estimates convert through a verified reference rate and degrade to nat
   assert.equal(convertCost(2328500,'INR','USD',{date:'2026-11-11',usdPerEur:1.1127}),null);
   assert.equal(convertCost(29543,'USD','USD',null),29543);
 });
+
+const { averageTravellerPrice, effectivePricePerKg, parseReferenceRates, COST_CURRENCIES } = require('../lib/automaticDeliveryCosts.ts');
+test('route average uses eligible listings equally, excludes unavailable trips and changes with parcel capacity',()=>{
+  const trips=[trip({remainingKg:1}),trip({id:'two',pricePerKg:9}),trip({id:'past',departDate:'2026-01-01',pricePerKg:100}),trip({id:'reverse',fromCountry:'KE',toCountry:'FR',pricePerKg:50})];
+  assert.deepEqual(averageTravellerPrice(travellerEstimates(trips,'FR','KE','1',today)),{count:2,rateCents:800,totalCents:800});
+  assert.deepEqual(averageTravellerPrice(travellerEstimates(trips,'FR','KE','10',today)),{count:1,rateCents:900,totalCents:9000});
+  assert.equal(averageTravellerPrice(travellerEstimates(trips,'FR','KE','11',today)),null);
+});
+test('average rounds the final total once, including fractional kg',()=>{
+  const prices=travellerEstimates([trip({pricePerKg:7}),trip({id:'b',pricePerKg:7.01})],'FR','KE','10',today);
+  assert.deepEqual(averageTravellerPrice(prices),{count:2,rateCents:701,totalCents:7005});
+  assert.equal(averageTravellerPrice(travellerEstimates([trip(),trip({id:'b',pricePerKg:9})],'FR','KE','.3',today)).totalCents,240);
+});
+test('courier price per kg divides the tariff by actual weight, not billed weight',()=>{
+  assert.equal(effectivePricePerKg(rate('KE','.3').cents,300),11730);
+  assert.equal(effectivePricePerKg(rate('KE','10').cents,10000),1490);
+  assert.equal(effectivePricePerKg(100,0),null);
+  assert.equal(effectivePricePerKg(-100,1000),null);
+});
+const now=Date.parse('2026-11-18T12:00:00Z');
+const rows=[['USD',1.1],['KES',143],['GBP',.85],['INR',103]].map(([quote,rate])=>({date:'2026-11-18',base:'EUR',quote,rate}));
+test('all selectable currencies convert both ways through the same dated rates',()=>{
+  const fx=parseReferenceRates(rows,now);
+  assert.equal(convertCost(700,'USD','KES',fx),91000);
+  assert.equal(convertCost(91000,'KES','USD',fx),700);
+  assert.equal(convertCost(10000,'EUR','GBP',fx),8500);
+  assert.equal(convertCost(10000,'EUR','INR',fx),1030000);
+  for(const currency of COST_CURRENCIES) assert.equal(convertCost(100,currency,currency,null),100);
+});
+test('stale, future, invalid, duplicated and mismatched rates are never used',()=>{
+  assert.equal(parseReferenceRates({},now),null);
+  for(const date of ['2026-11-01','2026-11-19','2026-02-31','bad']) assert.equal(parseReferenceRates(rows.map(row=>({...row,date})),now),null);
+  for(const rate of [0,-1,Infinity,'1.1']) assert.equal(parseReferenceRates([{...rows[0],rate}],now),null);
+  assert.equal(parseReferenceRates([...rows,rows[0]],now),null);
+  assert.equal(parseReferenceRates(rows.map(row=>({...row,base:'USD'})),now),null);
+  const fx=parseReferenceRates(rows.map(row=>row.quote==='KES'?{...row,date:'2026-11-17'}:row),now);
+  assert.equal(fx.kesPerEur,undefined);
+  assert.equal(convertCost(700,'USD','KES',fx),null);
+  assert.equal(convertCost(700,'USD','KES',null),null);
+  assert.equal(convertCost(700,'USD','KES',{...fx,kesPerEur:Infinity}),null);
+});

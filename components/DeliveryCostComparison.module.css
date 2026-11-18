@@ -86,7 +86,14 @@
 .sectionHeading h2 { font-size: 22px; font-weight: 650; letter-spacing: -.5px; }
 .sectionHeading p { color: var(--muted); font-size: 13px; margin-top: 5px; }
 .sectionHeading svg { flex-shrink: 0; }
-.courierGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.courierGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.courierCard.averageCard { border-color: var(--leaf); background: var(--success-bg); }
+.courierPrice small { font-family: inherit; font-size: 15px; color: var(--muted); letter-spacing: normal; white-space: nowrap; }
+.viewToggle { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--sand-deep); border-radius: 12px; margin-bottom: 18px; }
+.viewToggle button { min-height: 44px; padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--forest); }
+.viewToggle button[aria-pressed="true"] { background: var(--forest); color: white; }
+.currencyNotice { padding: 12px 16px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 20px; font-size: 13px; color: var(--muted); }
+.currencyNotice button { text-decoration: underline; min-height: 44px; color: var(--forest); }
 .courierCard { background: white; border: 1px solid var(--line); border-radius: 20px; padding: 24px 28px; display: flex; flex-direction: column; min-width: 0; }
 .courierHeading h3 { color: var(--forest); font-size: 17px; font-weight: 600; }
 .courierHeading > span { display: inline-block; color: var(--muted); background: var(--sand); border-radius: 6px; padding: 3px 7px; margin-top: 8px; font-size: 11px; }
@@ -109,7 +116,8 @@
   .hero { display: block; margin-bottom: 24px; }
   .hero h1 { font-size: 32px; letter-spacing: -1px; max-width: 520px; }
   .intro { font-size: 14px; }
-  .hero .currency { margin-top: 16px; display: flex; align-items: center; gap: 10px; }
+  .hero .currency { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .hero .currency select { max-width: 100%; }
   .hero .currency label { margin: 0; font-size: 12px; }
   .calculator, .courierGrid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .formCard { padding: 22px 20px; border-radius: 20px; }

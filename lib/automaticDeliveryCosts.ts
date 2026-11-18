@@ -20,6 +20,24 @@ export function travellerEstimates(trips: Trip[], from: string, to: string, weig
   }).sort((a, b) => a.totalCents - b.totalCents || a.trip.departDate.localeCompare(b.trip.departDate) || a.trip.id.localeCompare(b.trip.id));
 }
 
+/** Each eligible listing has equal weight; this is a listed-price mean, not completed payments. */
+export function averageTravellerPrice(estimates: ReturnType<typeof travellerEstimates>) {
+  if (!estimates.length) return null;
+  const mean = estimates.reduce((sum, estimate) => sum + estimate.rateCents, 0) / estimates.length;
+  return {
+    count: estimates.length,
+    rateCents: Math.round(mean),
+    totalCents: Math.round(mean * estimates[0].grams / 1000),
+  };
+}
+
+/** Effective price per actual kg, after the courier's weight band has been applied. */
+export function effectivePricePerKg(totalCents: number, grams: number): number | null {
+  if (!Number.isSafeInteger(totalCents) || totalCents < 0 || !Number.isSafeInteger(grams) || grams <= 0) return null;
+  const result = Math.round(totalCents * 1000 / grams);
+  return Number.isSafeInteger(result) ? result : null;
+}
+
 // Explicit export zones from the French guide, pp. 23–26. Never use these for reverse routes.
 const dhlZones: Record<string, number> = {};
 [
@@ -92,8 +110,38 @@ export function publishedCourierRates(from: string, to: string, weight: string, 
   return result;
 }
 
-export type CostCurrency = "USD" | "EUR" | "INR";
-export interface ExchangeRate { date: string; usdPerEur: number; inrPerEur?: number }
+export const COST_CURRENCIES = ["USD", "EUR", "KES", "GBP", "INR"] as const;
+export type CostCurrency = typeof COST_CURRENCIES[number];
+export interface ExchangeRate {
+  date: string;
+  usdPerEur: number;
+  inrPerEur?: number;
+  kesPerEur?: number;
+  gbpPerEur?: number;
+  source?: "ecb" | "frankfurter";
+}
+
+function recentDate(date: string, now: number) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const stamp = Date.parse(`${date}T00:00:00Z`);
+  return Number.isFinite(stamp) && new Date(stamp).toISOString().slice(0, 10) === date && stamp <= now && now - stamp <= 7 * 86400000;
+}
+
+/** Require a common recent date so a cross-rate cannot silently mix days. */
+export function parseReferenceRates(data: unknown, now = Date.now()): ExchangeRate | null {
+  if (!Array.isArray(data)) return null;
+  const rows = data.filter((row): row is { base: string; quote: string; date: string; rate: number } =>
+    row && row.base === "EUR" && typeof row.date === "string" && recentDate(row.date, now) &&
+    typeof row.rate === "number" && Number.isFinite(row.rate) && row.rate > 0);
+  const usd = rows.filter(row => row.quote === "USD");
+  if (usd.length !== 1) return null;
+  const result: ExchangeRate = { date: usd[0].date, usdPerEur: usd[0].rate, source: "frankfurter" };
+  for (const [code, key] of [["KES", "kesPerEur"], ["GBP", "gbpPerEur"], ["INR", "inrPerEur"]] as const) {
+    const matches = rows.filter(row => row.quote === code && row.date === result.date);
+    if (matches.length === 1) result[key] = matches[0].rate;
+  }
+  return result;
+}
 /** Reject stale, future, missing and malformed reference data instead of guessing a conversion. */
 export function parseEcbRate(xml: string, now = Date.now()): ExchangeRate | null {
   const date = xml.match(/<Cube\s+time=['"](\d{4}-\d{2}-\d{2})['"]/)?.[1];
@@ -106,12 +154,14 @@ export function parseEcbRate(xml: string, now = Date.now()): ExchangeRate | null
   return { date, usdPerEur, ...(Number.isFinite(inr) && inr > 0 ? { inrPerEur: inr } : {}) };
 }
 
-export function convertCost(cents: number, from: CostCurrency, to: "USD" | "EUR", exchange: ExchangeRate | null): number | null {
+export function convertCost(cents: number, from: CostCurrency, to: CostCurrency, exchange: ExchangeRate | null): number | null {
   if (!Number.isSafeInteger(cents) || cents < 0) return null;
   if (from === to) return cents;
   if (!exchange || !Number.isFinite(exchange.usdPerEur) || exchange.usdPerEur <= 0) return null;
-  const rates = { EUR: 1, USD: exchange.usdPerEur, INR: exchange.inrPerEur };
+  const rates = { EUR: 1, USD: exchange.usdPerEur, INR: exchange.inrPerEur, KES: exchange.kesPerEur, GBP: exchange.gbpPerEur };
   const fromRate = rates[from];
-  if (!fromRate || !Number.isFinite(fromRate) || fromRate <= 0) return null;
-  return Math.round(cents / fromRate * rates[to]);
+  const toRate = rates[to];
+  if (!fromRate || !Number.isFinite(fromRate) || fromRate <= 0 || !toRate || !Number.isFinite(toRate) || toRate <= 0) return null;
+  const converted = Math.round(cents / fromRate * toRate);
+  return Number.isSafeInteger(converted) ? converted : null;
 }

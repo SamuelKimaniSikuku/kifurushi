@@ -21,6 +21,7 @@ import { useSession } from "@/lib/auth";
 import { Trip } from "@/lib/types";
 import { safetyCopy } from "@/lib/locales/safety";
 import { filterUpcomingTrips, laterDepartures } from "@/lib/tripDiscovery";
+import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 
 function TripsContent() {
   const gate = useContactGate();
@@ -113,6 +114,7 @@ function TripsContent() {
         <Link href={postHref("parcel", { from, to })} className="btn-primary"><Package size={18} aria-hidden />{x.postParcel}</Link>
       </div>
       <BrowseFilters kind="trips" {...browse} />
+      <Link href={`/compare-delivery-costs?${new URLSearchParams({ from, to })}`} className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-forest underline underline-offset-4">{deliveryCostCopy[lang].averageLink}</Link>
       {!date && !month && <p className="mt-3 text-sm text-muted">{s.anyDate}</p>}
 
       {!loaded ? (
