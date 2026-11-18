@@ -120,10 +120,14 @@ export default function DeliveryCostComparison() {
             <div className={styles.provider}><Plane size={20} aria-hidden="true" /><div><h3>Kifurushi</h3><p>{t.simpleAverage}</p>{average && <span className={styles.tripCount}>{t.simpleTrips(average.count)}</span>}</div></div>
             {average ? <div className={styles.amount}><p>{price(average.totalCents, "USD")}</p><small>{price(average.rateCents, "USD")} / kg</small></div> : <div className={styles.unavailable}><p>{waitingText}</p>{tripState === "error" && <button type="button" onClick={() => setAttempt(a => a + 1)}>{t.retry}</button>}</div>}
           </article>
-          {availableCouriers.map(quote => <article className={styles.priceRow} key={quote.provider}>
-            <div className={styles.provider}><Truck size={20} aria-hidden="true" /><div><h3>{quote.name}</h3><p>{quote.provider === "dhl" ? t.baseRate : t.simplePublished}</p></div></div>
-            <div className={styles.amount}><p>{price(quote.cents!, quote.currency)}</p><small>{perKgPrice(quote.cents!, quote.currency)} / kg</small></div>
-          </article>)}
+          {availableCouriers.map(quote => {
+            const converted = convertCost(quote.cents!, quote.currency, currency, exchange);
+            const saving = averageConverted !== null && converted !== null ? converted - averageConverted : null;
+            return <article className={styles.priceRow} key={quote.provider}>
+              <div className={styles.provider}><Truck size={20} aria-hidden="true" /><div><h3>{quote.name}</h3><p>{quote.provider === "dhl" ? t.baseRate : t.simplePublished}</p></div></div>
+              <div className={styles.amount}><p>{price(quote.cents!, quote.currency)}</p><small>{perKgPrice(quote.cents!, quote.currency)} / kg</small>{saving !== null && saving > 0 && <span className={styles.saving}>{t.simpleSaving(money(saving))}</span>}</div>
+            </article>;
+          })}
           {planning && <article className={`${styles.priceRow} ${styles.referenceRow}`}>
             <div className={styles.provider}><Truck size={20} aria-hidden="true" /><div><h3>{t.simpleCourier}</h3><p className={styles.referenceBadge}>{t.simpleReference}</p></div></div>
             <div className={styles.amount}><p>≈ {range(planning.minCents, planning.maxCents)}</p><small>{range(effectivePricePerKg(planning.minCents, grams)!, effectivePricePerKg(planning.maxCents, grams)!)} / kg</small></div>
