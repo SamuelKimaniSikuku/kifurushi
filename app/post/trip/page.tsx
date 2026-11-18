@@ -15,14 +15,11 @@ import {
   addTrip, CorridorFit, fetchTripById, fitForTrip, hasDuplicateTrip, updateTrip,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
-
-// What senders typically pay a courier per kg on Africa ↔ diaspora routes —
-// baseline for the earnings/savings comparison shown on the form.
-const COURIER_RATE_PER_KG = 14;
 
 const FIELD_ORDER = [
   "fromCountry",
@@ -50,6 +47,7 @@ function PostTripForm() {
   const params = useSearchParams();
   const { session, loading } = useSession();
   const t = useT();
+  const { lang } = useLang();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   // Which fields the member has actually finished with. Nothing complains
@@ -188,16 +186,13 @@ function PostTripForm() {
   const tightDeparture =
     daysToDeparture !== null && daysToDeparture >= 0 && daysToDeparture < 7;
 
-  // Live earnings maths for the comparison band. Courier baseline matches
-  // the marketing copy (5 kg London→Lagos runs $50–80 by courier).
+  // Potential carrying fees before expenses, if the advertised space is booked.
   const spaceNum = parseFloat(form.spaceKg);
   const priceNum = parseFloat(form.pricePerKg);
   const valid =
     Number.isFinite(spaceNum) && spaceNum > 0 &&
     Number.isFinite(priceNum) && priceNum > 0;
   const earnings = valid ? Math.round(spaceNum * priceNum) : 0;
-  const courierCost = valid ? Math.round(spaceNum * COURIER_RATE_PER_KG) : 0;
-  const senderSavings = Math.max(0, courierCost - earnings);
 
 
   // Keep the visible errors honest as the member types: a message appears the
@@ -346,7 +341,7 @@ function PostTripForm() {
               <p id="pricePerKg-error" className="field-error">{errors.pricePerKg}</p>
             )}
             <p id="pricePerKg-hint" className="mt-1 text-xs text-muted">
-              {t.postTrip.priceHint(COURIER_RATE_PER_KG)}
+              <a href={`/compare-delivery-costs?${new URLSearchParams({ from: form.fromCountry, to: form.toCountry })}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold text-forest underline underline-offset-4">{deliveryCostCopy[lang].averageLink}</a>
             </p>
           </div>
         </div>
@@ -365,17 +360,13 @@ function PostTripForm() {
           departDate={form.departDate}
         />
 
-        {/* Live earnings vs courier comparison */}
+        {/* Potential carrying fees */}
         {earnings > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl bg-sand px-4 py-3.5 text-sm">
             <span className="font-semibold text-forest">
               {t.postTrip.earnBand(earnings)}
             </span>
-            {senderSavings > 0 && (
-              <span className="text-muted">
-                {t.postTrip.saveBand(courierCost, senderSavings)}
-              </span>
-            )}
+            <span className="text-muted">{deliveryCostCopy[lang].earningsNote}</span>
           </div>
         )}
 

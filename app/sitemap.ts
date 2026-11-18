@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ["/trips", "hourly", 0.9],
     ["/parcels", "hourly", 0.9],
     ["/pricing", "monthly", 0.8],
+    ["/compare-delivery-costs", "monthly", 0.8],
     ["/faq", "monthly", 0.8],
     ["/safety", "monthly", 0.7],
     ["/post/trip", "monthly", 0.6],

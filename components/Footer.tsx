@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { Lock, ShieldCheck } from "lucide-react";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
+import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 
 export default function Footer() {
   const t = useT();
+  const { lang } = useLang();
   return (
     <footer className="mt-16 bg-forest-deep text-white">
       <div className="kente-strip" />
@@ -28,6 +30,7 @@ export default function Footer() {
             <li><Link href="/post/trip" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.postTrip}</Link></li>
             <li><Link href="/post/parcel" className="block py-1.5 text-white/70 transition hover:text-white">{t.nav.sendParcel}</Link></li>
             <li><Link href="/pricing" className="block py-1.5 text-white/70 transition hover:text-white">{t.footer.pricingLink}</Link></li>
+            <li><Link href="/compare-delivery-costs" className="block py-1.5 text-white/70 transition hover:text-white">{deliveryCostCopy[lang].link}</Link></li>
           </ul>
         </div>
         <div>
