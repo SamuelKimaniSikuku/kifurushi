@@ -124,15 +124,16 @@ export function publishedCourierRates(from: string, to: string, weight: string, 
 }
 
 /** Reference prices on OTHER routes to the same destination, never a tariff or savings quote for this route. */
-export function courierPlanningReference(from: string, to: string, weight: string, currency: CostCurrency, exchange: ExchangeRate | null, today = new Date().toISOString().slice(0, 10)) {
+export function courierPlanningReference(from: string, to: string, weight: string, currency: CostCurrency, exchange: ExchangeRate | null, today = new Date().toISOString().slice(0, 10), provider?: CourierRate["provider"]) {
   const grams = weightInGrams(weight);
   if (!validCostRoute(from, to) || grams === null) return null;
-  const exact = publishedCourierRates(from, to, weight, today);
+  const matchesProvider = (quote: CourierRate) => !provider || quote.provider === provider;
+  const exact = publishedCourierRates(from, to, weight, today).filter(matchesProvider);
   // Missing coverage can use reference routes. An expired or overweight tariff must not be bypassed.
   if (exact.some(rate => rate.reason !== "route")) return null;
   const origin = ALL_COUNTRIES.find(country => country.code === from)!;
   const samples = ["FR", "EG", "IN", "KE"].filter(code => code !== from && code !== to).flatMap(code =>
-    publishedCourierRates(code, to, weight, today).flatMap(quote => quote.cents === null ? [] : [{ from: code, to, quote }]));
+    publishedCourierRates(code, to, weight, today).filter(matchesProvider).flatMap(quote => quote.cents === null ? [] : [{ from: code, to, quote }]));
   const regional = samples.filter(sample => {
     const country = ALL_COUNTRIES.find(country => country.code === sample.from)!;
     return origin.africa ? country.africa : country.region === origin.region;

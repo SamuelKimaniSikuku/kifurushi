@@ -68,9 +68,9 @@ export default function DeliveryCostComparison() {
   const average = averageTravellerPrice(estimates);
   const hasRoute = upcomingOnRoute(trips, from, to).length > 0;
   const routes = Array.from(new Map(upcomingOnRoute(trips).map(trip => [`${trip.fromCountry}-${trip.toCountry}`, trip])).values()).slice(0, 3);
-  const couriers = publishedCourierRates(from, to, weight);
+  const couriers = publishedCourierRates(from, to, weight).filter(quote => quote.provider === "dhl");
   const availableCouriers = couriers.filter(quote => quote.cents !== null);
-  const planning = courierPlanningReference(from, to, weight, currency, exchange);
+  const planning = courierPlanningReference(from, to, weight, currency, exchange, undefined, "dhl");
   const locale = lang === "fr" ? "fr-FR" : lang === "sw" ? "sw-KE" : "en-GB";
   const countryName = (code: string) => new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
   const routeName = (origin: string, destination: string) => `${countryName(origin)} → ${countryName(destination)}`;
@@ -124,7 +124,7 @@ export default function DeliveryCostComparison() {
             const converted = convertCost(quote.cents!, quote.currency, currency, exchange);
             const saving = averageConverted !== null && converted !== null ? converted - averageConverted : null;
             return <article className={styles.priceRow} key={quote.provider}>
-              <div className={styles.provider}><Truck size={20} aria-hidden="true" /><div><h3>{quote.name}</h3><p>{quote.provider === "dhl" ? t.baseRate : t.simplePublished}</p></div></div>
+              <div className={styles.provider}><Truck size={20} aria-hidden="true" /><div><h3>{quote.name}</h3><p>{t.baseRate}</p></div></div>
               <div className={styles.amount}><p>{price(quote.cents!, quote.currency)}</p><small>{perKgPrice(quote.cents!, quote.currency)} / kg</small>{saving !== null && saving > 0 && <span className={styles.saving}>{t.simpleSaving(money(saving))}</span>}</div>
             </article>;
           })}
@@ -133,7 +133,7 @@ export default function DeliveryCostComparison() {
             <div className={styles.amount}><p>≈ {range(planning.minCents, planning.maxCents)}</p><small>{range(effectivePricePerKg(planning.minCents, grams)!, effectivePricePerKg(planning.maxCents, grams)!)} / kg</small></div>
             <div className={styles.referenceNote}><p>{t.simpleReferenceNote}</p><p>{Array.from(new Set(planning.samples.map(sample => sample.from))).map(origin => routeName(origin, to)).join(" · ")}</p></div>
           </article>}
-          {!availableCouriers.length && !planning && <div className={styles.quoteRow}><Truck size={19} aria-hidden="true" /><div><p>{!fxLoaded ? t.loading : couriers.some(quote => quote.reason === "expired") ? t.expired : couriers.some(quote => quote.reason === "weight") || grams > 31500 ? t.missingWeight : t.missingRoute}</p><a href="https://www.dhl.com/global-en/home/get-a-quote.html" target="_blank" rel="noopener noreferrer">{t.simpleNoQuote}<ArrowUpRight size={14} aria-hidden="true" /></a></div></div>}
+          {!availableCouriers.length && !planning && <div className={styles.quoteRow}><Truck size={19} aria-hidden="true" /><div><p>{!fxLoaded ? t.loading : couriers.some(quote => quote.reason === "expired") ? t.expired : couriers.some(quote => quote.reason === "weight") || grams > 30000 ? t.missingWeight : t.missingRoute}</p><a href="https://www.dhl.com/global-en/home/get-a-quote.html" target="_blank" rel="noopener noreferrer">{t.simpleNoQuote}<ArrowUpRight size={14} aria-hidden="true" /></a></div></div>}
         </div>
         {fxMissing && <p className={styles.notice} role="status">{t.simpleFx} <button type="button" onClick={() => setAttempt(a => a + 1)}>{t.retry}</button></p>}
         <p className={styles.estimateNote}>{t.simpleNote}</p>
@@ -157,13 +157,13 @@ export default function DeliveryCostComparison() {
           return <section key={quote.provider}>
             <h3>{quote.name} · {routeName(from, to)}</h3>
             <p>{money(quote.cents!, quote.currency)} · {t.upTo} {number(quote.billedGrams! / 1000)} kg · {t.checked} {date(quote.checkedOn)}</p>
-            <p>{quote.provider === "dhl" ? t.dhlNote : quote.provider === "posta" ? t.postaNote : t.colissimoNote}</p>
+            <p>{t.dhlNote}</p>
             {difference !== null && <p>{t.averageDifference}: {difference === 0 ? t.equal : `${money(Math.abs(difference))} ${difference > 0 ? t.averageLower : t.averageHigher}`}. {t.differenceNote}</p>}
             <a href={quote.source} target="_blank" rel="noopener noreferrer">{t.source}<ArrowUpRight size={14} aria-hidden="true" /></a>
           </section>;
         })}
         {planning && <section><h3>{t.referenceRoutes}</h3><p>{t.referenceMethod}</p><ul>{planning.samples.map(sample => <li key={`${sample.from}-${sample.quote.provider}`}><strong>{routeName(sample.from, sample.to)} · {sample.quote.name}</strong><p>{money(sample.cents!)} · {t.checked} {date(sample.quote.checkedOn)}</p><a href={sample.quote.source} target="_blank" rel="noopener noreferrer">{t.source}<ArrowUpRight size={14} aria-hidden="true" /></a></li>)}</ul></section>}
-        <section><h3>{t.sourceDate}</h3><p>{t.perKgExplain}</p><p>{t.coverage}</p>{exchange ? <p>{t.fxNote} {date(exchange.date)}. <a href={exchange.source === "frankfurter" ? "https://frankfurter.dev" : "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"} target="_blank" rel="noopener noreferrer">{exchange.source === "frankfurter" ? "Frankfurter" : "ECB"}</a>. {t.fxPurpose}</p> : fxLoaded && <p>{t.fxUnavailable}</p>}</section>
+        <section><h3>{t.sourceDate}</h3><p>{t.perKgExplain}</p><p>{t.dhlCoverage}</p>{exchange ? <p>{t.fxNote} {date(exchange.date)}. <a href={exchange.source === "frankfurter" ? "https://frankfurter.dev" : "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html"} target="_blank" rel="noopener noreferrer">{exchange.source === "frankfurter" ? "Frankfurter" : "ECB"}</a>. {t.fxPurpose}</p> : fxLoaded && <p>{t.fxUnavailable}</p>}</section>
         <section><h3>{t.checkTitle}</h3><p>{t.checkText}</p><Link href="/safety">{t.safety}<ArrowRight size={14} aria-hidden="true" /></Link></section>
       </div>
     </details>}

@@ -196,6 +196,21 @@ test('a missing Ethiopia route gets a separate reference range with the real sou
   assert.equal(result.samples.find(s=>s.from==='KE').cents,5675);
   assert.equal(publishedCourierRates('ET','PT','1',checkedDay).some(q=>q.cents!==null),false);
 });
+test('DHL references exclude other carriers before selecting routes and calculating the range',()=>{
+  const result=courierPlanningReference('ET','PT','5','USD',referenceFx,checkedDay,'dhl');
+  assert.deepEqual(result.samples.map(s=>[s.from,s.quote.provider]),[['EG','dhl']]);
+  const expected=convertCost(rate('PT','5','dhl','EG',checkedDay).cents,'USD','USD',referenceFx);
+  assert.equal(result.minCents,expected);
+  assert.equal(result.maxCents,expected);
+});
+test('DHL reference eligibility ignores another carrier’s exact tariff but respects DHL limits',()=>{
+  const result=courierPlanningReference('KE','FR','1','EUR',referenceFx,checkedDay,'dhl');
+  assert.ok(result);
+  assert.ok(result.samples.every(s=>s.quote.provider==='dhl' && s.to==='FR'));
+  for(const [from,to,weight,day] of [['FR','KE','5',checkedDay],['IN','KE','11',checkedDay],['FR','KE','31',checkedDay],['FR','KE','1','2027-01-01']]) {
+    assert.equal(courierPlanningReference(from,to,weight,'EUR',referenceFx,day,'dhl'),null);
+  }
+});
 test('reference range is the min and max of published sample prices in one chosen currency',()=>{
   for(const currency of COST_CURRENCIES) {
     const result=plan('ET','PT','5',currency);
