@@ -7,7 +7,7 @@ import CountrySelect from "./CountrySelect";
 import { useLang } from "@/lib/i18n";
 import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 import { weightInGrams } from "@/lib/deliveryCosts";
-import { COST_CURRENCIES, averageTravellerPrice, effectivePricePerKg, convertCost, publishedCourierRates, travellerEstimates, validCostRoute, type ExchangeRate, type CostCurrency } from "@/lib/automaticDeliveryCosts";
+import { COST_CURRENCIES, averageTravellerPrice, effectivePricePerKg, convertCost, courierPlanningReference, publishedCourierRates, travellerEstimates, validCostRoute, type ExchangeRate, type CostCurrency } from "@/lib/automaticDeliveryCosts";
 import { fetchTrips } from "@/lib/db";
 import { upcomingOnRoute } from "@/lib/tripDiscovery";
 import { browseHref, postHref } from "@/lib/routes";
@@ -70,7 +70,11 @@ export default function DeliveryCostComparison() {
   const hasRoute = upcomingOnRoute(trips, from, to).length > 0;
   const routes = Array.from(new Map(upcomingOnRoute(trips).map(trip => [`${trip.fromCountry}-${trip.toCountry}`, trip])).values()).slice(0, 6);
   const couriers = publishedCourierRates(from, to, weight);
+  const availableCouriers = couriers.filter(quote => quote.cents !== null);
+  const planning = courierPlanningReference(from, to, weight, currency, exchange);
   const locale = lang === "fr" ? "fr-FR" : lang === "sw" ? "sw-KE" : "en-GB";
+  const countryName = (code: string) => new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? code;
+  const routeName = (origin: string, destination: string) => `${countryName(origin)} → ${countryName(destination)}`;
   const money = (cents: number, code: CostCurrency = currency) => new Intl.NumberFormat(locale, { style: "currency", currency: code, currencyDisplay: "code", maximumFractionDigits: 2 }).format(cents / 100);
   const price = (cents: number, native: CostCurrency) => {
     const converted = convertCost(cents, native, currency, exchange);
@@ -78,6 +82,7 @@ export default function DeliveryCostComparison() {
   };
   const number = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 3 }).format(value);
   const date = (value: string) => new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${value}T12:00:00Z`));
+  const planningAmount = (cents: number) => money(priceView === "kg" && grams !== null ? effectivePricePerKg(cents, grams)! : cents);
   const averageConverted = average ? convertCost(average.totalCents, "USD", currency, exchange) : null;
   const fxMissing = fxLoaded && convertCost(100, "USD", currency, exchange) === null;
   const adjustWeight = (difference: number) => {
@@ -152,24 +157,44 @@ export default function DeliveryCostComparison() {
           <p className={styles.courierNote}>{t.averageExplain}</p>
           <Link className={styles.quoteLink} href={browseHref("/trips", { from, to })}>{t.find}<ArrowUpRight size={15} aria-hidden="true" /></Link>
         </article>
-        {couriers.map(quote => {
+        {availableCouriers.map(quote => {
           const converted = quote.cents === null ? null : convertCost(quote.cents, quote.currency, currency, exchange);
           const difference = averageConverted !== null && converted !== null ? converted - averageConverted : null;
           const nativeAmount = quote.cents !== null && grams !== null ? (priceView === "kg" ? effectivePricePerKg(quote.cents, grams) : quote.cents) : null;
           const shownAmount = converted !== null && grams !== null ? (priceView === "kg" ? effectivePricePerKg(converted, grams) : converted) : null;
           const shownDifference = difference === null || grams === null ? null : (priceView === "kg" ? effectivePricePerKg(Math.abs(difference), grams) : Math.abs(difference));
           return <article className={styles.courierCard} key={quote.provider}>
-            <div className={styles.courierHeading}><h3>{quote.name}</h3><span>{quote.provider === "dhl" ? t.baseRate : t.tariff}</span></div>
+            <div className={styles.courierHeading}><h3>{quote.name}</h3><span>{quote.provider === "dhl" ? t.baseRate : quote.provider === "posta" ? t.publishedTariff : t.tariff}</span></div>
+            <p className={styles.hint}>{routeName(from, to)}</p>
             <p className={styles.courierPrice}>{ready && nativeAmount !== null ? <>{currency !== quote.currency && shownAmount !== null ? "≈ " : ""}{money(shownAmount ?? nativeAmount, shownAmount === null ? quote.currency : currency)}{priceView === "kg" && <small> / kg</small>}</> : "—"}</p>
             {ready && quote.cents !== null ? <>
               <p className={styles.hint}>{t.parcelTotal}: {price(quote.cents, quote.currency)}</p>
               <p className={styles.hint}>{quote.provider === "dhl" ? t.dhlWeight : t.upTo} {number(quote.billedGrams! / 1000)} kg{currency !== quote.currency && converted !== null ? ` · ${money(quote.cents, quote.currency)}` : ""}</p>
-              <p className={styles.courierNote}>{quote.provider === "dhl" ? t.dhlNote : t.colissimoNote}</p>
+              <p className={styles.courierNote}>{quote.provider === "dhl" ? t.dhlNote : quote.provider === "posta" ? t.postaNote : t.colissimoNote}</p>
               {difference !== null && shownDifference !== null && <div className={`${styles.priceDifference} ${difference < 0 ? styles.higher : ""}`}><span>{t.averageDifference}</span><strong>{shownDifference === 0 ? t.equal : `${money(shownDifference)}${priceView === "kg" ? " / kg" : ""} ${difference > 0 ? t.averageLower : t.averageHigher}`}</strong></div>}
               <a className={styles.quoteLink} href={quote.source} target="_blank" rel="noopener noreferrer">{t.source}<ArrowUpRight size={15} aria-hidden="true" /></a>
+              <p className={styles.hint}>{t.checked} {date(quote.checkedOn)}</p>
             </> : <><p className={styles.courierNote}>{!ready ? t.waiting : quote.reason === "expired" ? t.expired : quote.reason === "weight" ? t.missingWeight : t.missingRoute}</p><a className={styles.quoteLink} href={quote.provider === "dhl" ? "https://www.dhl.com/global-en/home/get-a-quote.html" : "https://www.laposte.fr/colissimo-en-ligne"} target="_blank" rel="noopener noreferrer">{t.quote}<ArrowUpRight size={15} aria-hidden="true" /></a></>}
           </article>;
         })}
+        {planning && <article className={`${styles.courierCard} ${styles.planningCard}`}>
+          <div className={styles.courierHeading}><h3>{t.planningTitle}</h3><span>{t.planningBadge}</span></div>
+          <p className={styles.hint}>{t.selectedRoute}: {routeName(from, to)}</p>
+          <p className={`${styles.courierPrice} ${styles.planningPrice}`}><span>≈ {planningAmount(planning.minCents)}</span>{planning.minCents !== planning.maxCents && <> – <span>{planningAmount(planning.maxCents)}</span></>}{priceView === "kg" && <small> / kg</small>}</p>
+          {priceView === "kg" && <p className={styles.hint}>{t.parcelTotal}: {money(planning.minCents)}{planning.minCents !== planning.maxCents && ` – ${money(planning.maxCents)}`}</p>}
+          <p className={styles.courierNote}>{t.planningExplain}</p>
+          <div className={styles.referenceRoutes}><p>{t.referenceRoutes}</p>{Array.from(new Set(planning.samples.map(sample => sample.from))).map(origin => <span key={origin}>{routeName(origin, to)}</span>)}</div>
+          <details className={styles.referenceDetails}><summary>{t.referenceDetails}<ChevronDown size={16} aria-hidden="true" /></summary>
+            <p>{t.referenceMethod}</p>
+            <ul>{planning.samples.map(sample => <li key={`${sample.from}-${sample.quote.provider}`}><strong>{routeName(sample.from, sample.to)}</strong><span>{sample.quote.name} · {planningAmount(sample.cents!)}{priceView === "kg" ? " / kg" : ""}</span><span>{t.checked} {date(sample.quote.checkedOn)}</span><a href={sample.quote.source} target="_blank" rel="noopener noreferrer">{t.source}<ArrowUpRight size={14} aria-hidden="true" /></a></li>)}</ul>
+          </details>
+          <a className={styles.quoteLink} href="https://www.dhl.com/global-en/home/get-a-quote.html" target="_blank" rel="noopener noreferrer">{t.quoteTitle}<ArrowUpRight size={15} aria-hidden="true" /></a>
+        </article>}
+        {!availableCouriers.length && !planning && <article className={styles.courierCard}>
+          <div className={styles.courierHeading}><h3>{t.quoteTitle}</h3></div>
+          <p className={styles.courierNote}>{!ready ? t.waiting : couriers.some(quote => quote.reason === "expired") ? t.expired : t.noReference}</p>
+          {ready && <><p className={styles.hint}>{routeName(from, to)} · {number(grams! / 1000)} kg</p><p className={styles.courierNote}>{t.quoteNote}</p><a className={styles.quoteLink} href="https://www.dhl.com/global-en/home/get-a-quote.html" target="_blank" rel="noopener noreferrer">{t.quote}<ArrowUpRight size={15} aria-hidden="true" /></a></>}
+        </article>}
       </div>
       <p className={styles.comparisonNote}>{t.perKgExplain}</p>
       <p className={styles.comparisonNote}>{t.differenceNote}</p>

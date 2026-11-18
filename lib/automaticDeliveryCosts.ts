@@ -5,6 +5,7 @@ import type { Trip } from "./types";
 import dhl from "./data/dhl-france-2026.json";
 import dhlEgypt from "./data/dhl-eg-2026.json";
 import dhlIndia from "./data/dhl-in-2026.json";
+import postaKenya from "./data/posta-kenya-ems.json";
 
 const countries = new Set(ALL_COUNTRIES.map(c => c.code));
 export const validCostRoute = (from: string, to: string) => countries.has(from) && countries.has(to) && from !== to;
@@ -61,7 +62,7 @@ const zoneB = new Set("NO DZ MA TN".split(" "));
 const unverifiedColissimo = new Set(["TR", "LY", "MR"]);
 
 export type CourierRate = {
-  provider: "colissimo" | "dhl";
+  provider: "colissimo" | "dhl" | "posta";
   name: string;
   currency: CostCurrency;
   cents: number | null;
@@ -81,7 +82,19 @@ export function publishedCourierRates(from: string, to: string, weight: string, 
     { ...common, provider: "dhl", name: "DHL Express Worldwide", source: dhl.source, cents: null, billedGrams: null, reason: "route" },
   ];
   if (!validCostRoute(from, to)) return result;
+  if (from === "KE") {
+    const zone = (postaKenya.zones as Record<string, number>)[to];
+    const row = grams === null ? undefined : postaKenya.parcelRows.find(row => grams <= row[0]);
+    const reason = zone === undefined ? "route" : today < postaKenya.checkedOn || today > postaKenya.reviewAfter ? "expired" : !row ? "weight" : null;
+    result.push({
+      provider: "posta", name: "Posta Kenya EMS", currency: "KES",
+      source: postaKenya.source, checkedOn: postaKenya.checkedOn, validThrough: postaKenya.reviewAfter,
+      cents: reason === null ? row![zone + 1] : null,
+      billedGrams: reason === null ? row![0] : null, reason,
+    });
+  }
   for (const item of result) {
+    if (item.provider === "posta") continue;
     const table = from === "FR" ? { ...dhl, zones: dhlZones, maxGrams: 30000 }
       : from === "EG" ? dhlEgypt : from === "IN" ? dhlIndia : null;
     if ((item.provider === "colissimo" && from !== "FR") || (item.provider === "dhl" && !table)) continue;
@@ -108,6 +121,29 @@ export function publishedCourierRates(from: string, to: string, weight: string, 
     }
   }
   return result;
+}
+
+/** Reference prices on OTHER routes to the same destination, never a tariff or savings quote for this route. */
+export function courierPlanningReference(from: string, to: string, weight: string, currency: CostCurrency, exchange: ExchangeRate | null, today = new Date().toISOString().slice(0, 10)) {
+  const grams = weightInGrams(weight);
+  if (!validCostRoute(from, to) || grams === null) return null;
+  const exact = publishedCourierRates(from, to, weight, today);
+  // Missing coverage can use reference routes. An expired or overweight tariff must not be bypassed.
+  if (exact.some(rate => rate.reason !== "route")) return null;
+  const origin = ALL_COUNTRIES.find(country => country.code === from)!;
+  const samples = ["FR", "EG", "IN", "KE"].filter(code => code !== from && code !== to).flatMap(code =>
+    publishedCourierRates(code, to, weight, today).flatMap(quote => quote.cents === null ? [] : [{ from: code, to, quote }]));
+  const regional = samples.filter(sample => {
+    const country = ALL_COUNTRIES.find(country => country.code === sample.from)!;
+    return origin.africa ? country.africa : country.region === origin.region;
+  });
+  const selected = regional.length ? regional : samples;
+  if (!selected.length) return null;
+  const converted = selected.map(sample => ({ ...sample, cents: convertCost(sample.quote.cents!, sample.quote.currency, currency, exchange) }));
+  // Never mix currencies or silently omit an unconvertible endpoint from the range.
+  if (converted.some(sample => sample.cents === null)) return null;
+  const prices = converted.map(sample => sample.cents!);
+  return { kind: "reference" as const, grams, currency, minCents: Math.min(...prices), maxCents: Math.max(...prices), samples: converted };
 }
 
 export const COST_CURRENCIES = ["USD", "EUR", "KES", "GBP", "INR"] as const;

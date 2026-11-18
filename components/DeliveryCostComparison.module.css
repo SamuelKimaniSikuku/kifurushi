@@ -86,7 +86,7 @@
 .sectionHeading h2 { font-size: 22px; font-weight: 650; letter-spacing: -.5px; }
 .sectionHeading p { color: var(--muted); font-size: 13px; margin-top: 5px; }
 .sectionHeading svg { flex-shrink: 0; }
-.courierGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.courierGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
 .courierCard.averageCard { border-color: var(--leaf); background: var(--success-bg); }
 .courierPrice small { font-family: inherit; font-size: 15px; color: var(--muted); letter-spacing: normal; white-space: nowrap; }
 .viewToggle { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--sand-deep); border-radius: 12px; margin-bottom: 18px; }
@@ -104,6 +104,20 @@
 .priceDifference strong { font-size: 13px; font-weight: 600; }
 .priceDifference.higher { background: var(--warn-bg); color: var(--warn); }
 .courierCard .quoteLink { align-self: flex-start; margin-bottom: -8px; }
+.courierCard.planningCard { border-style: dashed; border-color: var(--clay-deep); }
+.planningCard .courierHeading > span { color: var(--clay-deep); }
+.planningPrice { font-size: 26px; }
+.planningPrice > span { display: inline-block; }
+.referenceRoutes { display: flex; flex-wrap: wrap; gap: 6px; }
+.referenceRoutes > p { flex-basis: 100%; color: var(--muted); font-size: 11px; }
+.referenceRoutes > span { border-radius: 6px; background: var(--sand); padding: 5px 8px; font-size: 12px; color: var(--forest); }
+.referenceDetails { margin-top: 12px; font-size: 12px; color: var(--muted); }
+.referenceDetails summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; color: var(--forest); cursor: pointer; }
+.referenceDetails > p { margin: 6px 0 12px; line-height: 1.7; }
+.referenceDetails ul { list-style: none; padding: 0; }
+.referenceDetails li { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); }
+.referenceDetails li strong { color: var(--forest); }
+.referenceDetails a { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; color: var(--forest); text-decoration: underline; align-self: flex-start; }
 .dataNote { margin-top: 12px; color: var(--muted); font-size: 12px; }
 .dataNote summary { display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 44px; color: var(--forest); }
 .dataNote summary::-webkit-details-marker { display: none; }

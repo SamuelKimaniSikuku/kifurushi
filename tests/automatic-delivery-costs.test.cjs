@@ -156,3 +156,96 @@ test('stale, future, invalid, duplicated and mismatched rates are never used',()
   assert.equal(convertCost(700,'USD','KES',null),null);
   assert.equal(convertCost(700,'USD','KES',{...fx,kesPerEur:Infinity}),null);
 });
+
+const { courierPlanningReference } = require('../lib/automaticDeliveryCosts.ts');
+const checkedDay = '2026-11-18';
+const referenceFx = { date: checkedDay, usdPerEur: 1.1, kesPerEur: 143, inrPerEur: 103, gbpPerEur: .85 };
+const plan = (from='ET',to='PT',weight='1',currency='USD',fx=referenceFx,day=checkedDay) => courierPlanningReference(from,to,weight,currency,fx,day);
+
+test('Kenya to France uses the published EMS tariff in KES, including the 23 kg band',()=>{
+  const ems = weight => rate('FR',weight,'posta','KE',checkedDay);
+  assert.equal(ems('.3').cents,515000);
+  assert.equal(ems('1').cents,737800);
+  assert.equal(ems('1').currency,'KES');
+  assert.equal(ems('1.001').cents,877000);
+  assert.equal(ems('1.001').billedGrams,1500);
+  assert.equal(ems('10').cents,3266300);
+  assert.equal(ems('23').cents,5799700);
+  assert.equal(ems('31.5').cents,7489400);
+  assert.equal(ems('31.501').reason,'weight');
+  assert.equal(convertCost(ems('1').cents,'KES','USD',referenceFx),5675);
+});
+test('EMS destinations use their own verified zones and do not assume a missing destination',()=>{
+  for(const [to,cents] of [['ET',383200],['UG',383200],['ZA',535900],['GB',596000],['BE',676300],['FR',737800],['GQ',864800]]) {
+    assert.equal(rate(to,'1','posta','KE',checkedDay).cents,cents,to);
+  }
+  for(const to of ['SS','LS','LR']) assert.equal(rate(to,'1','posta','KE',checkedDay).reason,'route');
+  assert.equal(publishedCourierRates('FR','KE','1',checkedDay).some(q=>q.provider==='posta'),false);
+});
+test('EMS references expire for review and never quote an invalid weight or invalid route',()=>{
+  for(const day of ['2026-11-17','2027-01-01']) assert.equal(rate('FR','1','posta','KE',day).reason,'expired');
+  for(const weight of ['', '0', '-1', 'Infinity', '32']) assert.equal(rate('FR',weight,'posta','KE',checkedDay).cents,null);
+  assert.equal(publishedCourierRates('KE','KE','1',checkedDay).some(q=>q.cents!==null),false);
+});
+test('a missing Ethiopia route gets a separate reference range with the real source routes preserved',()=>{
+  const result=plan();
+  assert.equal(result.kind,'reference');
+  assert.deepEqual([...new Set(result.samples.map(s=>s.from))].sort(),['EG','KE']);
+  assert.ok(result.samples.every(s=>s.to==='PT'));
+  assert.ok(result.minCents>0 && result.maxCents>result.minCents);
+  assert.equal(result.samples.find(s=>s.from==='KE').cents,5675);
+  assert.equal(publishedCourierRates('ET','PT','1',checkedDay).some(q=>q.cents!==null),false);
+});
+test('reference range is the min and max of published sample prices in one chosen currency',()=>{
+  for(const currency of COST_CURRENCIES) {
+    const result=plan('ET','PT','5',currency);
+    const amounts=result.samples.map(s=>convertCost(s.quote.cents,s.quote.currency,currency,referenceFx));
+    assert.equal(result.currency,currency);
+    assert.equal(result.minCents,Math.min(...amounts));
+    assert.equal(result.maxCents,Math.max(...amounts));
+    assert.equal(result.grams,5000);
+  }
+});
+test('published route tariffs take precedence; overweight and expired tariffs are not bypassed with references',()=>{
+  for(const from of ['FR','EG','IN','KE']) assert.equal(plan(from,'PT'),null);
+  assert.equal(plan('FR','KE','30.001'),null);
+  assert.equal(plan('IN','KE','11'),null);
+  assert.equal(plan('KE','PT','32'),null);
+  assert.equal(plan('FR','KE','1','USD',referenceFx,'2027-01-01'),null);
+});
+test('reference routes use the same destination, skip domestic pairs and fall back transparently to other origins',()=>{
+  const europe=plan('DE','KE');
+  assert.ok(europe.samples.every(s=>s.from==='FR' && s.to==='KE'));
+  const america=plan('US','FR');
+  assert.deepEqual([...new Set(america.samples.map(s=>s.from))].sort(),['EG','IN','KE']);
+  assert.ok(america.samples.every(s=>s.from!==s.to && s.from!=='US' && s.to==='FR'));
+  const asia=plan('CN','KE');
+  assert.equal(asia.samples.length,1);
+  assert.equal(asia.samples[0].from,'IN');
+  assert.equal(asia.minCents,asia.maxCents);
+});
+test('fractional weights use published bands, and effective kg divides by actual weight',()=>{
+  const small=plan('ET','PT','.3');
+  const kenya=small.samples.find(s=>s.from==='KE');
+  assert.equal(kenya.quote.cents,515000);
+  assert.equal(kenya.quote.billedGrams,500);
+  assert.equal(small.grams,300);
+  assert.equal(effectivePricePerKg(kenya.cents,small.grams),Math.round(kenya.cents/.3));
+});
+test('no reference is invented for invalid input, unsupported weight, stale tariffs or missing conversions',()=>{
+  for(const [from,to,weight] of [['ET','ET','1'],['XX','PT','1'],['ET','PT','0'],['ET','PT','32'],['ET','PT','NaN']]) assert.equal(plan(from,to,weight),null);
+  assert.equal(plan('ET','PT','1','USD',null),null);
+  assert.equal(plan('ET','PT','1','USD',{...referenceFx,kesPerEur:undefined}),null);
+  assert.equal(plan('ET','PT','1','USD',referenceFx,'2027-01-01'),null);
+  // Same-currency source prices still work without foreign exchange data.
+  assert.ok(plan('DE','KE','1','EUR',null));
+});
+test('every supported uncovered route can show traceable reference prices at 1 kg with valid FX',()=>{
+  for(const from of ALL_COUNTRIES) for(const to of ALL_COUNTRIES.filter(c=>c.code!==from.code)) {
+    const exact=publishedCourierRates(from.code,to.code,'1',checkedDay);
+    if(exact.some(q=>q.cents!==null)) continue;
+    const result=plan(from.code,to.code);
+    assert.ok(result,`${from.code}-${to.code}`);
+    assert.ok(result.samples.every(s=>s.to===to.code && s.from!==from.code && s.quote.source.startsWith('https://')));
+  }
+});
