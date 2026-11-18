@@ -181,7 +181,7 @@ export default function MatchCard({
     (match.requestAvailability === "booked_elsewhere" || match.requestAvailability === "unavailable");
   const unavailableLabel = match.requestAvailability === "booked_elsewhere" ? weightText.bookedElsewhere : weightText.unavailable;
   const unavailableHelp = match.requestAvailability === "booked_elsewhere" ? weightText.bookedElsewhereHelp : weightText.unavailableHelp;
-  const weightNeedsAgreement = match.parcelWeightKg == null || (match.remainingKg != null && match.parcelWeightKg > match.remainingKg);
+  const exceedsAvailableSpace = match.parcelWeightKg != null && match.remainingKg != null && match.parcelWeightKg > match.remainingKg;
   const [view, setView] = useState<"messages" | "details">("messages");
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const detailsPanelRef = useRef<HTMLDivElement>(null);
@@ -531,7 +531,8 @@ export default function MatchCard({
             {unavailableRequest ? <p className="mt-1 text-sm text-muted">{unavailableHelp}</p> : !requestAvailable ?
               <p className="mt-1 text-sm text-muted">{weightText.detailsUnavailable}</p> : <>
               {match.parcelWeightKg == null && <p className="font-semibold">{weightText.toAgree}</p>}
-              {weightNeedsAgreement && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
+              {match.parcelWeightKg == null && <p className="mt-1 text-xs text-muted">{weightText.pending}</p>}
+              {exceedsAvailableSpace && <p className="mt-1 text-xs text-muted">{weightText.capacityPending}</p>}
             </>}
             <div className="mt-2 flex flex-wrap gap-3">
               {!isTraveler && requestAvailable && <Link href={`/post/parcel?edit=${match.parcelId}&next=%2Fdashboard%23deliveries`} className="font-semibold text-forest underline">{weightText.edit}</Link>}
@@ -551,7 +552,7 @@ export default function MatchCard({
                 <div className="flex flex-wrap gap-2">
                 <button
                   className="btn-primary min-h-[44px]"
-                  disabled={busy || !requestAvailable || weightNeedsAgreement}
+                  disabled={busy || !requestAvailable || exceedsAvailableSpace}
                   onClick={() =>
                     act(() => respondMatch(match.id, true), weightText.acceptError)
                   }
@@ -578,6 +579,10 @@ export default function MatchCard({
                 {waitingDays >= 1 && <> {t.browse.waitingSent(waitingDays)}</>}
               </p>
             ))}
+
+          {match.parcelWeightKg == null && (match.status === "accepted" || match.status === "escrow_paid") && (
+            <p className="text-sm text-muted">{weightText.acceptedUnknown}</p>
+          )}
 
           {match.status === "accepted" && <>
             <p className="text-sm text-muted">{d.termsIntro}</p>

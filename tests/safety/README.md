@@ -48,8 +48,12 @@ append-only for clients; support handles retention and orphan-upload cleanup.
 Apply `optional_request_weight` for requests with unknown or negotiable weight.
 Blank or zero entered in the app is stored as NULL and displayed as “Weight to
 agree”. Requests above the available kilos can open a conversation. The sender
-can edit the open parcel from the pending match; unknown weight and insufficient
-capacity still prevent acceptance. Accepted weights remain locked and all
+can edit the open parcel from the pending match. Apply `accept_unknown_parcel_weight`
+to allow acceptance with an unknown weight and discuss it in Messages. Recorded
+weights still reserve capacity and known over-capacity acceptance remains blocked.
+Unknown weights remain NULL and are not included in booked kilos; the delivery
+details remind both people to confirm the kilos and space before handover.
+Accepted parcel details remain locked and all
 inspection, refusal, ownership, route and date checks are unchanged.
 
 Apply `negotiable_weight_estimates` before the app update to retain positive
@@ -108,5 +112,5 @@ After `trust-bootstrap.sql` and
 `20261019080415_delivery_feedback_and_reviews.sql`, apply the context migration
 and run `tests/safety/match-listing-context.test.sql`. It reproduces two requests
 for one parcel, checks visibility for both parties, denies unrelated/anonymous
-access and confirms that unknown weight and duplicate acceptance remain blocked.
+access and confirms that unknown weight is allowed while duplicate acceptance remains blocked.
 UI and mapping regressions are covered by `node --test tests/*.test.cjs`.

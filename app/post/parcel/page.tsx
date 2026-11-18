@@ -146,7 +146,9 @@ function PostParcelForm() {
       if (editId) {
         await updateParcel(editId, { ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
       } else {
-        await addParcel({ ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
+        const postedId = await addParcel({ ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
+        router.push(`/dashboard/listings?kind=parcel&id=${postedId}&posted=1`);
+        return;
       }
       router.push(editId && params.get("next") ? safeReturnPath(params.get("next")) : "/parcels");
     } catch (e) {

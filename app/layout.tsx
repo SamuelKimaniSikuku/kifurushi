@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import NotificationVisit from "@/components/NotificationVisit";
 import type { Metadata } from "next";
 import "./fonts.css";
 import "./globals.css";
@@ -71,6 +73,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <LanguageProvider>
+          <Suspense fallback={null}><NotificationVisit /></Suspense>
           <div className="kente-strip" />
           <Nav />
           <main id="main" className="min-h-[70vh]">{children}</main>

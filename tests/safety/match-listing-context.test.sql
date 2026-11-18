@@ -55,7 +55,11 @@ select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001'
 select public.save_parcel(:'payload'::jsonb || '{"weightKg":null}','[{"description":"Four kilos of clothing"}]','{}',true,:'pid');
 select test.ok(test.context(:'pending')->'parcel_weight_kg'='null'::jsonb,'unknown weight stays null rather than guessing');
 select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
-select test.denied(format('select public.respond_match(%L,true)',:'pending'),'Agree the parcel weight','unknown-weight acceptance remains blocked');
+savepoint unknown_acceptance;
+select public.respond_match(:'pending',true);
+select test.ok((select status='accepted' from public.matches where id=:'pending'),'unknown-weight request can be accepted');
+select test.ok(test.context(:'pending')->'parcel_weight_kg'='null'::jsonb,'acceptance preserves unknown weight in participant context');
+rollback to savepoint unknown_acceptance;
 update public.trips set status='closed' where id='40000000-0000-4000-8000-000000000004';
 select test.ok(test.context(:'pending')->>'request_availability'='unavailable','closed trip explains unavailability');
 update public.trips set status='open' where id='40000000-0000-4000-8000-000000000004';

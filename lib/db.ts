@@ -138,11 +138,11 @@ export interface NewTrip {
   categoriesAccepted: ParcelCategory[];
 }
 
-export async function addTrip(t: NewTrip): Promise<void> {
+export async function addTrip(t: NewTrip): Promise<string> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error("Not signed in");
-  const { error } = await supabase.from("trips").insert({
+  const { data, error } = await supabase.from("trips").insert({
     traveler_id: uid,
     from_country: t.fromCountry,
     from_city: t.fromCity,
@@ -153,7 +153,7 @@ export async function addTrip(t: NewTrip): Promise<void> {
     price_per_kg: t.pricePerKg,
     notes: t.notes || null,
     categories: t.categoriesAccepted,
-  });
+  }).select("id").single();
   if (error) {
     await reportIncident("listing_post_failed", "A member could not post a trip", {
       code: error.code,
@@ -161,6 +161,7 @@ export async function addTrip(t: NewTrip): Promise<void> {
     });
     throw error;
   }
+  return data!.id;
 }
 
 // ---------------------------------------------------------------------------
@@ -1326,4 +1327,19 @@ export async function submitVerification(
   const url = (data as { url?: string })?.url;
   if (!url) throw new Error("No verification URL returned");
   return url;
+}
+
+export type OwnedListing = {kind:'trip'|'parcel'; id:string; status:string; date:string; confirmedAt:string|null; title:string; trip?:Trip; parcel?:ParcelRequest};
+export async function fetchMyListings(): Promise<OwnedListing[]> {
+ const {data:auth}=await supabase.auth.getSession(); const uid=auth.session?.user.id;
+ if(!uid) return [];
+ const [trips,parcels]=await Promise.all([
+  supabase.from('trips').select(TRIP_SELECT).eq('traveler_id',uid).order('created_at',{ascending:false}),
+  supabase.from('parcels').select(PARCEL_SELECT).eq('sender_id',uid).order('created_at',{ascending:false})
+ ]);
+ if(trips.error) throw trips.error; if(parcels.error) throw parcels.error;
+ return [
+  ...(trips.data??[]).map((r:unknown)=>{const row=r as TripRow & {status:string;availability_confirmed_at:string|null};const trip=mapTrip(row);return {kind:'trip' as const,id:trip.id,status:row.status,date:trip.departDate,confirmedAt:row.availability_confirmed_at,title:`${trip.fromCity} → ${trip.toCity}`,trip};}),
+  ...(parcels.data??[]).map((r:unknown)=>{const row=r as ParcelRow & {status:string;availability_confirmed_at:string|null};const parcel=mapParcel(row);return {kind:'parcel' as const,id:parcel.id,status:row.status,date:parcel.neededBy,confirmedAt:row.availability_confirmed_at,title:`${parcel.fromCity} → ${parcel.toCity}`,parcel};})
+ ];
 }

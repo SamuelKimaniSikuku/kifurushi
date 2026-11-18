@@ -1,7 +1,7 @@
 import type { Lang } from "../i18n";
 
 const en = {
-  deliveries: "Messages", ratings: "Reviews", account: "Account", dashboardSections: "Dashboard sections",
+  deliveries: "Messages", ratings: "Reviews", account: "Account", listings: "My listings", dashboardSections: "Dashboard sections",
   postTrip: "Post a trip", sendParcel: "Send a parcel", signOut: "Sign out",
   title: "Your conversations", search: "Search a name or route", active: "Active", unread: "Unread", history: "History",
   empty: "No conversations here yet.", noResults: "No conversations match your search.", noUnread: "You’re all caught up.",
@@ -14,7 +14,7 @@ type Copy = { [K in keyof typeof en]: string };
 export const inboxCopy: Record<Lang, Copy> = {
   en,
   fr: {
-    deliveries: "Messages", ratings: "Avis", account: "Compte", dashboardSections: "Rubriques du tableau de bord",
+    deliveries: "Messages", ratings: "Avis", account: "Compte", listings: "Mes annonces", dashboardSections: "Rubriques du tableau de bord",
     postTrip: "Publier un trajet", sendParcel: "Envoyer un colis", signOut: "Se déconnecter",
     title: "Vos conversations", search: "Chercher un nom ou un trajet", active: "En cours", unread: "Non lus", history: "Historique",
     empty: "Aucune conversation ici pour le moment.", noResults: "Aucune conversation ne correspond à votre recherche.", noUnread: "Vous avez tout lu.",
@@ -24,7 +24,7 @@ export const inboxCopy: Record<Lang, Copy> = {
     closed: "Cette demande est close. Vous pouvez toujours lire la conversation.", hold: "Cette livraison est suspendue. Consultez les détails de la livraison.",
   },
   sw: {
-    deliveries: "Ujumbe", ratings: "Maoni", account: "Akaunti", dashboardSections: "Sehemu za dashibodi",
+    deliveries: "Ujumbe", ratings: "Maoni", account: "Akaunti", listings: "Matangazo yangu", dashboardSections: "Sehemu za dashibodi",
     postTrip: "Weka safari", sendParcel: "Tuma kifurushi", signOut: "Ondoka",
     title: "Mazungumzo yako", search: "Tafuta jina au njia", active: "Yanayoendelea", unread: "Hayajasomwa", history: "Historia",
     empty: "Hakuna mazungumzo hapa bado.", noResults: "Hakuna mazungumzo yanayolingana na utafutaji wako.", noUnread: "Umesoma ujumbe wote.",
