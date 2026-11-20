@@ -1,3 +1,4 @@
+import {sendDeliveryFollowups} from "../_shared/delivery-followups.ts";
 import {sendTrackedEmail} from "../_shared/notifications.ts";
 // Nudges for listings nobody has taken. Run once a morning by pg_cron.
 //
@@ -370,6 +371,10 @@ Deno.serve(async (req) => {
       return ok;
     }
 
+    const deliveryFollowups = await sendDeliveryFollowups(admin, notifiedUsers, dryRun);
+    sent += deliveryFollowups.sent;
+    Object.assign(planned, deliveryFollowups.planned);
+
     // Unanswered requests: at 24 hours and 48 hours, with no reminder after a reply.
     // The responder got one email when the request landed and nothing since.
     // One reminder, once per match. A request whose listings have since gone
@@ -446,7 +451,7 @@ Deno.serve(async (req) => {
           senderRequested ? L.pendingAsk(name) : L.pendingOffer(name),
           senderRequested ? L.pendingAskBody(ctx) : L.pendingOfferBody(ctx),
           L.respondNow,
-          `${SITE}/dashboard#messages-${m.id}`,
+          `${SITE}/dashboard#delivery-${m.id}`,
           lang,
           L.footerPending
         )

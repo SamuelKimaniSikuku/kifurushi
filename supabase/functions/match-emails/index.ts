@@ -230,12 +230,6 @@ const COPY: Record<Lang, Record<Event, Copy>> = {
   },
 };
 
-const BUTTON: Record<Lang, string> = {
-  en: "Open your dashboard",
-  fr: "Ouvrir votre tableau de bord",
-  sw: "Fungua dashibodi yako",
-};
-
 const FOOTER: Record<Lang, string> = {
   en: "Kifurushi connects senders and travellers — every delivery is a direct agreement between the two of you.",
   fr: "Kifurushi met en relation expéditeurs et voyageurs — chaque livraison est un accord direct entre vous deux.",
@@ -249,16 +243,17 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function shell(heading: string, body: string, lang: Lang, matchId: string): string {
+function shell(heading: string, body: string, lang: Lang, matchId: string, event: Event): string {
+  const target = event === "message" ? "messages" : event === "released" ? "review" : "delivery";
   return `
 <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1c2321">
   <div style="background:#0B3B2E;border-radius:16px;padding:28px;color:#fff">
     <h1 style="margin:0;font-size:22px">${heading}</h1>
   </div>
   <div style="font-size:14px;line-height:1.7;margin:20px 0">${body}</div>
-  <a href="https://www.kifurushiapp.com/dashboard#messages-${matchId}"
+  <a href="https://www.kifurushiapp.com/dashboard#${target}-${matchId}"
      style="display:inline-block;background:#E85D26;color:#fff;text-decoration:none;font-weight:600;border-radius:12px;padding:12px 22px;font-size:14px">
-    ${BUTTON[lang]}
+    ${event === "message" ? ({en:"Read message",fr:"Lire le message",sw:"Soma ujumbe"}[lang]) : event === "released" ? ({en:"Leave a review",fr:"Laisser un avis",sw:"Toa maoni"}[lang]) : ({en:"View delivery",fr:"Voir la livraison",sw:"Angalia uwasilishaji"}[lang])}
   </a>
   <p style="margin-top:24px;font-size:12px;color:#8a938f">${FOOTER[lang]}</p>
 </div>`;
@@ -385,7 +380,7 @@ Deno.serve(async (req) => {
     jobs.push(sendTrackedEmail(admin, {
       key:`match/${matchId}/${event}/${eventKey}/${uid}`, recipientId:uid,
       kind:`match_${event}`, matchId, to:me.email, subject:c.subject,
-      html:shell(c.heading,c.body({route:escapeHtml(route),other:escapeHtml(other.name),role}),me.lang,matchId)
+      html:shell(c.heading,c.body({route:escapeHtml(route),other:escapeHtml(other.name),role}),me.lang,matchId,event)
     }));
   }
   const outcomes=await Promise.all(jobs);

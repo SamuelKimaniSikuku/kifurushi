@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, Eye, EyeOff, Gift, HeartHandshake, MailCheck, Package, Plane } from "lucide-react";
 import { signInSchema, signUpSchema, zodErrors, FieldErrors } from "@/lib/validation";
-import { safeReturnPath } from "@/lib/routes";
+import { emailAuthReturnUrl, safeReturnPath } from "@/lib/routes";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 import Link from "next/link";
@@ -71,6 +71,7 @@ function AuthForm() {
           email: parsed.data.email,
           password: form.password,
           options: {
+            emailRedirectTo: emailAuthReturnUrl(window.location.origin, safeNext),
             data: {
               full_name: "name" in parsed.data ? parsed.data.name : form.name.trim(),
               terms_accepted_at: new Date().toISOString(),
@@ -140,7 +141,7 @@ function AuthForm() {
       // Always reports success: whether the address has an account is not
       // something this page should reveal.
       await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset`,
+        redirectTo: `${window.location.origin}/auth/reset?next=${encodeURIComponent(safeNext)}`,
       });
       setResetSent(true);
     } catch {
@@ -168,7 +169,7 @@ function AuthForm() {
       await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: emailAuthReturnUrl(window.location.origin, safeNext),
           shouldCreateUser: false,
         },
       });

@@ -72,3 +72,17 @@ export function safeReturnPath(value: string | null): string {
 export function signInHref(returnTo: string) {
   return `/auth?mode=signin&next=${encodeURIComponent(safeReturnPath(returnTo))}`;
 }
+
+/** Carry the destination in the query: email auth uses the URL fragment for tokens. */
+export function emailAuthReturnUrl(origin: string, returnTo: string) {
+  const url = new URL("/dashboard", origin);
+  url.searchParams.set("returnTo", safeReturnPath(returnTo));
+  return url.toString();
+}
+export function readEmailAuthReturn(search: string): string | null {
+  const value = new URLSearchParams(search).get("returnTo");
+  if (value === null) return null;
+  const url = new URL(safeReturnPath(value), "https://www.kifurushiapp.com");
+  url.searchParams.delete("returnTo");
+  return `${url.pathname}${url.search}${url.hash}`;
+}

@@ -11,6 +11,8 @@ import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { receiptCopy } from "@/lib/locales/receipt";
 import { CHAT_READ_CHANGED, CHAT_READ_PREFIX, inboxMatches, isHistory, readChatMarker, summarizeConversation, type ConversationSummary, type InboxFilter } from "@/lib/inbox";
 import MatchCard from "./MatchCard";
+import { readDeliveryTarget } from "@/lib/deliveryReturn";
+import { deliveryReturnCopy } from "@/lib/locales/deliveryReturn";
 
 export default function DeliveryInbox({ matches, myUserId, active, onChanged }: {
   matches: MatchDetail[]; myUserId: string; active: boolean; onChanged: () => void;
@@ -20,6 +22,7 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
   const [filter, setFilter] = useState<InboxFilter>("active");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [missingTarget, setMissingTarget] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [summaries, setSummaries] = useState<Record<string, ConversationSummary>>({});
   const [failed, setFailed] = useState(false);
@@ -37,13 +40,15 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
   useEffect(() => {
     const sync = () => {
       const hash = window.location.hash.slice(1);
-      if (hash.startsWith("messages-")) {
-        const id = hash.slice("messages-".length);
+      const target = readDeliveryTarget(hash);
+      setMissingTarget(false);
+      if (target) {
+        const id = target.id;
         const match = matches.find(m => m.id === id);
         if (match) {
           setSelectedId(id); setMobileOpen(true); setQuery("");
           setFilter(isHistory(match) ? "history" : "active");
-        }
+        } else { setSelectedId(null); setMobileOpen(false); setMissingTarget(true); }
       } else if (hash === "unread") {
         setFilter("unread"); setSelectedId(null); setMobileOpen(false); setQuery("");
       } else if (hash === "deliveries") setMobileOpen(false);
@@ -100,8 +105,9 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
   const selected = matches.find(m => m.id === selectedId);
   const unreadCount = matches.filter(m => summaries[m.id]?.unread > 0).length;
   const choose = (match: MatchDetail) => {
-    setSelectedId(match.id); setMobileOpen(true);
+    setSelectedId(match.id); setMobileOpen(true); setMissingTarget(false);
     window.history.replaceState(null, "", `#messages-${match.id}`);
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
   };
   const changeFilter = (next: InboxFilter) => {
     setFilter(next); setSelectedId(null); setMobileOpen(false);
@@ -124,6 +130,7 @@ export default function DeliveryInbox({ matches, myUserId, active, onChanged }: 
           </button>)}
         </div>
       </div>
+      {missingTarget && <p role="alert" className="border-b border-line p-4 text-sm text-muted">{deliveryReturnCopy[lang].missing}</p>}
       {failed && <p role="status" className="px-4 py-2 text-xs text-danger">{s.failed} <button className="underline" onClick={() => setAttempt(n => n + 1)}>{s.retry}</button></p>}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         {visibleMatches.map(match => {

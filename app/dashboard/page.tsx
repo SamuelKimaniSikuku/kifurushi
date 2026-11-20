@@ -19,7 +19,7 @@ import { inboxCopy } from "@/lib/locales/inbox";
 import RatingsFeedback from "@/components/RatingsFeedback";
 import AccountOverview from "@/components/AccountOverview";
 import { useLang } from "@/lib/i18n";
-import { signInHref } from "@/lib/routes";
+import { readEmailAuthReturn, signInHref } from "@/lib/routes";
 import { notifyAttentionChanged } from "@/lib/attentionEvents";
 import { reviewCopy } from "@/lib/locales/reviews";
 
@@ -73,6 +73,16 @@ export default function DashboardPage() {
       if (!s) {
         router.replace(signInHref(`/dashboard${window.location.search}${window.location.hash}`));
         return;
+      }
+      const returnTo = readEmailAuthReturn(window.location.search);
+      if (returnTo) {
+        if (new URL(returnTo, window.location.origin).pathname !== "/dashboard") {
+          router.replace(returnTo);
+          return;
+        }
+        // Keep the mounted dashboard in sync when only its query/hash changes.
+        window.history.replaceState(window.history.state, "", returnTo);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
       }
       setSession(s);
       const [m, ms, v, admin, totals] = await Promise.all([

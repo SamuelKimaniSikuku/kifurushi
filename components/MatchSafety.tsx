@@ -11,10 +11,11 @@ import { declarationSchema, emptyDeclaration, REFUSAL_REASONS, type RefusalReaso
 import { confirmInspection, fetchMatchSafety, refuseParcel, saveDeclaration } from "@/lib/safetyDb";
 import ContentsDeclaration from "./ContentsDeclaration";
 import EvidencePhotos from "./EvidencePhotos";
+import type { InspectionProgress } from "@/lib/deliveryReturn";
 
 export default function MatchSafety({ match, myUserId, onChanged, onReady, onMessage, children }: {
   match: MatchDetail; myUserId: string; onChanged: () => void; onReady: (ready: boolean) => void; onMessage: () => void;
-  children: (panels: { inspection: ReactNode; parcelDetails: ReactNode; refusal?: ReactNode }) => ReactNode;
+  children: (panels: { inspection: ReactNode; parcelDetails: ReactNode; refusal?: ReactNode; progress?: InspectionProgress }) => ReactNode;
 }) {
   const { lang } = useLang(); const s = safetyCopy[lang]; const d = deliveryCopy[lang];
   const [state, setState] = useState<Awaited<ReturnType<typeof fetchMatchSafety>> | null>(null);
@@ -112,7 +113,7 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
     </>}
     {!refusing && errorNotice}
   </div>;
-  return children({ inspection, refusal: refusalControl && <>{refusalControl}{refusing && errorNotice}</>, parcelDetails: <div className="space-y-4">
+  return children({ inspection, progress: { hasDeclaration: !!declaration, mine, both: ready, refused: !!state.refusal }, refusal: refusalControl && <>{refusalControl}{refusing && errorNotice}</>, parcelDetails: <div className="space-y-4">
     {state.refusal && <p role="status" className="text-sm text-danger">{s.refused} {s[state.refusal.reason]}</p>}
     {details}
     {traveler && declaration && !state.refusal && match.status === "escrow_paid" && !mine && <details className="border-t border-line pt-3 text-sm"><summary className="cursor-pointer py-2 text-forest">{d.checkHelp}</summary><div className="mt-2 space-y-3"><p className="text-muted">{s.verify} <Link className="font-medium text-forest underline" href="/verify">{s.verifyLink}</Link></p><EvidencePhotos handover paths={photos} onChange={setPhotos} onBusy={setUploading} disabled={busy || uploading} /></div></details>}
