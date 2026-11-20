@@ -7,14 +7,18 @@
 // explanation and a way to request a fresh link — never a dead end.
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Check, Eye, EyeOff, KeyRound } from "lucide-react";
 import { signUpSchema } from "@/lib/validation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/lib/i18n";
 
+import { safeReturnPath, signInHref } from "@/lib/routes";
+
 function ResetForm() {
+  const params = useSearchParams();
+  const next = safeReturnPath(params.get("next"));
   const router = useRouter();
   const t = useT();
   const x = t.experience;
@@ -68,7 +72,7 @@ function ResetForm() {
         return;
       }
       setPhase("done");
-      router.push("/dashboard");
+      router.push(next);
     } catch {
       setError(x.connectionError);
     } finally {
@@ -97,7 +101,7 @@ function ResetForm() {
             {t.auth.resetExpiredTitle}
           </h1>
           <p className="mt-2 text-sm text-muted">{t.auth.resetExpiredBody}</p>
-          <Link href="/auth?mode=signin" className="btn-primary mt-6 w-full">
+          <Link href={signInHref(next)} className="btn-primary mt-6 w-full">
             {t.auth.requestNewLink}
           </Link>
         </div>

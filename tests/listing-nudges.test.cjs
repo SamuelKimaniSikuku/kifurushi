@@ -74,6 +74,7 @@ function harness(seed = {}, options = {}) {
       if(options.emailFailure){incidents.push(['email_send_failed']);return false;}
       return true;
     },
+    sendDeliveryFollowups: async () => ({sent:0,planned:{}}),
     logIncident: async (...args) => incidents.push(args),
   };
   vm.runInNewContext(js, context);
@@ -197,11 +198,11 @@ test('early copy works in all three member languages and escapes city text', asy
     assert.ok(h.mail[0].html.includes(h.T[lang].parcelEarlyBody));
   }
 });
-test('first request reminder starts at 24 hours and deep links to that conversation',async()=>{
+test('first request reminder starts at 24 hours and deep links to that delivery',async()=>{
  const seed={parcels:[parcel()],trips:[trip()],matches:[match({created_at:new Date(NOW-DAY).toISOString()})]};
  const h=harness(seed);await h.run();
  assert.ok(h.db.matches[0].request_first_nudged_at);assert.equal(h.db.matches[0].request_nudged_at,null);
- assert.match(h.mail[0].html,/#messages-m1/);
+ assert.match(h.mail[0].html,/#delivery-m1/);
  assert.match(h.mail[0].key,/request24/);
  await h.run();assert.equal(h.mail.filter(m=>/request24/.test(m.key)).length,1);
 });

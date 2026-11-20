@@ -12,9 +12,9 @@ const future='2099-01-01';
 const trip={id:'trip-id',status:'open',traveler_id:'traveller',from_country:'KE',to_country:'FR',from_city:'Nairobi',to_city:'Paris',depart_date:future,remaining_kg:10,price_per_kg:7,categories:['documents'],profile:{full_name:'Alex'}};
 const parcel={id:'parcel-id',status:'open',safety_hold:false,sender_id:'sender',from_country:'KE',to_country:'FR',from_city:'Nairobi',to_city:'Paris',needed_by:future,weight_kg:null,budget_usd:30,categories:['documents'],profile:{full_name:'<img>'}};
 const match={id:'match-id',status:'accepted',requester_id:'sender',updated_at:'2026-11-16T00:00:00Z',trip,parcel};
-test('acceptance tells the requester and opens the exact conversation',async()=>{
+test('acceptance tells the requester and opens the exact delivery',async()=>{
  const {sent}=await runWorker('match-emails',{matches:[match],profiles:[{id:'sender',lang:'en',full_name:'Sender'},{id:'traveller',lang:'en',full_name:'<img>'}]},{match_id:'match-id',event:'accepted',actor:'traveller'});
- assert.equal(sent.length,1);assert.equal(sent[0].recipientId,'sender');assert.match(sent[0].html,/#messages-match-id/);assert.match(sent[0].html,/&lt;img&gt;/);assert.doesNotMatch(sent[0].html,/<img>/);
+ assert.equal(sent.length,1);assert.equal(sent[0].recipientId,'sender');assert.match(sent[0].html,/#delivery-match-id/);assert.match(sent[0].html,/&lt;img&gt;/);assert.doesNotMatch(sent[0].html,/<img>/);
 });
 test('a stale queued status event cannot tell someone a cancelled request was accepted',async()=>{
  const {sent}=await runWorker('match-emails',{matches:[{...match,status:'cancelled'}]},{match_id:'match-id',event:'accepted',actor:'traveller'});assert.equal(sent.length,0);
@@ -30,4 +30,12 @@ test('new parcel alert uses the fitting trip and escapes sender-supplied content
 test('closed listings and unsupported parcel contents do not generate match alerts',async()=>{
  let result=await runWorker('new-listing-alerts',{trips:[{...trip,status:'closed'}],parcels:[parcel]},{kind:'trip',id:'trip-id'});assert.equal(result.sent.length,0);
  result=await runWorker('new-listing-alerts',{trips:[trip],parcels:[{...parcel,categories:['electronics']}]},{kind:'trip',id:'trip-id'});assert.equal(result.sent.length,0);
+});
+test('completed-delivery emails open that booking’s review',async()=>{
+ const {sent}=await runWorker('match-emails',{matches:[{...match,status:'released'}],profiles:[]},{match_id:'match-id',event:'released',actor:'sender'});
+ assert.equal(sent.length,1);assert.match(sent[0].html,/#review-match-id/);assert.match(sent[0].html,/Leave a review/);
+});
+test('message alerts keep opening chat rather than delivery actions',async()=>{
+ const {sent}=await runWorker('match-emails',{matches:[match],messages:[{id:'msg1',match_id:'match-id',created_at:'2026-11-20T00:00:00Z'}],profiles:[]},{match_id:'match-id',event:'message',actor:'sender'});
+ assert.equal(sent.length,1);assert.match(sent[0].html,/#messages-match-id/);assert.match(sent[0].html,/Read message/);
 });

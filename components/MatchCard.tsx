@@ -21,6 +21,9 @@ import { receiptCopy } from "@/lib/locales/receipt";
 import { reviewCopy } from "@/lib/locales/reviews";
 import { deliveryCopy } from "@/lib/locales/delivery";
 import DeliveryProblem from "@/components/DeliveryProblem";
+import DeliveryAgreement from "@/components/DeliveryAgreement";
+import { deliveryPath, readDeliveryTarget, deliveryWhatsappHref, nextDeliveryAction } from "@/lib/deliveryReturn";
+import { deliveryReturnCopy } from "@/lib/locales/deliveryReturn";
 import MatchSafety from "@/components/MatchSafety";
 
 import { inboxCopy } from "@/lib/locales/inbox";
@@ -175,6 +178,8 @@ export default function MatchCard({
   const { lang } = useLang();
   const weightText = requestWeightCopy[lang];
   const inboxText = inboxCopy[lang];
+  const returnText = deliveryReturnCopy[lang];
+  const [linkState, setLinkState] = useState<"" | "copied" | "failed">("");
   const d = deliveryCopy[lang];
   const requestAvailable = match.requestAvailability === "available";
   const unavailableRequest = match.status === "requested" &&
@@ -183,6 +188,18 @@ export default function MatchCard({
   const unavailableHelp = match.requestAvailability === "booked_elsewhere" ? weightText.bookedElsewhereHelp : weightText.unavailableHelp;
   const exceedsAvailableSpace = match.parcelWeightKg != null && match.remainingKg != null && match.parcelWeightKg > match.remainingKg;
   const [view, setView] = useState<"messages" | "details">("messages");
+  useEffect(() => {
+    const sync = () => {
+      const target = readDeliveryTarget(window.location.hash);
+      if (target?.id === match.id) { setView(target.view); setOpen(true); }
+    };
+    sync(); window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [match.id]);
+  const chooseView = (next: "messages" | "details") => {
+    setView(next);
+    if (conversation) window.history.replaceState(null, "", `/dashboard${window.location.search}${deliveryPath(match.id, next).slice("/dashboard".length)}`);
+  };
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const detailsPanelRef = useRef<HTMLDivElement>(null);
   const [chatInView, setChatInView] = useState(false);
@@ -237,6 +254,7 @@ export default function MatchCard({
         match.status
       )
     ) {
+      setWaNumber(null);
       return;
     }
     let live = true;
@@ -401,7 +419,7 @@ export default function MatchCard({
           <h2 id={`conversation-heading-${match.id}`} tabIndex={-1} className="break-words font-body text-base font-semibold tracking-normal text-forest outline-none">{match.counterpartyName}</h2>
           <p className="mt-0.5 text-xs text-muted">{match.route} · {isTraveler ? d.sender : d.traveller}</p>
         </div>
-        <button type="button" onClick={() => setView("details")} className="max-w-[42%] rounded-lg bg-sand px-2 py-2 text-xs font-semibold text-forest" aria-label={`${inboxText.details}: ${d.status[match.status]}`}>
+        <button type="button" onClick={() => chooseView("details")} className="max-w-[42%] rounded-lg bg-sand px-2 py-2 text-xs font-semibold text-forest" aria-label={`${inboxText.details}: ${d.status[match.status]}`}>
           {match.receiptOutcome ? receiptCopy[lang][match.receiptOutcome] : unavailableRequest ? unavailableLabel : d.status[match.status]}
         </button>
       </header> : <>
@@ -449,19 +467,28 @@ export default function MatchCard({
       {open && (
       <>
 
-      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => { setView("messages"); document.getElementById(`messages-tab-${match.id}`)?.focus({ preventScroll: true }); }}>
-      {({ inspection, parcelDetails, refusal }) => <>
+      <MatchSafety match={match} myUserId={myUserId} onChanged={onChanged} onReady={setInspectionReady} onMessage={() => { chooseView("messages"); document.getElementById(`messages-tab-${match.id}`)?.focus({ preventScroll: true }); }}>
+      {({ inspection, parcelDetails, refusal, progress }) => <>
+      {conversation && activeView === "messages" && <div className="shrink-0 border-b border-line bg-sand/60 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-semibold text-muted">{returnText.next}</span>
+          <a href={match.canReview && (done || match.receiptOutcome) && !reportHold ? `#review-${match.id}` : deliveryPath(match.id)}
+            className="inline-flex min-h-11 items-center rounded-lg bg-forest px-3 text-sm font-semibold text-white">
+            {returnText.actions[nextDeliveryAction(match, myUserId, progress, reportHold)]}
+          </a>
+        </div>
+      </div>}
       {chatVisible && <div role="tablist" aria-label={d.sections} className={`flex shrink-0 gap-5 border-b border-line ${conversation ? "px-4" : "mt-5"}`}>
         {(["messages", "details"] as const).map((tab) => <button
           key={tab} id={`${tab}-tab-${match.id}`} type="button" role="tab"
           aria-selected={activeView === tab} aria-controls={`${tab}-panel-${match.id}`}
           tabIndex={activeView === tab ? 0 : -1}
-          onClick={() => setView(tab)}
+          onClick={() => chooseView(tab)}
           onKeyDown={(event) => {
             if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
             event.preventDefault();
             const next = event.key === "Home" ? "messages" : event.key === "End" ? "details" : tab === "messages" ? "details" : "messages";
-            setView(next);
+            chooseView(next);
             document.getElementById(`${next}-tab-${match.id}`)?.focus();
           }}
           className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-1 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf ${activeView === tab ? "border-forest text-forest" : "border-transparent text-muted hover:text-forest"}`}
@@ -471,17 +498,17 @@ export default function MatchCard({
         </button>)}
       </div>}
       {chatVisible && <div ref={chatPanelRef} id={`messages-panel-${match.id}`} role="tabpanel" aria-labelledby={`messages-tab-${match.id}`} hidden={activeView !== "messages"} tabIndex={0} className={`${conversation ? "conversation-messages" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
-      {reportHold && <button type="button" onClick={() => setView("details")} className="mb-2 rounded-lg bg-warn-bg p-2 text-left text-xs text-warn">{inboxText.hold}</button>}
-      {waNumber && !ended && (
-        <a
-          href={`https://wa.me/${waNumber.replace("+", "")}`}
+      {reportHold && <button type="button" onClick={() => chooseView("details")} className="mb-2 rounded-lg bg-warn-bg p-2 text-left text-xs text-warn">{inboxText.hold}</button>}
+      {waNumber && !ended && !done && (
+        <div className="mb-2 shrink-0"><a
+          href={deliveryWhatsappHref(waNumber, match.id, lang)}
           target="_blank"
           rel="noopener noreferrer"
           className="mb-2 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-success underline"
         >
           <MessageSquare className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
           WhatsApp
-        </a>
+        </a><p className="text-xs text-muted">{returnText.whatsappHint}</p></div>
       )}
 
       {messagesLoading && <p role="status" className="p-3 text-sm text-muted">{inboxText.loading}</p>}
@@ -505,7 +532,7 @@ export default function MatchCard({
       <div ref={detailsPanelRef} id={`details-panel-${match.id}`} role={chatVisible ? "tabpanel" : undefined} aria-labelledby={chatVisible ? `details-tab-${match.id}` : undefined} hidden={activeView !== "details"} tabIndex={0} className={`${conversation ? "conversation-details" : "pt-4"} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf`}>
       <DeliveryProblem match={match} handover={match.status === "escrow_paid"} onHold={setReportHold} onChanged={onChanged}>
       {({ status: deliveryStatus, reportControl }) => <div className="space-y-4">
-      {(done || match.canReview) && <a href="#ratings" className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
+      {(done || match.canReview) && <a href={`#review-${match.id}`} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-forest underline underline-offset-2">
         <Star size={17} className="fill-gold text-gold-deep" aria-hidden />
         {reviewCopy[lang].reviewLink}
       </a>}
@@ -648,6 +675,17 @@ export default function MatchCard({
       </div>}
 
       {parcelDetails}
+      {["accepted", "escrow_paid"].includes(match.status) && !reportHold && !match.receiptOutcome && <DeliveryAgreement matchId={match.id} onSaved={() => { reloadMessages(); chooseView("messages"); }} />}
+      <div className="rounded-xl border border-line p-3 text-sm">
+        <p className="text-muted">{returnText.returnHint}</p>
+        <button type="button" className="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold text-forest underline" onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(`https://www.kifurushiapp.com${deliveryPath(match.id)}`);
+            setLinkState("copied");
+          } catch { setLinkState("failed"); }
+        }}><Copy size={15} aria-hidden />{returnText.copy}</button>
+        {linkState && <p role="status" className="text-xs text-muted">{linkState === "copied" ? returnText.copied : returnText.copyFailed}</p>}
+      </div>
 
       {ended && (
         <div className="mt-3">
