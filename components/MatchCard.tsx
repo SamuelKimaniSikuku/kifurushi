@@ -21,7 +21,9 @@ import { receiptCopy } from "@/lib/locales/receipt";
 import { reviewCopy } from "@/lib/locales/reviews";
 import { deliveryCopy } from "@/lib/locales/delivery";
 import DeliveryProblem from "@/components/DeliveryProblem";
-import DeliveryAgreement from "@/components/DeliveryAgreement";
+import DeliveryOffer from "@/components/DeliveryOffer";
+import DeliveryTimeline from "@/components/DeliveryTimeline";
+import { bookingCopy } from "@/lib/locales/booking";
 import { deliveryPath, readDeliveryTarget, deliveryWhatsappHref, nextDeliveryAction } from "@/lib/deliveryReturn";
 import { deliveryReturnCopy } from "@/lib/locales/deliveryReturn";
 import MatchSafety from "@/components/MatchSafety";
@@ -236,7 +238,6 @@ export default function MatchCard({
   const canRespond = match.requesterId !== myUserId;
   const done = match.status === "released";
   const ended = TERMINAL_NEGATIVE.includes(match.status);
-  const stepIndex = ["requested", "accepted"].includes(match.status) ? 0 : match.status === "escrow_paid" ? 1 : 2;
   const inTransit = match.status === "picked_up" || match.status === "in_transit";
   const received = match.status === "delivered" || done;
   const cancellable = ["requested", "accepted", "escrow_paid"].includes(match.status);
@@ -511,6 +512,8 @@ export default function MatchCard({
         </a><p className="text-xs text-muted">{returnText.whatsappHint}</p></div>
       )}
 
+      <DeliveryOffer key={match.id} matchId={match.id} status={match.status} myUserId={myUserId} weight={match.parcelWeightKg ?? null} paused={reportHold || !!match.receiptOutcome || !!progress?.refused} refreshKey={messages[messages.length - 1]?.id ?? ""} onChanged={() => { reloadMessages(); onChanged(); }} />
+
       {messagesLoading && <p role="status" className="p-3 text-sm text-muted">{inboxText.loading}</p>}
       {messagesError && <p role="alert" className="p-3 text-sm text-danger">{inboxText.failed} <button type="button" className="underline" onClick={reloadMessages}>{inboxText.retry}</button></p>}
       {/* Closed requests retain a read-only record. */}
@@ -537,12 +540,7 @@ export default function MatchCard({
         {reviewCopy[lang].reviewLink}
       </a>}
 
-      {!ended && !unavailableRequest && !match.receiptOutcome && <ol aria-label={d.progress} className="grid grid-cols-3 gap-2">
-        {d.steps.map((step, i) => <li key={step} aria-current={!done && i === stepIndex ? "step" : undefined}>
-          <div className={`h-1 rounded-full ${i <= stepIndex ? "bg-forest" : "bg-sand-deep"}`} />
-          <p className={`mt-1 text-xs ${i <= stepIndex ? "font-medium text-forest" : "text-muted"}`}>{i + 1}. {step}</p>
-        </li>)}
-      </ol>}
+      {!ended && !unavailableRequest && !match.receiptOutcome && <DeliveryTimeline status={match.status} />}
 
       {deliveryStatus}
 
@@ -612,11 +610,8 @@ export default function MatchCard({
           )}
 
           {match.status === "accepted" && <>
-            <p className="text-sm text-muted">{d.termsIntro}</p>
-            <button className="btn-primary min-h-11" disabled={busy}
-              onClick={() => act(() => advanceMatch(match.id), "Could not update — try again.")}>
-              {d.confirmTerms}
-            </button>
+            <p className="text-sm text-muted">{bookingCopy[lang].reviewOffer}</p>
+            <button type="button" className="btn-primary min-h-11" onClick={() => chooseView("messages")}>{bookingCopy[lang].openMessages}</button>
           </>}
 
           {match.status === "escrow_paid" && isTraveler && inspectionReady && !reportHold && (
@@ -675,7 +670,6 @@ export default function MatchCard({
       </div>}
 
       {parcelDetails}
-      {["accepted", "escrow_paid"].includes(match.status) && !reportHold && !match.receiptOutcome && <DeliveryAgreement matchId={match.id} onSaved={() => { reloadMessages(); chooseView("messages"); }} />}
       <div className="rounded-xl border border-line p-3 text-sm">
         <p className="text-muted">{returnText.returnHint}</p>
         <button type="button" className="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold text-forest underline" onClick={async () => {

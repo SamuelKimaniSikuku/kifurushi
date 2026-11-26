@@ -11,6 +11,7 @@ const base=process.env.KIFURUSHI_TEST_BASE || 'http://127.0.0.1:3119';
  const user={id:uid,aud:'authenticated',role:'authenticated',email:'return-test@example.invalid',user_metadata:{full_name:'Sample Sender'},app_metadata:{provider:'email'}};
  const token=[{alg:'HS256',typ:'JWT'},{sub:uid,role:'authenticated',exp:Math.floor(Date.now()/1000)+3600},'test-only'].map(v=>Buffer.from(typeof v==='string'?v:JSON.stringify(v)).toString('base64url')).join('.');
  const session={access_token:token,refresh_token:'test-only',expires_in:3600,token_type:'bearer',user};
+ let offers=[];
  let status='accepted',role='sender',held=false,outcome=null,inspections=[],messages=[],failMessage=false,missing=false,otpRedirect=null;
  await page.route('https://bltaaidjhpkmwnsprenu.supabase.co/**',async route=>{
   const req=route.request(),url=new URL(req.url()),path=url.pathname;let data=[];
@@ -19,6 +20,15 @@ const base=process.env.KIFURUSHI_TEST_BASE || 'http://127.0.0.1:3119';
   else if(path==='/auth/v1/user')data=user;
   else if(path==='/auth/v1/otp'){otpRedirect=url.searchParams.get('redirect_to');assert.equal(req.postDataJSON().create_user,false);data={};}
   else if(path==='/rest/v1/matches')data=missing?[]:[{id:mid,trip_id:'test-trip',parcel_id:pid,requester_id:other,status,updated_at:new Date().toISOString(),code_hash:null,trip:{from_city:'Paris',to_city:'Nairobi',traveler_id:role==='traveler'?uid:other,remaining_kg:9,profile:{id:role==='traveler'?uid:other,full_name:'Sample Traveller'}},parcel:{sender_id:role==='sender'?uid:other,weight_kg:1,profile:{id:role==='sender'?uid:other,full_name:'Sample Sender'}}}];
+  else if(path==='/rest/v1/rpc/delivery_offers_for_match')data=offers;
+  else if(path==='/rest/v1/rpc/propose_delivery_offer'){
+   if(failMessage)return rejected('Temporary failure');
+   const body=req.postDataJSON();offers=offers.map(o=>o.status==='pending'?{...o,status:'superseded'}:o);
+   offers.unshift({id:body.p_id,match_id:mid,proposer_id:uid,amount:body.p_amount,currency:body.p_currency,handover:body.p_handover,weight_kg:1,status:'pending',created_at:new Date().toISOString()});data=offers;writes.push(body);
+  }
+  else if(path==='/rest/v1/rpc/respond_delivery_offer'){
+   const body=req.postDataJSON();offers=offers.map(o=>o.id===body.p_offer?{...o,status:body.p_accept?'accepted':'declined',responder_id:uid,responded_at:new Date().toISOString()}:o);if(body.p_accept)status='escrow_paid';data=offers;writes.push(body);
+  }
   else if(path==='/rest/v1/rpc/my_delivery_feedback')data=missing?[]:[{match_id:mid,can_review:status==='released',can_report_receipt:role==='sender'&&!['requested','declined'].includes(status),outcome,request_availability:'available'}];
   else if(path==='/rest/v1/rpc/my_delivery_report')data={on_hold:held,my_verified:true,partner_verified:true,report:held?{id:'issue',status:'open'}:null};
   else if(path==='/rest/v1/rpc/match_contact')data='+33600000000';
@@ -65,18 +75,34 @@ const base=process.env.KIFURUSHI_TEST_BASE || 'http://127.0.0.1:3119';
  assert.match(new URL(await wa.getAttribute('href')).searchParams.get('text'),new RegExp('#delivery-'+mid));
  await page.getByRole('link',{name:'Confirm agreement',exact:true}).click();
  await panel.waitFor({state:'visible'});
- // An agreement is saved as our message, with a confirmation request, never as a state change.
- await panel.locator('summary').filter({hasText:'Record fee & handover'}).click();
- await panel.getByLabel('Total carrying fee',{exact:true}).fill('30');
- await panel.getByLabel('Collection and delivery arrangements',{exact:true}).fill('Collect on Friday in Paris; deliver to Nairobi.');
- failMessage=true;await panel.getByRole('button',{name:'Save details in chat',exact:true}).click();
- await panel.getByText('Couldn’t save. Please try again.',{exact:true}).waitFor();
- assert.equal(await panel.getByLabel('Total carrying fee',{exact:true}).inputValue(),'30');
- failMessage=false;await panel.getByRole('button',{name:'Save details in chat',exact:true}).click();
- await page.locator('#messages-'+mid).getByText(/Delivery agreement — please confirm/).waitFor();
- assert.equal(status,'accepted');assert.equal(writes.length,1);assert.match(writes[0].body,/EUR 30.00/);
+ // Offers preserve failed drafts and require the other participant's acceptance.
+ await panel.getByRole('button',{name:'Open Messages',exact:true}).click();
+ await page.getByRole('button',{name:'Suggest a price',exact:true}).click();
+ await page.getByLabel('Total carrying fee',{exact:true}).fill('30');
+ await page.getByLabel('Collection and delivery arrangements',{exact:true}).fill('Collect on Friday in Paris; deliver to Nairobi.');
+ failMessage=true;await page.getByRole('button',{name:'Send offer',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'Could not update the offer'}).waitFor();
+ assert.equal(await page.getByLabel('Total carrying fee',{exact:true}).inputValue(),'30');
+ failMessage=false;await page.getByRole('button',{name:'Send offer',exact:true}).click();
+ await page.getByText(/Price offer · EUR/).first().waitFor();
+ assert.equal(status,'accepted');assert.equal(writes.length,1);assert.equal(writes[0].p_amount,30);
+ assert.equal(await page.getByRole('button',{name:'Accept this price',exact:true}).count(),0);
+ // A received counteroffer exposes the agreement actions.
+ offers=[{...offers[0],id:'counteroffer',proposer_id:other,amount:32},...offers.map(o=>({...o,status:'superseded'}))];
+ await page.reload();await page.getByRole('button',{name:'View price details',exact:true}).click();await page.getByRole('button',{name:'Accept this price',exact:true}).waitFor();
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
- await page.screenshot({path:'/private/tmp/kifurushi-return-mobile.png',fullPage:true});
+ await page.screenshot({path:'/private/tmp/kifurushi-offer-mobile.png',fullPage:true});
+ await page.setViewportSize({width:320,height:568});
+ await page.getByRole('button',{name:'Suggest another price',exact:true}).click();
+ await page.getByLabel('Total carrying fee',{exact:true}).fill('31');
+ const dialog=page.getByRole('dialog',{name:'Agree the price',exact:true});
+ const bounds=await dialog.boundingBox();assert(bounds.y>=0&&bounds.y+bounds.height<=568&&bounds.width<=320);
+ await page.screenshot({path:'/private/tmp/kifurushi-offer-small-phone.png',fullPage:false});
+ await page.getByRole('button',{name:'Cancel',exact:true}).click();
+ await page.setViewportSize({width:390,height:844});
+ await page.getByRole('button',{name:'Accept this price',exact:true}).click();
+ await page.getByText(/Price agreed · EUR/).first().waitFor();assert.equal(status,'escrow_paid');
+ assert.equal(await page.getByRole('button',{name:'Suggest another price',exact:true}).count(),0);
  // Same conversation can move from chat to delivery after opening a return link.
  await page.goto(base+target);await panel.waitFor({state:'visible'});
  // Magic-link query retains destination when Supabase consumes/replaces its hash.
@@ -105,7 +131,16 @@ const base=process.env.KIFURUSHI_TEST_BASE || 'http://127.0.0.1:3119';
  await page.getByLabel('Email',{exact:true}).fill(user.email);
  await page.getByRole('button',{name:/email.*sign.in link|send.*sign.in link/i}).click();
  assert.equal(new URL(otpRedirect).searchParams.get('returnTo'),target);
+ await page.goto(base+'/');
+ const guide=page.locator('#how-it-works');
+ await guide.getByRole('button',{name:'I’m travelling',exact:true}).click();
+ await guide.getByRole('heading',{name:'Deliver and earn',exact:true}).waitFor();
+ await guide.screenshot({path:'/private/tmp/kifurushi-guide-desktop.png'});
+ await page.setViewportSize({width:390,height:844});
+ await guide.getByRole('button',{name:'I’m sending a parcel',exact:true}).click();
+ await guide.getByRole('heading',{name:'Confirm receipt',exact:true}).waitFor();
+ assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.deepEqual(errors,[]);
- console.log('PASS: mobile/desktop return links, password + email sign-in, agreement draft retry, receipt confirmation, review, holds and wrong-account handling; no live sends.');
+ console.log('PASS: mobile/desktop return links, password + email sign-in, price offers, counteroffer acceptance, receipt confirmation, review, holds and wrong-account handling; no live sends.');
  } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

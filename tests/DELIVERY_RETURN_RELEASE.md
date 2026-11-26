@@ -11,9 +11,9 @@ Password sign-in, email sign-in/confirmation and password reset preserve the
 requested destination. Email links carry it in a query parameter because the
 Supabase implicit auth flow uses the URL fragment for session tokens.
 
-A small next-step button is visible above the chat. The optional fee/handover
-form saves a message authored by the signed-in participant and asks the other
-person to confirm. It does not mark a payment or silently change the booking.
+A small next-step button is visible above the chat. The original fee/handover
+message form has been replaced by structured, bilateral price offers; see
+`BOOKING_OFFERS_RELEASE.md`. Payments remain direct between participants.
 
 ## Deployment
 

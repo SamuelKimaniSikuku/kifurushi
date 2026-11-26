@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, ChevronDown, Gift, HeartHandshake, KeyRound, Package, PackageCheck, Plane, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, Gift, HeartHandshake, KeyRound, Package, PackageCheck, Plane, ShieldCheck } from "lucide-react";
 import { useT } from "@/lib/i18n";
 import { label } from "@/lib/countries";
 import { browseHref } from "@/lib/routes";
@@ -72,24 +72,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-y border-line bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20">
-          <p className="section-eyebrow">{t.home.processLabel}</p>
-          <h2 className="mt-2 text-3xl font-bold text-forest">{t.home.howTitle}</h2>
-          <p className="mt-3 max-w-2xl text-base text-muted">{x.howNote}</p>
-          <ol className="mt-9 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-            {t.home.steps.map((step, index) => <li key={step.title} className="border-t-2 border-line pt-5">
-              <span className="font-display text-sm font-semibold text-clay-deep">0{index + 1}</span>
-              <h3 className="mt-3 text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-base leading-relaxed text-muted">{step.body}</p>
-            </li>)}
-          </ol>
-          <details className="getting-started mt-9 rounded-2xl border border-line bg-sand">
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 font-semibold text-forest">{t.howTo.title}<ChevronDown size={18} aria-hidden /></summary>
-            <HowToStart />
-          </details>
-        </div>
-      </section>
+      <HowToStart />
 
       <section className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[0.85fr_1fr] md:gap-16 md:py-20">
         <div>
