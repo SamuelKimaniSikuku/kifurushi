@@ -19,6 +19,8 @@ import { useLang, useT } from "@/lib/i18n";
 import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
 
+import { categoryNames, parcelContentsCopy } from "@/lib/locales/parcelContents";
+
 const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
 
 const FIELD_ORDER = [
@@ -48,6 +50,7 @@ function PostTripForm() {
   const { session, loading } = useSession();
   const t = useT();
   const { lang } = useLang();
+  const pc = parcelContentsCopy[lang];
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   // Which fields the member has actually finished with. Nothing complains
@@ -57,7 +60,7 @@ function PostTripForm() {
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
     departDate: "", spaceKg: "10", pricePerKg: "9", notes: "",
   });
-  const [cats, setCats] = useState<ParcelCategory[]>(["documents", "clothing", "gifts"]);
+  const [cats, setCats] = useState<ParcelCategory[]>([]);
   const [minDate, setMinDate] = useState("");
   // Set when the member already has an open trip on this route and date; the
   // next submit is taken as "yes, it really is a second trip".
@@ -147,8 +150,8 @@ function PostTripForm() {
       }
       // Return to the updated listing and its current recommendations.
       router.push(editId ? `/dashboard/listings?kind=trip&id=${editId}` : "/trips");
-    } catch {
-      setErrors({ _submit: t.postTrip.submitError });
+    } catch (e) {
+      setErrors({ _submit: e && typeof e === "object" && "message" in e ? String(e.message) : t.postTrip.submitError });
       setSubmitting(false);
     }
   }
@@ -164,7 +167,7 @@ function PostTripForm() {
     }
     let live = true;
     const timer = setTimeout(() => {
-      fitForTrip(fromCountry, toCountry, departDate)
+      fitForTrip(fromCountry, toCountry, departDate, cats)
         .then((f) => live && setFit(f))
         .catch(() => live && setFit(null));
     }, 350);
@@ -172,7 +175,7 @@ function PostTripForm() {
       live = false;
       clearTimeout(timer);
     };
-  }, [form.fromCountry, form.toCountry, form.departDate, form]);
+  }, [form.fromCountry, form.toCountry, form.departDate, form, cats]);
 
   // A changed route or date is a different trip — retract the duplicate warning.
   useEffect(() => {
@@ -354,7 +357,7 @@ function PostTripForm() {
         />
 
         {/* Who is already waiting for this trip. */}
-        <WaitingParcels
+        <WaitingParcels categories={cats}
           fromCountry={form.fromCountry}
           toCountry={form.toCountry}
           departDate={form.departDate}
@@ -374,6 +377,8 @@ function PostTripForm() {
         <div className="mt-6 space-y-5 border-t border-line pt-5">
           <div>
             <span id="cats-label" className="field-label">{t.postTrip.categoriesLabel}</span>
+            <p className="mb-3 text-sm text-muted">{pc.tripHelp}</p>
+            <div className="mb-3 flex flex-wrap gap-2"><button type="button" className="btn-ghost" aria-pressed={cats.length===1 && cats[0]==="certificates"} onClick={()=>{setCats(["certificates"]);setErrors({});}}>🔒 {pc.certificatesOnly}</button><button type="button" className="btn-ghost" onClick={()=>setCats([])}>{pc.clear}</button></div>
             <div
               id="cats"
               tabIndex={-1}
@@ -397,7 +402,7 @@ function PostTripForm() {
                     }`}
                   >
                     {selected && <Check size={16} strokeWidth={2} aria-hidden="true" />}
-                    {CATEGORY_LABELS[c]}
+                    {categoryNames[lang][c]}
                   </button>
                 );
               })}

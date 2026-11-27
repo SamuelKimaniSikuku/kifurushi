@@ -14,9 +14,12 @@ import { addParcel, requestMatch } from "@/lib/db";
 import ContentsDeclaration from "./ContentsDeclaration";
 import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
 import { safetyCopy } from "@/lib/locales/safety";
-import { CATEGORY_LABELS, ParcelCategory, Trip } from "@/lib/types";
+import { ParcelCategory, Trip } from "@/lib/types";
 
-const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
+import ParcelContentsFields from "./ParcelContentsFields";
+import ParcelWeightField from "./ParcelWeightField";
+import { acceptsContents, parcelDetailsSchema } from "@/lib/parcelContents";
+import { categoryNames, parcelContentsCopy } from "@/lib/locales/parcelContents";
 import { useLang, useT } from "@/lib/i18n";
 
 export default function QuickRequest({
@@ -35,17 +38,13 @@ export default function QuickRequest({
   const [createdParcelId, setCreatedParcelId] = useState<string | null>(null);
   const w = requestWeightCopy[lang];
   const [weight, setWeight] = useState("");
-  const [budget, setBudget] = useState(String(Math.round(trip.pricePerKg * 3)));
+  const [budget, setBudget] = useState("");
   const [description, setDescription] = useState("");
   const [cats, setCats] = useState<ParcelCategory[]>([]);
-  // Every category, the traveller's declared ones first. Their list is a
-  // preference, not a wall — the chat exists precisely to ask "would you take
-  // medicine too?" — so we don't hide options, we order and flag them.
-  const orderedCats: ParcelCategory[] = [
-    ...trip.categoriesAccepted,
-    ...ALL_CATEGORIES.filter((c) => !trip.categoriesAccepted.includes(c)),
-  ];
-  const outsideList = cats.some((c) => !trip.categoriesAccepted.includes(c));
+  const [details, setDetails] = useState({ itemCount: "", packageType: "" });
+  const [weightKind, setWeightKind] = useState<"measured"|"estimated">("estimated");
+  const pc = parcelContentsCopy[lang];
+  const outsideList = cats.length > 0 && !acceptsContents(trip.categoriesAccepted,cats);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -74,6 +73,10 @@ export default function QuickRequest({
       setError(w.invalid);
       return;
     }
+    if (!cats.length) { setError(pc.choose); return; }
+    if (outsideList) { setError(pc.mismatch); return; }
+    const parsedDetails = parcelDetailsSchema.safeParse({ ...details, weightKind: parsedWeight.data == null ? null : weightKind });
+    if (!parsedDetails.success) { setError(pc.detailsError); return; }
     setBusy(true);
     setError("");
     try {
@@ -86,7 +89,8 @@ export default function QuickRequest({
         neededBy: trip.departDate,
         weightKg: parsedWeight.data,
         budgetUsd: parseFloat(budget),
-        categories: cats.length ? cats : ["other"],
+        categories: cats,
+        ...parsedDetails.data,
         description: description.trim(),
         declaration,
       });
@@ -97,10 +101,6 @@ export default function QuickRequest({
       setError(t.browse.quickError);
       setBusy(false);
     }
-  }
-
-  function toggle(c: ParcelCategory) {
-    setCats((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   }
 
   return (
@@ -138,24 +138,7 @@ export default function QuickRequest({
         <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
           <fieldset disabled={busy || uploading || !!createdParcelId} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="q-weight" className="field-label">
-                {w.label}
-              </label>
-              <input
-                id="q-weight"
-                type="number"
-                min={0}
-                step="any"
-                inputMode="decimal"
-                className="field"
-                value={weight}
-                onChange={(e) => { setWeight(e.target.value); setError(""); }}
-                aria-describedby="q-weight-help"
-              />
-              <p id="q-weight-help" className="mt-1 text-xs text-muted">{w.help}</p>
-              {weightNum > trip.remainingKg && <p className="mt-2 text-xs text-muted">{w.overCapacity}</p>}
-            </div>
+            <ParcelWeightField id="q-weight" value={weight} onChange={v => { setWeight(v); setError(""); }} kind={weightKind} onKind={setWeightKind} />
             <div>
               <label htmlFor="q-budget" className="field-label">
                 {t.postParcel.budget}
@@ -181,51 +164,10 @@ export default function QuickRequest({
 
 
 
-          <div>
-            <label htmlFor="q-desc" className="field-label">
-              {t.postParcel.whatsInside}
-            </label>
-            <textarea
-              id="q-desc"
-              className="field min-h-[80px]"
-              placeholder={safetyCopy[lang].briefPlaceholder}
-              value={description}
-              onChange={(e) => { setDescription(e.target.value); setDeclaration((d) => briefDeclaration(e.target.value, { ...d, attested: false })); setError(""); }}
-              maxLength={400}
-            />
-          </div>
-
-          <ContentsDeclaration descriptionProvided value={declaration} onChange={(d) => { setDeclaration(d); setError(""); }} onBusy={setUploading} disabled={busy || uploading || !!createdParcelId}>
-          <div>
-            <span className="field-label">{t.postParcel.categoriesLabel}</span>
-            <div className="flex flex-wrap gap-2">
-              {orderedCats.map((c) => {
-                const on = cats.includes(c);
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => toggle(c)}
-                    aria-pressed={on}
-                    className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition ${
-                      on
-                        ? "border-forest bg-forest text-white"
-                        : "border-line-strong bg-white text-ink hover:border-forest"
-                    }`}
-                  >
-                    {on && <span aria-hidden>✓</span>}
-                    {CATEGORY_LABELS[c]}
-                  </button>
-                );
-              })}
-            </div>
-            {outsideList && (
-              <p className="mt-2 text-xs text-muted">
-                {t.browse.quickCatHint(trip.travelerName)}
-              </p>
-            )}
-          </div>
-          </ContentsDeclaration>
+          <p className="rounded-xl bg-sand p-3 text-sm"><strong>{pc.accepted}:</strong> {trip.categoriesAccepted.map(c=>categoryNames[lang][c]).join(", ")}</p>
+          <ParcelContentsFields prefix="q-" categories={cats} onCategories={v => {setCats(v);setError("");setDeclaration(d=>({...d,attested:false}));}} description={description} onDescription={v=>{setDescription(v);setDeclaration(d=>briefDeclaration(v,{...d,attested:false}));setError("");}} itemCount={details.itemCount} packageType={details.packageType} onDetails={(key,value)=>{setDetails(d=>({...d,[key]:value}));setDeclaration(d=>({...d,attested:false}));setError("");}} />
+          {outsideList && <p role="alert" className="field-error">{pc.mismatch}</p>}
+          <ContentsDeclaration descriptionProvided value={declaration} onChange={(d) => { setDeclaration(d); setError(""); }} onBusy={setUploading} disabled={busy || uploading || !!createdParcelId} />
           </fieldset>
           {createdParcelId && <p className="text-sm text-muted">{safetyCopy[lang].savedRequest} <Link className="font-semibold text-forest underline" href="/dashboard">{t.nav.dashboard}</Link></p>}
 
@@ -237,7 +179,7 @@ export default function QuickRequest({
           {error && <p role="alert" className="field-error">{error}</p>}
 
           <div className="flex flex-col gap-2 pt-1 sm:flex-row-reverse">
-            <button type="submit" className="btn-accent w-full sm:w-auto" disabled={busy || uploading}>
+            <button type="submit" className="btn-accent w-full sm:w-auto" disabled={busy || uploading || outsideList}>
               <Package className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
               {busy ? t.browse.quickSending : t.browse.quickSend}
             </button>

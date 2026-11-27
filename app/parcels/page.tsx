@@ -1,4 +1,6 @@
 "use client";
+import { parcelContentsCopy } from "@/lib/locales/parcelContents";
+import { acceptsContents } from "@/lib/parcelContents";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -16,7 +18,7 @@ import {
   fetchParcels, fetchMyOpenTrips, requestMatch, fetchAttention, type Attention,
 } from "@/lib/db";
 import { useContactGate } from "@/lib/useContactGate";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { useSession } from "@/lib/auth";
 import { ParcelRequest } from "@/lib/types";
 
@@ -24,6 +26,7 @@ function ParcelsContent() {
   const router = useRouter();
   const gate = useContactGate();
   const t = useT();
+  const { lang } = useLang();
   const { session } = useSession();
   const [attention, setAttention] = useState<Attention | null>(null);
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
@@ -75,8 +78,11 @@ function ParcelsContent() {
           tr.fromCountry === parcel.fromCountry &&
           tr.toCountry === parcel.toCountry &&
           tr.date >= today &&
-          tr.date <= parcel.neededBy
+          tr.date <= parcel.neededBy && acceptsContents(tr.categories, parcel.categories)
       );
+      if (!sameRoute && mine.some(tr => tr.fromCountry === parcel.fromCountry && tr.toCountry === parcel.toCountry && tr.date >= today && tr.date <= parcel.neededBy)) {
+        setToast(parcelContentsCopy[lang].offerMismatch); return;
+      }
       if (!sameRoute) {
         setToast(t.browse.noFittingTrip);
         // A trip needs a flight date, so send them to the form with the

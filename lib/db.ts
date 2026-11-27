@@ -10,6 +10,7 @@ import {
   Trip, ParcelRequest, MatchStatus, ParcelCategory, TransitUpdate, Review,
   Message,
 } from "./types";
+import { acceptsContents } from "./parcelContents";
 import { personSlug } from "./people";
 import { briefDeclaration, declarationSchema, type DeclarationDraft } from "./parcelSafety";
 import { parcelSchema, reviewSchema } from "./validation";
@@ -55,6 +56,9 @@ interface ParcelRow {
   weight_kg: number | null;
   categories: string[] | null;
   description: string;
+  item_count: number | null;
+  package_type: ParcelRequest["packageType"];
+  weight_kind: ParcelRequest["weightKind"];
   budget_usd: number;
   created_at: string;
   profile: ProfileRow | null;
@@ -102,6 +106,7 @@ function mapParcel(row: ParcelRow): ParcelRequest {
     weightKg: row.weight_kg == null ? null : Number(row.weight_kg),
     categories: (row.categories ?? []) as ParcelCategory[],
     description: row.description,
+    itemCount: row.item_count ?? null, packageType: row.package_type ?? null, weightKind: row.weight_kind ?? null,
     budgetUsd: Number(row.budget_usd),
     createdAt: row.created_at,
   };
@@ -288,7 +293,8 @@ export async function fetchFittingTrips(
 export async function fetchWaitingParcels(
   fromCountry: string,
   toCountry: string,
-  departDate: string
+  departDate: string,
+  categories?: ParcelCategory[]
 ): Promise<ParcelRequest[]> {
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
@@ -302,11 +308,11 @@ export async function fetchWaitingParcels(
     .eq("to_country", toCountry)
     .gte("needed_by", floor)
     .order("needed_by", { ascending: true })
-    .limit(4);
+    .limit(100);
   if (error) return [];
   return ((data ?? []) as unknown as ParcelRow[])
     .map(mapParcel)
-    .filter((p) => p.senderId !== uid)
+    .filter((p) => p.senderId !== uid && (!categories || acceptsContents(categories,p.categories)))
     .slice(0, 3);
 }
 
@@ -337,19 +343,20 @@ export interface CorridorFit {
 export async function fitForTrip(
   fromCountry: string,
   toCountry: string,
-  departDate: string
+  departDate: string,
+  categories?: ParcelCategory[]
 ): Promise<CorridorFit> {
   const today = new Date().toISOString().slice(0, 10);
   const { data, error } = await supabase
     .from("parcels")
-    .select("needed_by")
+    .select("needed_by,categories")
     .eq("status", "open")
     .eq("from_country", fromCountry)
     .eq("to_country", toCountry)
     .gte("needed_by", today);
   if (error) throw error;
 
-  const dates = (data ?? []).map((r) => r.needed_by as string);
+  const dates = (data ?? []).filter(r => !categories || acceptsContents(categories,r.categories)).map((r) => r.needed_by as string);
   const fits = dates.filter((d) => d >= departDate);
   const missed = dates.filter((d) => d < departDate);
   return {
@@ -403,12 +410,15 @@ export interface NewParcel {
   categories: ParcelCategory[];
   description: string;
   budgetUsd: number;
+  itemCount?: number | null;
+  packageType?: ParcelRequest["packageType"];
+  weightKind?: ParcelRequest["weightKind"];
   declaration: DeclarationDraft;
 }
 
 export async function addParcel(p: NewParcel): Promise<string> {
   const declaration = declarationSchema.parse(briefDeclaration(p.description, p.declaration));
-  const parcel = { ...parcelSchema.parse(p), categories: p.categories };
+  const parcel = { ...parcelSchema.parse(p), categories: p.categories, itemCount: p.itemCount ?? null, packageType: p.packageType ?? null, weightKind: p.weightKg == null ? null : p.weightKind ?? null };
   const { data, error } = await supabase.rpc("save_parcel", {
     p_parcel: parcel, p_items: declaration.items,
     p_photo_paths: declaration.photoPaths, p_attested: declaration.attested,
@@ -512,7 +522,7 @@ export async function updateTrip(id: string, t: NewTrip): Promise<void> {
 
 export async function updateParcel(id: string, p: NewParcel): Promise<void> {
   const declaration = declarationSchema.parse(briefDeclaration(p.description, p.declaration));
-  const parcel = { ...parcelSchema.parse(p), categories: p.categories };
+  const parcel = { ...parcelSchema.parse(p), categories: p.categories, itemCount: p.itemCount ?? null, packageType: p.packageType ?? null, weightKind: p.weightKg == null ? null : p.weightKind ?? null };
   const { error } = await supabase.rpc("save_parcel", {
     p_parcel_id: id, p_parcel: parcel, p_items: declaration.items,
     p_photo_paths: declaration.photoPaths, p_attested: declaration.attested,
@@ -534,6 +544,7 @@ export interface MyListing {
   date: string;
   /** parcels: weight_kg · trips: remaining_kg */
   kg: number | null;
+  categories: ParcelCategory[];
 }
 
 function mapListing(
@@ -543,6 +554,7 @@ function mapListing(
     to_country: string;
     date: string;
     kg: number | null;
+    categories: string[];
   }[]
 ) {
   return rows.map((r) => ({
@@ -551,6 +563,7 @@ function mapListing(
     toCountry: r.to_country,
     date: r.date,
     kg: r.kg == null ? null : Number(r.kg),
+    categories: r.categories as ParcelCategory[],
   }));
 }
 
@@ -560,7 +573,7 @@ export async function fetchMyOpenParcels(): Promise<MyListing[]> {
   if (!uid) return [];
   const { data, error } = await supabase
     .from("parcels")
-    .select("id, from_country, to_country, date:needed_by, kg:weight_kg")
+    .select("id, from_country, to_country, date:needed_by, kg:weight_kg, categories")
     .eq("sender_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });
@@ -574,7 +587,7 @@ export async function fetchMyOpenTrips(): Promise<MyListing[]> {
   if (!uid) return [];
   const { data, error } = await supabase
     .from("trips")
-    .select("id, from_country, to_country, date:depart_date, kg:remaining_kg")
+    .select("id, from_country, to_country, date:depart_date, kg:remaining_kg, categories")
     .eq("traveler_id", uid)
     .eq("status", "open")
     .order("created_at", { ascending: false });

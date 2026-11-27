@@ -1,13 +1,14 @@
 import type { Trip, ParcelRequest } from './types';
+import { acceptsContents } from './parcelContents';
 import type { MatchDetail } from './db';
 export const listingHref = (kind: 'trip'|'parcel', id: string) => `/dashboard/listings?kind=${kind}&id=${encodeURIComponent(id)}`;
 export const conversationHref = (id: string) => `/dashboard#messages-${encodeURIComponent(id)}`;
 export function fittingTrips(parcel: ParcelRequest, trips: Trip[], today: string, later = false): Trip[] {
- return trips.filter(t => t.travelerId !== parcel.senderId && t.fromCountry === parcel.fromCountry && t.toCountry === parcel.toCountry && t.departDate >= today && (later ? t.departDate > parcel.neededBy : t.departDate <= parcel.neededBy) && t.remainingKg > 0 && (parcel.weightKg == null || t.remainingKg >= parcel.weightKg) && parcel.categories.every(c => t.categoriesAccepted.includes(c)))
+ return trips.filter(t => t.travelerId !== parcel.senderId && t.fromCountry === parcel.fromCountry && t.toCountry === parcel.toCountry && t.departDate >= today && (later ? t.departDate > parcel.neededBy : t.departDate <= parcel.neededBy) && t.remainingKg > 0 && (parcel.weightKg == null || t.remainingKg >= parcel.weightKg) && acceptsContents(t.categoriesAccepted, parcel.categories))
  .sort((a,b) => Number(b.travelerVerified)-Number(a.travelerVerified) || a.departDate.localeCompare(b.departDate) || a.pricePerKg-b.pricePerKg);
 }
 export function fittingParcels(trip: Trip, parcels: ParcelRequest[], today: string): ParcelRequest[] {
- return parcels.filter(p => p.senderId !== trip.travelerId && trip.departDate >= today && p.fromCountry === trip.fromCountry && p.toCountry === trip.toCountry && p.neededBy >= trip.departDate && trip.remainingKg > 0 && (p.weightKg == null || p.weightKg <= trip.remainingKg) && p.categories.every(c => trip.categoriesAccepted.includes(c))).sort((a,b)=>a.neededBy.localeCompare(b.neededBy));
+ return parcels.filter(p => p.senderId !== trip.travelerId && trip.departDate >= today && p.fromCountry === trip.fromCountry && p.toCountry === trip.toCountry && p.neededBy >= trip.departDate && trip.remainingKg > 0 && (p.weightKg == null || p.weightKg <= trip.remainingKg) && acceptsContents(trip.categoriesAccepted, p.categories)).sort((a,b)=>a.neededBy.localeCompare(b.neededBy));
 }
 export function nextSteps(matches: MatchDetail[], uid: string) {
  return matches.flatMap(m => {

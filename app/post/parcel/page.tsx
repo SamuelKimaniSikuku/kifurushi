@@ -13,16 +13,19 @@ import {
   addParcel, fetchParcelById, hasDuplicateParcel, updateParcel,
 } from "@/lib/db";
 import { useSession, fetchIsMember } from "@/lib/auth";
-import { requestWeightCopy } from "@/lib/locales/requestWeight";
+import ParcelContentsFields from "@/components/ParcelContentsFields";
+import ParcelWeightField from "@/components/ParcelWeightField";
+import { parcelDetailsSchema } from "@/lib/parcelContents";
+import { parcelContentsCopy } from "@/lib/locales/parcelContents";
 import { useLang, useT } from "@/lib/i18n";
-import { CATEGORY_LABELS, ParcelCategory } from "@/lib/types";
+import { ParcelCategory } from "@/lib/types";
 import ContentsDeclaration from "@/components/ContentsDeclaration";
 import { briefDeclaration, declarationSchema, emptyDeclaration } from "@/lib/parcelSafety";
 import { fetchDeclaration } from "@/lib/safetyDb";
 import { safetyCopy } from "@/lib/locales/safety";
 import { deliveryCostCopy } from "@/lib/locales/deliveryCosts";
 
-const ALL_CATEGORIES = Object.keys(CATEGORY_LABELS) as ParcelCategory[];
+
 
 const FIELD_ORDER = [
   "fromCountry",
@@ -33,6 +36,8 @@ const FIELD_ORDER = [
   "weightKg",
   "budgetUsd",
   "cats",
+  "packageType",
+  "itemCount",
   "description",
 ];
 
@@ -64,8 +69,11 @@ function PostParcelForm() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     fromCountry: "", fromCity: "", toCountry: "", toCity: "",
-    neededBy: "", weightKg: "3", description: "", budgetUsd: "50",
+    neededBy: "", weightKg: "", description: "", budgetUsd: "",
   });
+  const [details, setDetails] = useState({ itemCount: "", packageType: "" });
+  const [weightKind, setWeightKind] = useState<"measured"|"estimated">("estimated");
+  const pc = parcelContentsCopy[lang];
   const [cats, setCats] = useState<ParcelCategory[]>([]);
   const [minDate, setMinDate] = useState("");
   // Set when the member already has an open parcel on this route and deadline;
@@ -104,6 +112,8 @@ function PostParcelForm() {
       setForm({ fromCountry: p.fromCountry, fromCity: p.fromCity, toCountry: p.toCountry, toCity: p.toCity,
         neededBy: p.neededBy, weightKg: p.weightKg == null ? "" : String(p.weightKg), description: p.description, budgetUsd: String(p.budgetUsd) });
       setCats(p.categories);
+      setDetails({ itemCount: p.itemCount == null ? "" : String(p.itemCount), packageType: p.packageType ?? "" });
+      setWeightKind(p.weightKind ?? "estimated");
       setDeclaration(briefDeclaration(p.description, { photoPaths: d?.photo_paths ?? [], items: [], attested: false }));
     }).catch(() => { if (active) setDeclarationLoadError(true); }).finally(() => { if (active) setDeclarationLoading(false); });
     return () => { active = false; };
@@ -116,10 +126,6 @@ function PostParcelForm() {
     if (Object.keys(route).length) setForm((current) => ({ ...current, ...route }));
   }, [params, editId]);
 
-  function toggleCat(c: ParcelCategory) {
-    setCats((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const parsed = parcelSchema.safeParse(form);
@@ -129,6 +135,11 @@ function PostParcelForm() {
       setErrors(errs);
       focusFirstInvalid(errs);
       return;
+    }
+    const parsedDetails = parcelDetailsSchema.safeParse({ ...details, weightKind: parsed.data.weightKg == null ? null : weightKind });
+    if (!cats.length || !parsedDetails.success) {
+      const errs: FieldErrors = !cats.length ? { cats: pc.choose } : { packageType: pc.detailsError };
+      setErrors(errs); focusFirstInvalid(errs); return;
     }
     if (!declarationSchema.safeParse(briefDeclaration(form.description, declaration)).success) {
       setErrors({ _submit: s.invalid });
@@ -144,9 +155,9 @@ function PostParcelForm() {
         return;
       }
       if (editId) {
-        await updateParcel(editId, { ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
+        await updateParcel(editId, { ...parsed.data, categories: cats, ...parsedDetails.data, declaration });
       } else {
-        const postedId = await addParcel({ ...parsed.data, categories: cats.length ? cats : ["other"], declaration });
+        const postedId = await addParcel({ ...parsed.data, categories: cats, ...parsedDetails.data, declaration });
         router.push(`/dashboard/listings?kind=parcel&id=${postedId}&posted=1`);
         return;
       }
@@ -164,6 +175,7 @@ function PostParcelForm() {
 
   const set = (k: string) => (v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
+    if (k === "weightKg") setDeclaration(d=>({...d,attested:false}));
     if (k === "description") setDeclaration((d) => briefDeclaration(v, { ...d, attested: false }));
   };
 
@@ -254,25 +266,7 @@ function PostParcelForm() {
               <p id="neededBy-error" className="field-error">{errors.neededBy}</p>
             )}
           </div>
-          <div>
-            <label htmlFor="weightKg" className="field-label">{requestWeightCopy[lang].label}</label>
-            <input
-              id="weightKg"
-              type="number"
-              min={0}
-              step="any"
-              inputMode="decimal"
-              className={cls("weightKg")}
-              value={form.weightKg}
-              onChange={(e) => set("weightKg")(e.target.value)}
-              onBlur={touch("weightKg")}
-              {...err("weightKg")}
-            />
-            <p className="mt-1 text-xs text-muted">{requestWeightCopy[lang].help}</p>
-            {errors.weightKg && (
-              <p id="weightKg-error" className="field-error">{errors.weightKg}</p>
-            )}
-          </div>
+          <ParcelWeightField value={form.weightKg} onChange={set("weightKg")} kind={weightKind} onKind={setWeightKind} error={errors.weightKg} />
           <div>
             <label htmlFor="budgetUsd" className="field-label">{t.postParcel.budget}</label>
             <input
@@ -295,65 +289,11 @@ function PostParcelForm() {
           </div>
         </div>
 
-        {/* Extras */}
-        <div className="mt-6 space-y-5 border-t border-line pt-5">
-
-
-          <div>
-            <label htmlFor="description" className="field-label">{t.postParcel.whatsInside}</label>
-            <textarea
-              id="description"
-              className={`${cls("description")} min-h-[90px]`}
-              value={form.description}
-              onChange={(e) => set("description")(e.target.value)}
-              onBlur={touch("description")}
-              placeholder={s.briefPlaceholder}
-              maxLength={400}
-              {...err("description")}
-            />
-            {errors.description && (
-              <p id="description-error" className="field-error">{errors.description}</p>
-            )}
-          </div>
+        <div className="mt-6 border-t border-line pt-5">
+          <ParcelContentsFields categories={cats} onCategories={v => { setCats(v); setErrors({}); setDeclaration(d => ({...d,attested:false})); }} description={form.description} onDescription={set("description")} itemCount={details.itemCount} packageType={details.packageType} onDetails={(key,value) => { setDetails(d => ({...d,[key]:value})); setErrors({}); setDeclaration(d => ({...d,attested:false})); }} error={errors.cats || errors.description || errors.packageType} />
         </div>
-
         <div id="parcel-declaration" className="mt-6">
-          <ContentsDeclaration descriptionProvided value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={submitting || uploading || declarationLoading || declarationLoadError}>
-          <div>
-            <span id="cats-label" className="field-label">{t.postParcel.categoriesLabel}</span>
-            <div
-              id="cats"
-              tabIndex={-1}
-              role="group"
-              aria-labelledby="cats-label"
-              aria-describedby={errors.cats ? "cats-error" : undefined}
-              className="flex flex-wrap gap-2 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
-            >
-              {ALL_CATEGORIES.map((c) => {
-                const selected = cats.includes(c);
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => toggleCat(c)}
-                    aria-pressed={selected}
-                    className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2 ${
-                      selected
-                        ? "border-forest bg-forest text-white"
-                        : "border-line-strong bg-white text-ink hover:border-forest"
-                    }`}
-                  >
-                    {selected && <span aria-hidden>✓</span>}
-                    {CATEGORY_LABELS[c]}
-                  </button>
-                );
-              })}
-            </div>
-            {errors.cats && (
-              <p id="cats-error" className="field-error">{errors.cats}</p>
-            )}
-          </div>
-          </ContentsDeclaration>
+          <ContentsDeclaration descriptionProvided value={declaration} onChange={setDeclaration} onBusy={setUploading} disabled={submitting || uploading || declarationLoading || declarationLoadError} />
           {declarationLoadError && <div className="mt-3"><p role="alert" className="field-error">{s.loadError}</p><button type="button" className="btn-ghost mt-2" onClick={() => setDeclarationAttempt((n) => n + 1)}>{s.retry}</button></div>}
         </div>
 

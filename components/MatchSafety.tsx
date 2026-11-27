@@ -11,6 +11,7 @@ import { declarationSchema, emptyDeclaration, REFUSAL_REASONS, type RefusalReaso
 import { confirmInspection, fetchMatchSafety, refuseParcel, saveDeclaration } from "@/lib/safetyDb";
 import ContentsDeclaration from "./ContentsDeclaration";
 import EvidencePhotos from "./EvidencePhotos";
+import { categoryNames, parcelContentsCopy } from "@/lib/locales/parcelContents";
 import type { InspectionProgress } from "@/lib/deliveryReturn";
 
 export default function MatchSafety({ match, myUserId, onChanged, onReady, onMessage, children }: {
@@ -57,6 +58,12 @@ export default function MatchSafety({ match, myUserId, onChanged, onReady, onMes
   const details = <section aria-label={s.title} className="rounded-xl border border-line p-4 text-sm">
     <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-semibold text-forest"><ShieldCheck size={18} aria-hidden />{s.title}</h3>{match.parcelWeightKg != null && <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-medium text-muted">{match.parcelWeightKg} kg</span>}</div>
     {declaration && <p className="mt-2 break-words">{declaration.items.map((item) => item.description).join("; ")}</p>}
+    {declaration?.parcel_details?.categories && <div className="mt-3 flex flex-wrap gap-2 text-xs">
+      {declaration.parcel_details.categories.map(c=><span className="chip" key={c}>{categoryNames[lang][c]}</span>)}
+      {declaration.parcel_details.itemCount != null && <span className="chip">{parcelContentsCopy[lang].items(declaration.parcel_details.itemCount)}</span>}
+      {declaration.parcel_details.packageType && <span className="chip">{parcelContentsCopy[lang][declaration.parcel_details.packageType]}</span>}
+      {declaration.parcel_details.weightKind && <span className="chip">{parcelContentsCopy[lang][declaration.parcel_details.weightKind]}</span>}
+    </div>}
     <details className="mt-2"><summary className="cursor-pointer py-2 font-medium text-forest">{d.parcelInfo}</summary><div className="mt-2 space-y-3 text-muted">
       {declaration && <>
         {declaration.items.some((item) => item.quantity != null || item.valueUsd != null) && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b border-line"><th className="py-2 pr-3">{s.item}</th><th className="p-2">{s.quantity}</th><th className="py-2 pl-3 text-right">{s.value}</th></tr></thead><tbody>{declaration.items.map((item, i) => <tr key={i} className="border-b border-line"><td className="py-2 pr-3">{item.description}</td><td className="p-2">{item.quantity ?? "—"}</td><td className="py-2 pl-3 text-right">{item.valueUsd != null ? `$${Number(item.valueUsd).toFixed(2)}` : "—"}</td></tr>)}</tbody></table></div>}

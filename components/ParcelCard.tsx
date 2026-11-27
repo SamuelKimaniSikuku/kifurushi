@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { ArrowRight, BellRing, Calendar, Check, Pencil, Scale, Star } from "lucide-react";
-import { ParcelRequest, CATEGORY_LABELS } from "@/lib/types";
+import { ParcelRequest } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
 import { requestWeightCopy } from "@/lib/locales/requestWeight";
 import { reviewCopy } from "@/lib/locales/reviews";
-import Avatar from "@/components/ui/Avatar";
+import { categoryNames, parcelContentsCopy } from "@/lib/locales/parcelContents";
+import { displayWeight } from "@/lib/parcelContents";
 import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 
@@ -29,6 +30,7 @@ export default function ParcelCard({
 }) {
   const t = useT();
   const { lang } = useLang();
+  const pc = parcelContentsCopy[lang];
   const date = new Date(`${parcel.neededBy}T12:00:00`).toLocaleDateString(lang, {
     day: "numeric",
     month: "short",
@@ -43,28 +45,7 @@ export default function ParcelCard({
   return (
     <article className="card card-lift group flex h-full min-w-0 flex-col gap-4 p-5">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <Avatar name={parcel.senderName} />
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <Link
-              href={personHref(parcel.senderName)}
-              className="truncate rounded text-base font-semibold text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
-            >
-              {parcel.senderName}
-            </Link>
-            {parcel.senderVerified ? (
-              <VerifiedBadge small />
-            ) : (
-              <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
-                {t.experience.unverified}
-              </span>
-            )}
-            {parcel.senderRating !== null && <Link href={`${personHref(parcel.senderName)}#reviews`} className="flex basis-full items-center gap-1 text-xs text-muted hover:underline">
-              <Star size={13} className="fill-gold text-gold-deep" aria-hidden />
-              {reviewCopy[lang].ratingLabel(parcel.senderRating.toFixed(1))}
-            </Link>}
-          </div>
-        </div>
+        <h2 className="min-w-0 break-words font-display text-lg font-bold leading-snug text-forest">{parcel.description}</h2>
 
         <div className="shrink-0 text-right">
           <div className="font-display text-2xl font-extrabold leading-none text-forest">
@@ -92,7 +73,7 @@ export default function ParcelCard({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
         <span className="flex items-center gap-1.5">
           <Scale size={14} strokeWidth={2} className="shrink-0" aria-hidden />
-          {parcel.weightKg == null ? requestWeightCopy[lang].toAgree : `${parcel.weightKg} kg`}
+          {parcel.weightKg == null ? requestWeightCopy[lang].toAgree : displayWeight(parcel.weightKg)}
         </span>
         <span className="flex items-center gap-1.5">
           <Calendar size={14} strokeWidth={2} className="shrink-0" aria-hidden />
@@ -101,16 +82,40 @@ export default function ParcelCard({
       </div>
 
       <div className="flex flex-wrap gap-1.5">
+        {parcel.itemCount != null && <span className="chip">{pc.items(parcel.itemCount)}</span>}
+        {parcel.packageType && <span className="chip">{pc[parcel.packageType]}</span>}
+        {parcel.weightKind && parcel.weightKg != null && <span className="chip">{pc[parcel.weightKind]}</span>}
         {parcel.categories.slice(0, 3).map((cat) => (
           <span key={cat} className="chip">
-            {CATEGORY_LABELS[cat]}
+            {categoryNames[lang][cat]}
           </span>
         ))}
         {parcel.categories.length > 3 && (
           <span className="chip">+{parcel.categories.length - 3}</span>
         )}
       </div>
-      <p className="line-clamp-2 text-sm text-muted">{parcel.description}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <Link
+              href={personHref(parcel.senderName)}
+              className="truncate rounded text-sm font-medium text-ink hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf focus-visible:ring-offset-2"
+            >
+              {parcel.senderName}
+            </Link>
+            {parcel.senderVerified ? (
+              <VerifiedBadge small />
+            ) : (
+              <span className="inline-flex items-center rounded-full border border-line px-2 py-0.5 text-[11px] font-medium text-faint">
+                {t.experience.unverified}
+              </span>
+            )}
+            {parcel.senderRating !== null && <Link href={`${personHref(parcel.senderName)}#reviews`} className="flex basis-full items-center gap-1 text-xs text-muted hover:underline">
+              <Star size={13} className="fill-gold text-gold-deep" aria-hidden />
+              {reviewCopy[lang].ratingLabel(parcel.senderRating.toFixed(1))}
+            </Link>}
+          </div>
+        </div>
+
 
       {mine ? (
         <div className="mt-auto space-y-2 pt-1">

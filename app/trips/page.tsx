@@ -1,4 +1,5 @@
 "use client";
+import { acceptsContents } from "@/lib/parcelContents";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -75,7 +76,7 @@ function TripsContent() {
         (p) =>
           p.fromCountry === trip.fromCountry &&
           p.toCountry === trip.toCountry &&
-          p.date >= trip.departDate
+          p.date >= trip.departDate && acceptsContents(trip.categoriesAccepted, p.categories)
       );
       if (!fits) {
         setQuickTrip(trip);

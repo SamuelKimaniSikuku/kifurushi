@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { BellRing, Calendar, Check, Pencil, Plane, Star } from "lucide-react";
-import { Trip, CATEGORY_LABELS } from "@/lib/types";
+import { Trip } from "@/lib/types";
 import { label } from "@/lib/countries";
 import { personHref } from "@/lib/people";
 import { useLang, useT } from "@/lib/i18n";
 import { reviewCopy } from "@/lib/locales/reviews";
 import Avatar from "@/components/ui/Avatar";
+import { categoryNames, parcelContentsCopy } from "@/lib/locales/parcelContents";
 import ShareListing from "@/components/ShareListing";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { safetyCopy } from "@/lib/locales/safety";
@@ -134,10 +135,11 @@ export default function TripCard({
         <p className="line-clamp-2 text-sm text-muted">{trip.notes}</p>
       )}
 
+      {trip.categoriesAccepted.length === 1 && trip.categoriesAccepted[0] === "certificates" && <p className="rounded-xl bg-success-bg px-3 py-2 text-sm font-semibold text-forest">🔒 {parcelContentsCopy[lang].locked}</p>}
       <div className="flex flex-wrap gap-1.5">
         {shownCategories.map((cat) => (
           <span key={cat} className="chip">
-            {CATEGORY_LABELS[cat]}
+            {categoryNames[lang][cat]}
           </span>
         ))}
         {extraCategories > 0 && <span className="chip">+{extraCategories}</span>}
