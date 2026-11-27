@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Package, Plane, Scale } from "lucide-react";
 import { fetchFittingTrips, fetchWaitingParcels } from "@/lib/db";
-import { ParcelRequest, Trip } from "@/lib/types";
+import { ParcelRequest, Trip, ParcelCategory } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 import QuickRequest from "@/components/QuickRequest";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
@@ -124,10 +124,12 @@ export function WaitingParcels({
   fromCountry,
   toCountry,
   departDate,
+  categories,
 }: {
   fromCountry: string;
   toCountry: string;
   departDate: string;
+  categories?: ParcelCategory[];
 }) {
   const t = useT();
   const [parcels, setParcels] = useState<ParcelRequest[]>([]);
@@ -139,7 +141,7 @@ export function WaitingParcels({
     }
     let live = true;
     const timer = setTimeout(() => {
-      fetchWaitingParcels(fromCountry, toCountry, departDate)
+      fetchWaitingParcels(fromCountry, toCountry, departDate, categories)
         .then((r) => live && setParcels(r))
         .catch(() => live && setParcels([]));
     }, 400);
@@ -147,7 +149,7 @@ export function WaitingParcels({
       live = false;
       clearTimeout(timer);
     };
-  }, [fromCountry, toCountry, departDate]);
+  }, [fromCountry, toCountry, departDate, categories]);
 
   if (parcels.length === 0) return null;
 

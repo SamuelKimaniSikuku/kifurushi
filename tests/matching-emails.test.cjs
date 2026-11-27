@@ -1,9 +1,11 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,f);
+const {acceptsContents}=require('../supabase/functions/_shared/itemCategories.ts');
 function runWorker(slug, seed, body, secret='secret'){
  let handler;const sent=[];
  class Q{constructor(table){this.table=table;this.filters=[];}select(){return this;}eq(k,v){this.filters.push(r=>r[k]===v);return this;}neq(k,v){this.filters.push(r=>r[k]!==v);return this;}gte(k,v){this.filters.push(r=>r[k]>=v);return this;}lte(k,v){this.filters.push(r=>r[k]<=v);return this;}or(){return this;}order(){return this;}limit(){return this;}maybeSingle(){this.single=true;return this;}throwOnError(){return this;}then(resolve,reject){return Promise.resolve().then(()=>{const rows=(seed[this.table]??[]).filter(r=>this.filters.every(f=>f(r)));return {data:this.single?rows[0]??null:rows,error:null};}).then(resolve,reject);}}
  const admin={from:table=>new Q(table),auth:{admin:{getUserById:async id=>({data:{user:{email:id+'@example.invalid'}}})}}};
- const ctx={Date,Response,Request,URL,console,Deno:{env:{get:()=> 'secret'},serve:fn=>handler=fn},createClient:()=>admin,sendTrackedEmail:async(_admin,input)=>{sent.push(input);return true;},escapeHtml:s=>s.replaceAll('<','&lt;').replaceAll('>','&gt;')};
+ const ctx={acceptsContents,Date,Response,Request,URL,console,Deno:{env:{get:()=> 'secret'},serve:fn=>handler=fn},createClient:()=>admin,sendTrackedEmail:async(_admin,input)=>{sent.push(input);return true;},escapeHtml:s=>s.replaceAll('<','&lt;').replaceAll('>','&gt;')};
  const src=fs.readFileSync(`supabase/functions/${slug}/index.ts`,'utf8').replace(/^import .*\n/gm,'');
  vm.runInNewContext(ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,ctx);
  return handler(new Request('https://example.invalid',{method:'POST',headers:{'x-hook-secret':secret},body:JSON.stringify(body)})).then(response=>({sent,response}));
@@ -38,4 +40,17 @@ test('completed-delivery emails open that booking’s review',async()=>{
 test('message alerts keep opening chat rather than delivery actions',async()=>{
  const {sent}=await runWorker('match-emails',{matches:[match],messages:[{id:'msg1',match_id:'match-id',created_at:'2026-11-20T00:00:00Z'}],profiles:[]},{match_id:'match-id',event:'message',actor:'sender'});
  assert.equal(sent.length,1);assert.match(sent[0].html,/#messages-match-id/);assert.match(sent[0].html,/Read message/);
+});
+
+test('certificate alerts respect strict restrictions and broader document trips in both directions',async()=>{
+ for(const kind of ['trip','parcel']){
+  for(const categories of [['certificates'],['documents']]){
+   const {sent}=await runWorker('new-listing-alerts',{trips:[{...trip,categories}],parcels:[{...parcel,categories:['certificates']}],profiles:[]},{kind,id:kind+'-id'});
+   assert.equal(sent.length,1);
+  }
+  for(const categories of [['certificates','clothing'],['documents'],['other'],[]]){
+   const {sent}=await runWorker('new-listing-alerts',{trips:[{...trip,categories:['certificates']}],parcels:[{...parcel,categories}],profiles:[]},{kind,id:kind+'-id'});
+   assert.equal(sent.length,0);
+  }
+ }
 });

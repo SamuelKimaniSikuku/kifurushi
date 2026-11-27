@@ -1,3 +1,4 @@
+import { acceptsContents } from "../_shared/itemCategories.ts";
 import {sendTrackedEmail, escapeHtml} from "../_shared/notifications.ts";
 // The moment a listing is posted, tell the people it fits — immediately, not
 // in tomorrow's digest. A sender's parcel goes to every traveller whose open
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
     // One email per traveller, their soonest fitting trip named.
     const byTraveler = new Map<string, {id:string;date:string}>();
     for (const t of trips ?? []) {
-      if ((p.categories??[]).every((c:string)=>(t.categories??[]).includes(c)) && !byTraveler.has(t.traveler_id)) byTraveler.set(t.traveler_id, {id:t.id,date:t.depart_date});
+      if (acceptsContents(t.categories ?? [], p.categories ?? []) && !byTraveler.has(t.traveler_id)) byTraveler.set(t.traveler_id, {id:t.id,date:t.depart_date});
     }
 
     const senderName =
@@ -205,7 +206,7 @@ Deno.serve(async (req) => {
       (t.profile as { full_name?: string } | null)?.full_name ?? "A member";
     const seen = new Set<string>();
     for (const p of parcels ?? []) {
-      if (seen.has(p.sender_id) || !(p.categories??[]).every((c:string)=>(t.categories??[]).includes(c))) continue;
+      if (seen.has(p.sender_id) || !acceptsContents(t.categories ?? [], p.categories ?? [])) continue;
       seen.add(p.sender_id);
       const r = await recipient(p.sender_id);
       if (!r.email) continue;

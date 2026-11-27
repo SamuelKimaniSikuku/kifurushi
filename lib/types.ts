@@ -1,5 +1,6 @@
 export type ParcelCategory =
   | "documents"
+  | "certificates"
   | "clothing"
   | "electronics"
   | "food"
@@ -57,6 +58,9 @@ export interface ParcelRequest {
   neededBy: string; // ISO date
   weightKg: number | null; // null until the sender and traveller agree
   categories: ParcelCategory[];
+  itemCount?: number | null;
+  packageType?: "envelope" | "small_box" | "large_box" | "suitcase" | "not_sure" | null;
+  weightKind?: "measured" | "estimated" | null;
   description: string;
   budgetUsd: number;
   createdAt: string;
@@ -97,6 +101,7 @@ export interface Review {
 }
 
 export const CATEGORY_LABELS: Record<ParcelCategory, string> = {
+  certificates: "📜 Certificates",
   documents: "📄 Documents",
   clothing: "👕 Clothing",
   electronics: "📱 Electronics",

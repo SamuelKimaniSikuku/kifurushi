@@ -35,6 +35,7 @@ export interface ParcelDeclaration {
   photo_paths: string[];
   declared_value_usd: number | null;
   declared_at: string;
+  parcel_details?: { categories: import("./types").ParcelCategory[]; itemCount: number | null; packageType: import("./types").ParcelRequest["packageType"]; weightKg: number | null; weightKind: "measured"|"estimated"|null; };
 }
 export interface Inspection {
   match_id: string;
